@@ -39,8 +39,6 @@ Token::Token(TokenType tokenType)
 {
 }
 
-Token::~Token() = default;
-
 Token *
 Token::parse(std::istream& stream)
 {
@@ -140,6 +138,7 @@ Token::parse(std::istream& stream)
 
                 *(t++) = (char) c;
                 isDecimal = true;
+                stream.get();
                 continue;
             } else if (isnumber(c)) {
                 // The numerical token continues
@@ -174,9 +173,30 @@ Liter::Liter(LiterType type)
 {
 }
 
+static string const liter_true = "1b";
+static string const liter_false = "0b";
+static string const liter_sq = "\"";
+
+std::string
+Liter::toString()
+{
+    switch (literType) {
+    case LiterType::BOOL: return bval ? liter_true : liter_false;
+    case LiterType::DEC: return to_string(dval) + "d";
+    case LiterType::INT: return to_string(ival) + "i";
+    case LiterType::STR: return liter_sq + *sval + liter_sq;
+    }
+}
+
 Ident::Ident(string name)
 : Token(TokenType::IDENT), name(move(name))
 {
+}
+
+std::string
+Ident::toString()
+{
+    return name;
 }
 
 Oper::Oper(OperType type)
@@ -184,7 +204,40 @@ Oper::Oper(OperType type)
 {
 }
 
+static string const oper_assign = "=";
+static string const oper_lambda = "lambda ";
+static string const oper_add = "+";
+static string const oper_sub = "-";
+
+std::string
+Oper::toString()
+{
+    switch (operType) {
+    case OperType::ASSIGN: return oper_assign;
+    case OperType::LAMBDA: return oper_lambda;
+    case OperType::ADD: return oper_add;
+    case OperType::SUB: return oper_sub;
+    }
+}
+
 Syntax::Syntax(SyntaxType type)
 : Token(TokenType::SYNTAX), syntaxType(type)
 {
+}
+
+static string const syntax_colon = ":";
+static string const syntax_lparen = "(";
+static string const syntax_rparen = ")";
+
+std::string
+Syntax::toString()
+{
+    switch (syntaxType) {
+    case SyntaxType::COLON: return syntax_colon;
+    case SyntaxType::L_PAREN: return syntax_lparen;
+    case SyntaxType::R_PAREN: return syntax_rparen;
+
+    default:
+        return "";
+    }
 }

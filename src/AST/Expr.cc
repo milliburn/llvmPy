@@ -50,6 +50,7 @@ Expr::parse(std::istream& stream)
         syntax = dynamic_cast<Syntax *>(tok);
         switch (syntax->syntaxType) {
         case SyntaxType::END_LINE:
+        case SyntaxType::END_FILE:
             return lhs;
 
         default:
@@ -108,6 +109,12 @@ IdentExpr::codegen(llvmPy::Codegen &)
     return nullptr;
 }
 
+std::string
+IdentExpr::toString() const
+{
+    return ident.toString();
+}
+
 ConstExpr::ConstExpr(Liter& liter)
 : Expr(ExprType::CONST), liter(liter)
 {
@@ -137,6 +144,12 @@ ConstExpr::codegen(Codegen& cg)
     }
 }
 
+std::string
+ConstExpr::toString() const
+{
+    return liter.toString();
+}
+
 BinaryExpr::BinaryExpr(
         Expr& lhs,
         Oper& op,
@@ -164,4 +177,15 @@ BinaryExpr::codegen(Codegen& cg)
     default:
         return nullptr;
     }
+}
+
+std::string
+BinaryExpr::toString() const
+{
+    return "(" + lhs.toString() + op.toString() + rhs.toString() + ")";
+}
+
+std::ostream& operator<< (std::ostream & os, Expr const & value) {
+    os << value.toString();
+    return os;
 }

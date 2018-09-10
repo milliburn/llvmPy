@@ -39,7 +39,7 @@ class Token {
 public:
     TokenType const tokenType;
     static Token * parse(std::istream&);
-    virtual ~Token();
+    virtual std::string toString() = 0;
 
 protected:
     explicit Token(TokenType);
@@ -49,12 +49,14 @@ class Ident : public Token {
 public:
     std::string const name;
     explicit Ident(std::string);
+    std::string toString() override;
 };
 
 class Liter : public Token {
 public:
     LiterType const literType;
     explicit Liter(LiterType);
+    std::string toString() override;
 
     union {
         std::string* sval; // STR
@@ -68,12 +70,14 @@ class Oper : public Token {
 public:
     OperType const operType;
     explicit Oper(OperType);
+    std::string toString() override;
 };
 
 class Syntax : public Token {
 public:
     SyntaxType const syntaxType;
     explicit Syntax(SyntaxType);
+    std::string toString() override;
 };
 
 } // namespace AST
