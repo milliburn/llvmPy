@@ -14,8 +14,14 @@ iseof(int c)
 }
 
 static inline bool
+iseol(int c)
+{
+    return c == '\n' || c == '\r';
+}
+
+static inline bool
 issyntax(int c) {
-    return strchr("()=", c) || iseof(c);
+    return strchr("()=#", c) || iseof(c);
 }
 
 static inline bool
@@ -33,9 +39,7 @@ Token::Token(TokenType tokenType)
 {
 }
 
-Token::~Token()
-{
-}
+Token::~Token() = default;
 
 Token *
 Token::parse(std::istream& stream)
@@ -48,7 +52,17 @@ Token::parse(std::istream& stream)
         c = stream.get();
     }
 
-    if (iseof(c) || isspace(c)) {
+    if (c == '#') {
+        while (!iseol(c) || !iseof(c)) {
+            c = stream.get();
+        }
+    }
+
+    if (iseof(c)) {
+        return new Syntax(SyntaxType::END_FILE);
+    }
+
+    if (iseol(c)) {
         return new Syntax(SyntaxType::END_LINE);
     }
 
@@ -67,7 +81,7 @@ Token::parse(std::istream& stream)
             c = stream.peek();
             bool keepNext = issyntax(c) || isoper(c);
 
-            if (iseof(c) || isspace(c) || keepNext) {
+            if (iseof(c) || iseol(c) || isspace(c) || keepNext) {
                 // Complete the token
                 if (!keepNext) {
                     stream.get();
@@ -111,7 +125,7 @@ Token::parse(std::istream& stream)
             c = stream.peek();
             bool keepNext = issyntax(c) || isoper(c);
 
-            if (iseof(c) || isspace(c) || keepNext) {
+            if (iseof(c) || iseol(c) || isspace(c) || keepNext) {
                 // Complete the token
                 if (!keepNext) {
                     stream.get();
