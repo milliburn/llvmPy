@@ -4,6 +4,7 @@
       <w>codegen</w>
       <w>ident</w>
       <w>oper</w>
+      <w>toks</w>
     </words>
   </dictionary>
 </component>

@@ -40,6 +40,8 @@ public:
     TokenType const tokenType;
     static Token * parse(std::istream&);
     virtual std::string toString() = 0;
+    bool isEOL() const;
+    bool isEOF() const;
 
 protected:
     explicit Token(TokenType);

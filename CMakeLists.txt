@@ -19,7 +19,9 @@ add_library(
         src/AST/Expr.cc
         include/llvmPy/AST.h
         include/llvmPy/Codegen.h
-        src/Codegen.cc)
+        src/Codegen.cc
+        include/llvmPy/AST/Stmt.h
+        src/AST/Stmt.cc)
 
 target_include_directories(
         ${name}

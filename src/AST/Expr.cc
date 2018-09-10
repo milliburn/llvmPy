@@ -12,29 +12,30 @@ Expr::Expr(ExprType exprType)
 }
 
 Expr *
-Expr::parse(std::istream& stream)
+Expr::parse(std::vector<Token *> tokens)
 {
     Token * tok = nullptr;
     Oper * oper = nullptr;
     Syntax * syntax = nullptr;
     Expr * lhs = nullptr;
     Expr * rhs = nullptr;
+    auto iter = tokens.begin();
 
     //
     // Read LHS
     //
 
-    tok = Token::parse(stream);
+    tok = *(iter++);
 
     switch (tok->tokenType) {
     case TokenType::IDENT:
         lhs = new IdentExpr(*dynamic_cast<Ident*>(tok));
-        tok = Token::parse(stream);
+        tok = *(iter++);
         break;
 
     case TokenType::LITER:
         lhs = new ConstExpr(*dynamic_cast<Liter*>(tok));
-        tok = Token::parse(stream);
+        tok = *(iter++);
         break;
 
     default:
@@ -59,7 +60,7 @@ Expr::parse(std::istream& stream)
 
     case TokenType::OPER:
         oper = dynamic_cast<Oper *>(tok);
-        tok = Token::parse(stream);
+        tok = *(iter++);
 
         switch (tok->tokenType) {
         case TokenType::IDENT:

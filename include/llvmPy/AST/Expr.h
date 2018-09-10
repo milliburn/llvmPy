@@ -3,6 +3,7 @@
 #include <llvmPy/Codegen.h>
 #include <llvm/IR/Value.h>
 #include <iostream>
+#include <vector>
 #include <string>
 
 #ifdef __cplusplus
@@ -18,7 +19,7 @@ enum class ExprType {
 class Expr {
 public:
     ExprType const exprType;
-    static Expr * parse(std::istream&);
+    static Expr * parse(std::vector<Token *>);
     explicit Expr(ExprType);
     virtual llvm::Value * codegen(Codegen&) = 0;
     virtual std::string toString() const = 0;

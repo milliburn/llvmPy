@@ -168,6 +168,28 @@ Token::parse(std::istream& stream)
     return nullptr;
 }
 
+bool
+Token::isEOL() const
+{
+    if (tokenType == TokenType::SYNTAX) {
+        auto stx = dynamic_cast<Syntax const *>(this);
+        return stx->syntaxType == SyntaxType::END_LINE;
+    }
+
+    return false;
+}
+
+bool
+Token::isEOF() const
+{
+    if (tokenType == TokenType::SYNTAX) {
+        auto stx = dynamic_cast<Syntax const *>(this);
+        return stx->syntaxType == SyntaxType::END_FILE;
+    }
+
+    return false;
+}
+
 Liter::Liter(LiterType type)
 : Token(TokenType::LITER), literType(type)
 {
