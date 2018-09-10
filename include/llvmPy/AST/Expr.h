@@ -1,5 +1,6 @@
 #pragma once
 #include <llvmPy/AST/Token.h>
+#include <llvm/IR/Value.h>
 #include <iostream>
 #include <string>
 
