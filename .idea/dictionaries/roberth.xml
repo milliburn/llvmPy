@@ -3,6 +3,7 @@
     <words>
       <w>codegen</w>
       <w>ident</w>
+      <w>keyw</w>
       <w>oper</w>
       <w>toks</w>
     </words>

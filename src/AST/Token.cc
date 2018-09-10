@@ -263,3 +263,18 @@ Syntax::toString()
         return "";
     }
 }
+
+Keyw::Keyw(KeywType type)
+: Token(TokenType::KEYW), keywType(type)
+{
+}
+
+std::string
+Keyw::toString()
+{
+    switch (keywType) {
+    case KeywType::LAMBDA: return "lambda";
+    case KeywType::PASS: return "pass";
+    default: return "unknown";
+    }
+}

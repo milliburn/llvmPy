@@ -13,12 +13,12 @@ namespace AST {
 enum class StmtType {
     ASSIGN,
     EXPR,
+    PASS,
 };
 
 class Stmt {
 public:
     StmtType const stmtType;
-    static Stmt * parse(std::istream &);
     virtual std::string toString() const = 0;
 
 protected:
@@ -37,6 +37,12 @@ class ExprStmt : public Stmt {
 public:
     Expr & expr;
     explicit ExprStmt(Expr &);
+    std::string toString() const override;
+};
+
+class PassStmt : public Stmt {
+public:
+    explicit PassStmt();
     std::string toString() const override;
 };
 

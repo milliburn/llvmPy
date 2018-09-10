@@ -11,8 +11,9 @@ static string
 parseExpr(string input)
 {
     istringstream stream(input);
-    Expr & expr = *Expr::parse(stream);
-    return expr.toString();
+    Parser p(stream);
+    p.tokenize();
+    return p.expr()->toString();
 }
 
 TEST_CASE("Parser") {

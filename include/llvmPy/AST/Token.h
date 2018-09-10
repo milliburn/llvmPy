@@ -11,6 +11,8 @@ enum class TokenType {
     LITER,
     OPER,
     SYNTAX,
+    INDENT,
+    KEYW,
 };
 
 enum class LiterType {
@@ -33,6 +35,19 @@ enum class SyntaxType {
     L_PAREN,
     R_PAREN,
     COLON,
+    ASSIGN,
+    SEMICOLON,
+};
+
+enum class KeywType {
+    LAMBDA,
+    PASS,
+    DEFUN,
+    IMPORT,
+    FROM,
+    IF,
+    ELSE,
+    ELIF,
 };
 
 class Token {
@@ -79,6 +94,13 @@ class Syntax : public Token {
 public:
     SyntaxType const syntaxType;
     explicit Syntax(SyntaxType);
+    std::string toString() override;
+};
+
+class Keyw : public Token {
+public:
+    KeywType const keywType;
+    explicit Keyw(KeywType);
     std::string toString() override;
 };
 

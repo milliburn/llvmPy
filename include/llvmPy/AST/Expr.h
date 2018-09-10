@@ -19,7 +19,6 @@ enum class ExprType {
 class Expr {
 public:
     ExprType const exprType;
-    static Expr * parse(std::vector<Token *>);
     explicit Expr(ExprType);
     virtual llvm::Value * codegen(Codegen&) = 0;
     virtual std::string toString() const = 0;
@@ -46,7 +45,7 @@ public:
     Expr& lhs;
     Oper& op;
     Expr& rhs;
-    BinaryExpr(Expr &, Oper&, Expr &);
+    BinaryExpr(Expr &, Oper &, Expr &);
     llvm::Value * codegen(Codegen&) override;
     std::string toString() const override;
 };

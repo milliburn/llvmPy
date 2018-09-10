@@ -21,7 +21,7 @@ add_library(
         include/llvmPy/Codegen.h
         src/Codegen.cc
         include/llvmPy/AST/Stmt.h
-        src/AST/Stmt.cc)
+        src/AST/Stmt.cc src/AST/Parser.cc include/llvmPy/AST/Parser.h include/llvmPy/AST/SyntaxError.h src/AST/SyntaxError.cc)
 
 target_include_directories(
         ${name}
