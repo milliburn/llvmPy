@@ -1,4 +1,6 @@
 #include <llvmPy/AST.h>
+#include <llvmPy/Codegen.h>
+#include <llvm/Support/raw_ostream.h>
 #include <cstdio>
 #include <string>
 #include <iostream>
@@ -9,7 +11,6 @@ using namespace std;
 int
 main(int argc, char * argv[])
 {
-    Expr * expr;
     char line[256];
 
     while (true) {
@@ -22,14 +23,11 @@ main(int argc, char * argv[])
         }
 
         istringstream stream(input);
-        expr = Expr::parse(stream);
-
-        if (expr == nullptr) {
-            continue;
-        }
-
-        string out = expr->toString();
-        cout << out << endl;
+        Expr& expr = *Expr::parse(stream);
+        llvmPy::Codegen cg;
+        auto& ir = *expr.codegen(cg);
+        ir.print(llvm::outs());
+        cout << endl;
     }
 
     return 0;

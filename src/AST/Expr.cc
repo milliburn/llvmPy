@@ -1,6 +1,7 @@
 #include <llvmPy/AST/Expr.h>
 #include <llvmPy/AST/Token.h>
 #include <typeinfo>
+using namespace llvm;
 using namespace llvmPy::AST;
 
 Expr *
@@ -82,6 +83,20 @@ ConstExpr::toString()
     return t.toString();
 }
 
+llvm::Value *
+ConstExpr::codegen(Codegen& cg)
+{
+    switch (t.getType()) {
+    case TokenType::NUM_LIT:
+        return ConstantFP::get(
+                cg.getContext(),
+                APFloat(dynamic_cast<NumLit&>(t).datum));
+
+    default:
+        return nullptr;
+    }
+}
+
 BinaryExpr::BinaryExpr(Expr & l, Oper& o, Expr & r)
 : l(l), o(o), r(r)
 {
@@ -91,4 +106,25 @@ std::string
 BinaryExpr::toString()
 {
     return "(" + l.toString() + " " + o.toString() + " " + r.toString() + ")";
+}
+
+llvm::Value *
+BinaryExpr::codegen(Codegen& cg)
+{
+    Value * lhs = l.codegen(cg);
+    Value * rhs = r.codegen(cg);
+
+    if (!lhs || !rhs)
+        return nullptr;
+
+    switch (o.datum) {
+    case '+':
+        return cg.getBuilder().CreateFAdd(lhs, rhs, "addtmp");
+
+    case '-':
+        return cg.getBuilder().CreateFSub(lhs, rhs, "subtmp");
+
+    default:
+        return nullptr;
+    }
 }
