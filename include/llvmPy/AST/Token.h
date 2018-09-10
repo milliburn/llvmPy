@@ -7,48 +7,73 @@ namespace llvmPy {
 namespace AST {
 
 enum class TokenType {
-    EOL,
-    NUM_LIT,
-    STR_LIT,
+    IDENT,
+    LITER,
     OPER,
-    LPARENS,
-    RPARENS,
+    SYNTAX,
+};
+
+enum class LiterType {
+    INT,
+    DEC,
+    STR,
+    BOOL,
+};
+
+enum class OperType {
+    ASSIGN,
+    ADD,
+    SUB,
+    LAMBDA,
+};
+
+enum class SyntaxType {
+    END_LINE,
+    END_FILE,
+    L_PAREN,
+    R_PAREN,
+    COLON,
 };
 
 class Token {
 public:
+    TokenType const tokenType;
     static Token * parse(std::istream&);
-    TokenType getType();
-    virtual std::string toString();
+    virtual ~Token();
 
 protected:
-    Token(TokenType);
-    TokenType const tokenType;
+    explicit Token(TokenType);
 };
 
-class NumLit : public Token {
+class Ident : public Token {
 public:
-    double datum;
-    NumLit(double);
-    virtual std::string toString() override;
+    std::string const name;
+    explicit Ident(std::string);
 };
 
-class StrLit : public Token {
+class Liter : public Token {
 public:
-    char * datum;
+    LiterType const literType;
+    explicit Liter(LiterType);
+
+    union {
+        std::string* sval; // STR
+        long ival; // INT
+        double dval; // DEC
+        bool bval; // BOOL
+    };
 };
 
 class Oper : public Token {
 public:
-    int datum;
-    Oper(int);
-    virtual std::string toString() override;
+    OperType const operType;
+    explicit Oper(OperType);
 };
 
-class EOL : public Token {
+class Syntax : public Token {
 public:
-    EOL();
-    virtual std::string toString() override;
+    SyntaxType const syntaxType;
+    explicit Syntax(SyntaxType);
 };
 
 } // namespace AST

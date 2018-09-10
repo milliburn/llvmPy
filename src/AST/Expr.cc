@@ -1,58 +1,89 @@
+#include <algorithm>
 #include <llvmPy/AST/Expr.h>
 #include <llvmPy/AST/Token.h>
 #include <typeinfo>
 using namespace llvm;
 using namespace llvmPy::AST;
+using std::move;
+
+Expr::Expr(ExprType exprType)
+: exprType(exprType)
+{
+}
 
 Expr *
 Expr::parse(std::istream& stream)
 {
     Token * tok = nullptr;
     Oper * oper = nullptr;
+    Syntax * syntax = nullptr;
     Expr * lhs = nullptr;
     Expr * rhs = nullptr;
-
-    tok = Token::parse(stream);
 
     //
     // Read LHS
     //
 
-    switch (tok->getType()) {
-    case TokenType::EOL:
+    tok = Token::parse(stream);
+
+    switch (tok->tokenType) {
+    case TokenType::IDENT:
+        lhs = new IdentExpr(*dynamic_cast<Ident*>(tok));
+        tok = Token::parse(stream);
+        break;
+
+    case TokenType::LITER:
+        lhs = new ConstExpr(*dynamic_cast<Liter*>(tok));
+        tok = Token::parse(stream);
+        break;
+
+    default:
         return nullptr;
-
-    case TokenType::LPARENS:
-        lhs = Expr::parse(stream);
-        tok = Token::parse(stream);
-        if (tok->getType() != TokenType::RPARENS) {
-            return nullptr;
-        }
-        break;
-
-    case TokenType::NUM_LIT:
-    case TokenType::STR_LIT:
-        lhs = new ConstExpr(*tok);
-        tok = Token::parse(stream);
-        break;
     }
 
     //
     // Read RHS
     //
 
-    switch (tok->getType()) {
-    case TokenType::EOL:
-        return lhs;
+    switch (tok->tokenType) {
+    case TokenType::SYNTAX:
+        syntax = dynamic_cast<Syntax *>(tok);
+        switch (syntax->syntaxType) {
+        case SyntaxType::END_LINE:
+            return lhs;
+
+        default:
+            return nullptr;
+        }
 
     case TokenType::OPER:
-        oper = (Oper *) tok;
+        oper = dynamic_cast<Oper *>(tok);
         tok = Token::parse(stream);
 
-        switch (tok->getType()) {
-        case TokenType::NUM_LIT:
-        case TokenType::STR_LIT:
-            rhs = new ConstExpr(*tok);
+        switch (tok->tokenType) {
+        case TokenType::IDENT:
+            rhs = new IdentExpr(*dynamic_cast<Ident *>(tok));
+            break;
+
+        case TokenType::LITER:
+            rhs = new ConstExpr(*dynamic_cast<Liter *>(tok));
+            break;
+
+        default:
+            return nullptr;
+        }
+
+        switch (oper->operType) {
+        case OperType::ASSIGN:
+            if (lhs->exprType != ExprType::IDENT) {
+                return nullptr;
+            }
+
+            break;
+
+        case OperType::ADD:
+        case OperType::SUB:
+            // Arithmetic operators
             break;
 
         default:
@@ -66,63 +97,69 @@ Expr::parse(std::istream& stream)
     }
 }
 
-std::string
-Expr::toString()
-{
-    return "EXPR";
-}
-
-ConstExpr::ConstExpr(Token& t)
-: t(t)
+IdentExpr::IdentExpr(Ident & ident)
+: Expr(ExprType::IDENT), ident(ident)
 {
 }
 
-std::string
-ConstExpr::toString()
+llvm::Value *
+IdentExpr::codegen(llvmPy::Codegen &)
 {
-    return t.toString();
+    return nullptr;
+}
+
+ConstExpr::ConstExpr(Liter& liter)
+: Expr(ExprType::CONST), liter(liter)
+{
 }
 
 llvm::Value *
 ConstExpr::codegen(Codegen& cg)
 {
-    switch (t.getType()) {
-    case TokenType::NUM_LIT:
+    switch (liter.literType) {
+    case LiterType::BOOL:
+        return ConstantInt::get(
+                cg.getContext(),
+                APInt(64, (uint64_t) (liter.bval ? 1 : 0), true));
+
+    case LiterType::DEC:
         return ConstantFP::get(
                 cg.getContext(),
-                APFloat(dynamic_cast<NumLit&>(t).datum));
+                APFloat(liter.dval));
+
+    case LiterType::INT:
+        return ConstantInt::get(
+                cg.getContext(),
+                APInt(64, (uint64_t) liter.ival, true));
 
     default:
         return nullptr;
     }
 }
 
-BinaryExpr::BinaryExpr(Expr & l, Oper& o, Expr & r)
-: l(l), o(o), r(r)
+BinaryExpr::BinaryExpr(
+        Expr& lhs,
+        Oper& op,
+        Expr& rhs)
+: Expr(ExprType::BINARY), lhs(lhs), op(op), rhs(rhs)
 {
-}
-
-std::string
-BinaryExpr::toString()
-{
-    return "(" + l.toString() + " " + o.toString() + " " + r.toString() + ")";
 }
 
 llvm::Value *
 BinaryExpr::codegen(Codegen& cg)
 {
-    Value * lhs = l.codegen(cg);
-    Value * rhs = r.codegen(cg);
+    Value * L = lhs.codegen(cg);
+    Value * R = rhs.codegen(cg);
 
-    if (!lhs || !rhs)
+    if (!L || !R)
         return nullptr;
 
-    switch (o.datum) {
-    case '+':
-        return cg.getBuilder().CreateFAdd(lhs, rhs, "addtmp");
+    switch (op.operType) {
+    case OperType::ADD:
+        return cg.getBuilder().CreateFAdd(L, R);
 
-    case '-':
-        return cg.getBuilder().CreateFSub(lhs, rhs, "subtmp");
+    case OperType::SUB:
+        return cg.getBuilder().CreateFSub(L, R);
 
     default:
         return nullptr;

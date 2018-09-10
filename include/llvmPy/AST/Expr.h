@@ -9,33 +9,41 @@
 namespace llvmPy {
 namespace AST {
 
+enum class ExprType {
+    IDENT,
+    CONST,
+    BINARY,
+};
+
 class Expr {
 public:
+    ExprType const exprType;
     static Expr * parse(std::istream&);
-    virtual std::string toString();
+    explicit Expr(ExprType);
     virtual llvm::Value * codegen(Codegen&) = 0;
+};
+
+class IdentExpr : public Expr {
+public:
+    Ident & ident;
+    explicit IdentExpr(Ident &);
+    llvm::Value * codegen(Codegen &) override;
 };
 
 class ConstExpr : public Expr {
 public:
-    ConstExpr(Token&);
-    std::string toString() override;
+    Liter& liter;
+    explicit ConstExpr(Liter&);
     llvm::Value * codegen(Codegen&) override;
-
-private:
-    Token& t;
 };
 
 class BinaryExpr : public Expr {
 public:
-    BinaryExpr(Expr& l, Oper& o, Expr& r);
-    std::string toString() override;
+    Expr& lhs;
+    Oper& op;
+    Expr& rhs;
+    BinaryExpr(Expr &, Oper&, Expr &);
     llvm::Value * codegen(Codegen&) override;
-
-private:
-    Expr& l;
-    Oper& o;
-    Expr& r;
 };
 
 } // namespace AST
