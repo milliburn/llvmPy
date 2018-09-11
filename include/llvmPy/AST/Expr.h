@@ -14,6 +14,7 @@ enum class ExprType {
     IDENT,
     CONST,
     BINARY,
+    LAMBDA,
 };
 
 class Expr {
@@ -46,6 +47,14 @@ public:
     Oper& op;
     Expr& rhs;
     BinaryExpr(Expr &, Oper &, Expr &);
+    llvm::Value * codegen(Codegen&) override;
+    std::string toString() const override;
+};
+
+class LambdaExpr : public Expr {
+public:
+    Expr & body;
+    LambdaExpr(Expr &);
     llvm::Value * codegen(Codegen&) override;
     std::string toString() const override;
 };

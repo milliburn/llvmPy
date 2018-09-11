@@ -1,7 +1,10 @@
-#include <llvmPy/AST/Token.h>
+#include <llvmPy/AST.h>
+#include <llvmPy/AST/Lang.h>
 #include <cctype>
 #include <cstdlib>
 #include <cstring>
+#include <llvmPy/AST/Token.h>
+
 using namespace llvmPy::AST;
 using namespace std;
 
@@ -37,6 +40,277 @@ isident(int c) {
 Token::Token(TokenType tokenType)
 : tokenType(tokenType)
 {
+}
+
+Tokenizer::Tokenizer(std::istream & stream)
+: stream(stream)
+{
+    reset();
+}
+
+std::vector<Token *>
+Tokenizer::tokenize()
+{
+    tokens.clear();
+
+    bool newline = true;
+    int indent = 0;
+
+    do {
+        reset();
+
+        // Skip preceding whitespace, but record the indent level.
+        while (is(' ') || is('\t')) {
+            indent++;
+        }
+
+        if (is('#')) {
+            // Comments span until the end of line.
+            while (!(is((char) eof) || oneof("\r\n")));
+        }
+
+        if (is((char) eof)) {
+            tokens.push_back(new Syntax(SyntaxType::END_FILE));
+            break;
+        } else if (oneof("\r\n")) {
+            while (oneof("\r\n")); // Contract newlines.
+            tokens.push_back(new Syntax(SyntaxType::END_LINE));
+            newline = true;
+            indent = 0;
+            continue; // Tokens can't span lines.
+        }
+
+        if (newline) {
+            tokens.push_back(new Indent(indent));
+            newline = false;
+        }
+
+        if (string()) continue;
+        if (number()) continue;
+        if (oper()) continue;
+        if (keywOrIdent()) continue;
+    } while (1);
+
+    return tokens;
+}
+
+void
+Tokenizer::next()
+{
+    if (ibuf < ilast - 1) {
+        ch = buf[++ibuf];
+    } else if (ibuf == ilast - 1) {
+        ++ibuf;
+        ch = (char) stream.peek();
+    } else {
+        buf[ibuf++] = ch;
+        stream.get();
+        ch = (char) stream.peek();
+    }
+}
+
+void
+Tokenizer::reset()
+{
+    ibuf = 0;
+    ilast = -1;
+    ch = (char) stream.peek();
+}
+
+void
+Tokenizer::push()
+{
+    ilast = ibuf;
+}
+
+void
+Tokenizer::pop()
+{
+    auto tmp = ibuf;
+    ibuf = ilast;
+    ilast = tmp;
+
+    if (ibuf == ilast) {
+        ch = (char) stream.peek();
+    } else {
+        ch = buf[ibuf];
+    }
+}
+
+void
+Tokenizer::expect(bool x)
+{
+    if (!x) {
+        throw new SyntaxError("Expected something!");
+    }
+}
+
+bool
+Tokenizer::is(char c)
+{
+    if (ch == c) {
+        next();
+        return true;
+    }
+
+    return false;
+}
+
+bool
+Tokenizer::isnot(char c)
+{
+    return ch != c;
+}
+
+bool
+Tokenizer::oneof(char const * chs)
+{
+    if (strchr(chs, ch)) {
+        next();
+        return true;
+    }
+
+    return false;
+}
+
+bool
+Tokenizer::is(int (*cls)(int))
+{
+    if (cls(ch)) {
+        next();
+        return true;
+    }
+
+    return false;
+}
+
+bool
+Tokenizer::number()
+{
+    bool sign = false;
+    bool point = false;
+    char const * num = "0123456789";
+    int start = ibuf;
+
+    push();
+
+    if (oneof("+-"))
+        sign = true;
+
+    if (is('.'))
+        point = true;
+
+    if (!oneof(num)) {
+        pop();
+        return false;
+    }
+
+    while (oneof(num));
+
+    if (is('.')) {
+        if (point) {
+            throw SyntaxError("Unexpected decimal point");
+        } else {
+            point = true;
+        }
+    }
+
+    while (oneof(num));
+
+    char * str = strndup(&buf[start], ibuf - start);
+
+    if (point) {
+        double value = atof(str);
+        auto * lit = new Liter(LiterType::DEC);
+        lit->dval = value;
+        tokens.push_back(lit);
+    } else {
+        long value = atol(str);
+        auto * lit = new Liter(LiterType::INT);
+        lit->ival = value;
+        tokens.push_back(lit);
+    }
+
+    free(str);
+    return true;
+}
+
+bool
+Tokenizer::keywOrIdent()
+{
+    int start = ibuf;
+
+    if (!is(isalpha) && !is('_'))
+        return false;
+
+    while (is(isalnum) || is('_'));
+
+    std::string s((char const *) &buf[start], ibuf - start);
+
+    for (auto pair : KEYWORDS) {
+        if (s == pair.first) {
+            tokens.push_back(new Keyw(pair.second));
+            return true;
+        }
+    }
+
+    tokens.push_back(new Ident(s));
+    return true;
+}
+
+bool
+Tokenizer::oper()
+{
+    char tok[3] = { ch, '\0', '\0' };
+
+    if (oneof(OP_CHAR1)) {
+        char b = ch;
+
+        if (isnot(' ') && oneof(OP_CHAR2)) {
+            tok[1] = b;
+        }
+    }
+
+    for (auto pair : OPERATORS) {
+        if (pair.first == tok) {
+            tokens.push_back(new Oper(pair.second));
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool
+Tokenizer::string()
+{
+    bool escape = false;
+    char end;
+
+    if      (is('\'')) end = '\'';
+    else if (is('"'))  end = '"';
+    else return false;
+
+    int start = ibuf;
+
+    do {
+        if (is('\\'))
+            escape = true;
+
+        if (is(end)) {
+            if (escape)
+                escape = false;
+            else
+                break;
+        }
+    } while (true);
+
+    std::string * s = new std::string(&buf[ibuf], ibuf - start - 1);
+    Liter * lit = new Liter(LiterType::STR);
+    lit->sval = s;
+    tokens.push_back(lit);
+
+    return true;
 }
 
 Token *
@@ -218,7 +492,7 @@ Ident::Ident(string name)
 std::string
 Ident::toString()
 {
-    return name;
+    return name + "*";
 }
 
 Oper::Oper(OperType type)
@@ -226,20 +500,16 @@ Oper::Oper(OperType type)
 {
 }
 
-static string const oper_assign = "=";
-static string const oper_lambda = "lambda ";
-static string const oper_add = "+";
-static string const oper_sub = "-";
-
 std::string
 Oper::toString()
 {
-    switch (operType) {
-    case OperType::ASSIGN: return oper_assign;
-    case OperType::LAMBDA: return oper_lambda;
-    case OperType::ADD: return oper_add;
-    case OperType::SUB: return oper_sub;
+    for (auto pair : OPERATORS) {
+        if (pair.second == operType) {
+            return pair.first;
+        }
     }
+
+    return "?";
 }
 
 Syntax::Syntax(SyntaxType type)
@@ -247,21 +517,22 @@ Syntax::Syntax(SyntaxType type)
 {
 }
 
-static string const syntax_colon = ":";
-static string const syntax_lparen = "(";
-static string const syntax_rparen = ")";
-
 std::string
 Syntax::toString()
 {
     switch (syntaxType) {
-    case SyntaxType::COLON: return syntax_colon;
-    case SyntaxType::L_PAREN: return syntax_lparen;
-    case SyntaxType::R_PAREN: return syntax_rparen;
-
-    default:
-        return "";
+    case SyntaxType::END_LINE: return "\n";
+    case SyntaxType::END_FILE: return "__eof__";
+    default: break;
     }
+
+    for (auto pair : SYNTAXES) {
+        if (pair.second == syntaxType) {
+            return pair.first;
+        }
+    }
+
+    return "?";
 }
 
 Keyw::Keyw(KeywType type)
@@ -272,9 +543,22 @@ Keyw::Keyw(KeywType type)
 std::string
 Keyw::toString()
 {
-    switch (keywType) {
-    case KeywType::LAMBDA: return "lambda";
-    case KeywType::PASS: return "pass";
-    default: return "unknown";
+    for (auto pair : KEYWORDS) {
+        if (pair.second == keywType) {
+            return pair.first;
+        }
     }
+
+    return "?";
+}
+
+Indent::Indent(int depth)
+: Token(TokenType::INDENT), depth(depth)
+{
+}
+
+std::string
+Indent::toString()
+{
+    return ">" + to_string(depth);
 }

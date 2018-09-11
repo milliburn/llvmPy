@@ -98,7 +98,7 @@ Parser::expr()
     } else if (is(KeywType::LAMBDA)) {
         expect(SyntaxType::COLON);
         lhs = expr();
-        return lhs;
+        return new LambdaExpr(*lhs);
     } else {
         throw SyntaxError("Invalid expression");
     }

@@ -2,9 +2,12 @@
   <dictionary name="roberth">
     <words>
       <w>codegen</w>
+      <w>defun</w>
+      <w>elif</w>
       <w>ident</w>
       <w>keyw</w>
       <w>oper</w>
+      <w>syntaxes</w>
       <w>toks</w>
     </words>
   </dictionary>

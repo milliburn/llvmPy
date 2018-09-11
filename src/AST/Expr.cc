@@ -98,6 +98,23 @@ BinaryExpr::toString() const
     return "(" + lhs.toString() + op.toString() + rhs.toString() + ")";
 }
 
+LambdaExpr::LambdaExpr(Expr & body)
+: Expr(ExprType::LAMBDA), body(body)
+{
+}
+
+llvm::Value *
+LambdaExpr::codegen(llvmPy::Codegen &)
+{
+    return nullptr;
+}
+
+std::string
+LambdaExpr::toString() const
+{
+    return "(lambda: " + body.toString() + ")";
+}
+
 std::ostream& operator<< (std::ostream & os, Expr const & value) {
     os << value.toString();
     return os;

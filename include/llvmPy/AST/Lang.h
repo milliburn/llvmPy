@@ -8,9 +8,9 @@
 namespace llvmPy {
 namespace AST {
 
-constexpr int OPERATORS_COUNT = 4;
+constexpr int OPERATORS_COUNT = 6;
 constexpr int KEYWORDS_COUNT = 8;
-constexpr int SYNTAXES_COUNT = 5;
+constexpr int SYNTAXES_COUNT = 6;
 
 extern
 std::array<
@@ -19,6 +19,9 @@ std::array<
                 OperType> const,
         OPERATORS_COUNT> const
 OPERATORS;
+
+constexpr char const * OP_CHAR1 = "+-*/!=";
+constexpr char const * OP_CHAR2 = "     =";
 
 extern
 std::array<

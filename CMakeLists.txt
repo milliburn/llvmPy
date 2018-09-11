@@ -21,7 +21,13 @@ add_library(
         include/llvmPy/Codegen.h
         src/Codegen.cc
         include/llvmPy/AST/Stmt.h
-        src/AST/Stmt.cc src/AST/Parser.cc include/llvmPy/AST/Parser.h include/llvmPy/AST/SyntaxError.h src/AST/SyntaxError.cc)
+        src/AST/Stmt.cc
+        src/AST/Parser.cc
+        include/llvmPy/AST/Parser.h
+        include/llvmPy/AST/SyntaxError.h
+        src/AST/SyntaxError.cc
+        include/llvmPy/AST/Lang.h
+        src/AST/Lang.cc)
 
 target_include_directories(
         ${name}
@@ -58,7 +64,7 @@ add_subdirectory(library/Catch2)
 
 add_executable(
         ${name}Test
-        test/main.cc test/ParserTest.cc)
+        test/main.cc test/ParserTest.cc test/TokenizerTest.cc)
 
 target_link_libraries(
         ${name}Test
