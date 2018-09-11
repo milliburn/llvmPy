@@ -15,19 +15,19 @@ add_library(
         ${name}
         include/llvmPy/AST/Token.h
         src/AST/Token.cc
-        include/llvmPy/AST/Expr.h
-        src/AST/Expr.cc
-        include/llvmPy/AST.h
-        include/llvmPy/Codegen.h
-        src/Codegen.cc
-        include/llvmPy/AST/Stmt.h
-        src/AST/Stmt.cc
-        src/AST/Parser.cc
-        include/llvmPy/AST/Parser.h
+        #        include/llvmPy/AST/Expr.h
+        #        src/AST/Expr.cc
+        #        include/llvmPy/AST.h
+        #        include/llvmPy/Codegen.h
+        #        src/Codegen.cc
+        #        include/llvmPy/AST/Stmt.h
+        #        src/AST/Stmt.cc
+        #        src/AST/Parser.cc
+        #        include/llvmPy/AST/Parser.h
         include/llvmPy/AST/SyntaxError.h
         src/AST/SyntaxError.cc
-        include/llvmPy/AST/Lang.h
-        src/AST/Lang.cc)
+        include/llvmPy/AST/Lexer.h
+        src/AST/Lexer.cc)
 
 target_include_directories(
         ${name}
@@ -64,7 +64,9 @@ add_subdirectory(library/Catch2)
 
 add_executable(
         ${name}Test
-        test/main.cc test/ParserTest.cc test/TokenizerTest.cc)
+        test/main.cc
+#        test/ParserTest.cc
+        test/LexerTest.cc)
 
 target_link_libraries(
         ${name}Test

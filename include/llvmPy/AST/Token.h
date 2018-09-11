@@ -1,152 +1,75 @@
 #pragma once
-#include <iostream>
 #include <string>
 #include <vector>
+#include <sstream>
 
 #ifdef __cplusplus
 namespace llvmPy {
 namespace AST {
 
-enum class TokenType {
-    IDENT,
-    LITER,
-    OPER,
-    SYNTAX,
-    INDENT,
-    KEYW,
-};
+enum TokenType {
+    // Modifiers
+    tok_assign = 0x8000,
+    tok_cmpeq = 0x4000,
 
-enum class LiterType {
-    INT,
-    DEC,
-    STR,
-    BOOL,
-};
+    tok_ident = 1,
+    tok_indent,
+    tok_number,
+    tok_string,
+    tok_eof,
+    tok_eol,
 
-enum class OperType {
-    ASSIGN,
-    ADD,
-    SUB,
-    MUL,
-    DIV,
-    LAMBDA,
-    NOT,
-    EQUALS,
-};
+    tok_dot, // .
+    tok_semicolon, // ;
+    tok_colon, // :
+    tok_comma, // ,
+    tok_eqsign, // =
+    tok_lp, // (
+    tok_rp, // )
+    tok_lb, // [
+    tok_rb, // ]
 
-enum class SyntaxType {
-    END_LINE,
-    END_FILE,
-    L_PAREN,
-    R_PAREN,
-    COLON,
-    ASSIGN,
-    SEMICOLON,
-    DOT,
-};
+    // Logical
+    tok_not,
+    tok_lt,
+    tok_gt,
 
-enum class KeywType {
-    LAMBDA,
-    PASS,
-    DEFUN,
-    IMPORT,
-    FROM,
-    IF,
-    ELSE,
-    ELIF,
+    tok_lte = tok_lt | tok_cmpeq,
+    tok_gte = tok_gt | tok_cmpeq,
+    tok_neq = tok_not | tok_cmpeq,
+    tok_eq = tok_eqsign | tok_cmpeq,
+
+    // Arithmetic
+    tok_add, // +
+    tok_sub, // -
+    tok_mul, // *
+    tok_div, // /
+
+    tok_addeq = tok_add | tok_assign,
+    tok_subeq = tok_sub | tok_assign,
+    tok_muleq = tok_mul | tok_assign,
+    tok_diveq = tok_div | tok_assign,
 };
 
 class Token {
 public:
-    TokenType const tokenType;
-    static Token * parse(std::istream&);
-    virtual std::string toString() = 0;
-    bool isEOL() const;
-    bool isEOF() const;
+    explicit Token(TokenType type)
+        : type(type), str(""), depth(0) {}
 
-protected:
-    explicit Token(TokenType);
-};
+    Token(TokenType type, std::string str)
+        : type(type), str(std::move(str)), depth(0) {}
 
-class Tokenizer {
-public:
-    explicit Tokenizer(std::istream &);
-    std::vector<Token *> tokenize();
+    Token(TokenType type, long depth)
+        : type(type), str(""), depth(depth) {}
 
-private:
-    std::istream & stream;
-    std::vector<Token *> tokens;
-    char ch;
-    char buf[65];
-    int ibuf;
-    int ilast;
-
-    void next();
-    void reset();
-    void push();
-    void pop();
-
-    void expect(bool);
-    bool is(char);
-    bool isnot(char);
-    bool oneof(char const *);
-    bool is(int(*)(int));
-
-    bool number();
-    bool string();
-    bool keywOrIdent();
-    bool oper();
-};
-
-class Ident : public Token {
-public:
-    std::string const name;
-    explicit Ident(std::string);
-    std::string toString() override;
-};
-
-class Liter : public Token {
-public:
-    LiterType const literType;
-    explicit Liter(LiterType);
-    std::string toString() override;
-
-    union {
-        std::string* sval; // STR
-        long ival; // INT
-        double dval; // DEC
-        bool bval; // BOOL
-    };
-};
-
-class Oper : public Token {
-public:
-    OperType const operType;
-    explicit Oper(OperType);
-    std::string toString() override;
-};
-
-class Syntax : public Token {
-public:
-    SyntaxType const syntaxType;
-    explicit Syntax(SyntaxType);
-    std::string toString() override;
-};
-
-class Keyw : public Token {
-public:
-    KeywType const keywType;
-    explicit Keyw(KeywType);
-    std::string toString() override;
-};
-
-class Indent : public Token {
-public:
-    int const depth;
-    explicit Indent(int depth);
-    std::string toString() override;
+    TokenType type;
+    std::string str;
+    long depth;
 };
 
 } // namespace AST
 } // namespace llvmPy
+
+std::ostream & operator<< (std::ostream &, llvmPy::AST::Token const &);
+
 #endif // __cplusplus
