@@ -1,4 +1,4 @@
-#include <llvmPy/AST/Token.h>
+#include <llvmPy/Token.h>
 using namespace llvmPy::AST;
 using namespace std;
 

@@ -12,7 +12,8 @@ enum TokenType {
     tok_assign = 0x8000,
     tok_cmpeq = 0x4000,
 
-    tok_ident = 1,
+    tok_ignore = 1,
+    tok_ident,
     tok_indent,
     tok_number,
     tok_string,
@@ -53,6 +54,8 @@ enum TokenType {
 
 class Token {
 public:
+    Token() : type(tok_ignore), str(""), depth(0) {}
+
     explicit Token(TokenType type)
         : type(type), str(""), depth(0) {}
 

@@ -1,5 +1,5 @@
-#include <llvmPy/AST/Lexer.h>
-#include <llvmPy/AST/SyntaxError.h>
+#include <llvmPy/Lexer.h>
+#include <llvmPy/SyntaxError.h>
 using namespace llvmPy::AST;
 using namespace std;
 

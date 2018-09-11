@@ -1,4 +1,4 @@
-#include <llvmPy/AST/SyntaxError.h>
+#include <llvmPy/SyntaxError.h>
 using namespace llvmPy::AST;
 using namespace std;
 

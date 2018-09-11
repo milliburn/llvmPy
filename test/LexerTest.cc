@@ -1,4 +1,4 @@
-#include <llvmPy/AST/Lexer.h>
+#include <llvmPy/Lexer.h>
 #include <string>
 #include <sstream>
 #include <catch2/catch.hpp>

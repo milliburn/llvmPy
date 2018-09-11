@@ -1,5 +1,5 @@
 #pragma once
-#include <llvmPy/AST/Token.h>
+#include <llvmPy/Token.h>
 #include <llvmPy/Codegen.h>
 #include <llvm/IR/Value.h>
 #include <iostream>

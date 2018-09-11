@@ -1,5 +1,5 @@
 #pragma once
-#include <llvmPy/AST/Token.h>
+#include <llvmPy/Token.h>
 #include <string>
 #include <sstream>
 #include <vector>

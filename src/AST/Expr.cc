@@ -1,6 +1,6 @@
 #include <algorithm>
 #include <llvmPy/AST/Expr.h>
-#include <llvmPy/AST/Token.h>
+#include <llvmPy/Token.h>
 #include <typeinfo>
 using namespace llvm;
 using namespace llvmPy::AST;

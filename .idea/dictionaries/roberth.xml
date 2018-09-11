@@ -3,8 +3,10 @@
     <words>
       <w>codegen</w>
       <w>defun</w>
+      <w>dval</w>
       <w>elif</w>
       <w>ident</w>
+      <w>ival</w>
       <w>keyw</w>
       <w>oper</w>
       <w>syntaxes</w>
