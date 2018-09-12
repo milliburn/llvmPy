@@ -249,7 +249,7 @@ Lexer::numlit()
         while (oneof(isnumber, ss));
     }
 
-    add(Token(tok_number, ss.str()));
+    add(Token(tok_number, new string(move(ss.str()))));
     return true;
 }
 
@@ -279,7 +279,7 @@ Lexer::strlit()
         }
     } while (true);
 
-    add(Token(tok_string, ss.str()));
+    add(Token(tok_string, new string(move(ss.str()))));
     return true;
 }
 
@@ -294,7 +294,17 @@ Lexer::ident()
     while (oneof(isalnum) || is('_'));
 
     string s(&buf[start], ibuf - start);
-    add(Token(tok_ident, s));
+
+    if (s == "def") {
+        add(Token(kw_def));
+    } else if (s == "lambda") {
+        add(Token(kw_lambda));
+    } else if (s == "import") {
+        add(Token(kw_import));
+    } else {
+        add(Token(tok_ident, new string(move(s))));
+    }
+
     return true;
 }
 

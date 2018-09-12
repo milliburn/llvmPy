@@ -9,8 +9,9 @@ namespace AST {
 
 enum TokenType {
     // Modifiers
-    tok_assign = 0x8000,
-    tok_cmpeq = 0x4000,
+    tok_assign = 0x80000000,
+    tok_cmpeq = 0x40000000,
+    tok_kw = 0x20000000,
 
     tok_ignore = 1,
     tok_ident,
@@ -50,24 +51,29 @@ enum TokenType {
     tok_subeq = tok_sub | tok_assign,
     tok_muleq = tok_mul | tok_assign,
     tok_diveq = tok_div | tok_assign,
+
+    // Keywords
+    kw_def = 1000 | tok_kw,
+    kw_lambda,
+    kw_import,
 };
 
 class Token {
 public:
-    Token() : type(tok_ignore), str(""), depth(0) {}
-
     explicit Token(TokenType type)
-        : type(type), str(""), depth(0) {}
+        : type(type), str(nullptr) {}
 
-    Token(TokenType type, std::string str)
-        : type(type), str(std::move(str)), depth(0) {}
+    Token(TokenType type, std::string const * const str)
+        : type(type), str(str) {}
 
     Token(TokenType type, long depth)
-        : type(type), str(""), depth(depth) {}
+        : type(type), str(nullptr) {}
 
     TokenType type;
-    std::string str;
-    long depth;
+    union {
+        std::string const * str;
+        long depth;
+    };
 };
 
 } // namespace AST

@@ -1,35 +1,82 @@
 #include <llvmPy/AST.h>
 using namespace llvmPy::AST;
 
-std::ostream &
-operator<< (std::ostream & s, Expr const & x)
+void
+Expr::toStream(std::ostream & s) const
 {
-    switch (x.type) {
-    case expr_ignore: break;
-    case expr_ident: s << x.ident; break;
-    case expr_strlit: s << '"' << x.strlit << '"'; break;
-    case expr_numlit:
-        switch (x.numlit.type) {
-        case num_double: s << x.numlit.dval << 'd'; break;
-        case num_int: s << x.numlit.ival << 'i'; break;
-        default: throw "Oops!";
-        }
-        break;
-    default: throw "Oops!";
-    }
+    throw "Not implemented";
+}
 
+void
+StrLitExpr::toStream(std::ostream & s) const
+{
+    s << '"' << str << '"';
+}
+
+void
+DecLitExpr::toStream(std::ostream & s) const
+{
+    s << value << 'd';
+}
+
+void
+IntLitExpr::toStream(std::ostream & s) const
+{
+    s << value << 'i';
+}
+
+void
+IdentExpr::toStream(std::ostream & s) const
+{
+    s << name;
+}
+
+void
+LambdaExpr::toStream(std::ostream & s) const
+{
+    s << "lambda: " << body;
+}
+
+void
+BinaryExpr::toStream(std::ostream & s) const
+{
+
+}
+
+void
+Stmt::toStream(std::ostream &) const
+{
+    throw "Not implemented";
+}
+
+void
+ExprStmt::toStream(std::ostream & s) const
+{
+    s << expr;
+}
+
+void
+AssignStmt::toStream(std::ostream & s) const
+{
+    s << lhs << '=' << rhs;
+}
+
+void
+ImportStmt::toStream(std::ostream & s) const
+{
+    s << modname;
+}
+
+std::ostream &
+operator<< (std::ostream & s, Expr const & expr)
+{
+    expr.toStream(s);
     return s;
 }
 
 std::ostream &
-operator<< (std::ostream & s, Stmt const & x)
+operator<< (std::ostream & s, Stmt const & stmt)
 {
-    switch (x.type) {
-    case stmt_assign: s << x.assign.lhs << " = " << x.assign.rhs; break;
-    case stmt_import: s << "import " << x.import.module; break;
-    case stmt_expr: s << x.expr; break;
-    default: throw "Oops!";
-    }
-
+    stmt.toStream(s);
     return s;
 }

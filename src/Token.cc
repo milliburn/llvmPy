@@ -37,6 +37,9 @@ operator<< (std::ostream & s, Token const &t)
     case tok_subeq: s << "-="; break;
     case tok_muleq: s << "*="; break;
     case tok_diveq: s << "/="; break;
+    case kw_def: s << "def"; break;
+    case kw_lambda: s << "lambda"; break;
+    case kw_import: s << "import"; break;
     default: s << "?"; break;
     }
 

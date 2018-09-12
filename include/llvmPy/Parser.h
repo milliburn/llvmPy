@@ -11,14 +11,15 @@ namespace AST {
 class Parser {
 public:
     explicit Parser(std::vector<Token> &);
-    bool parse(Stmt &);
-    bool parseStmt(Stmt &);
-    bool parseExpr(Expr &);
+    bool parse(Stmt * &);
 
 private:
+    bool parse_(Stmt * &);
+    bool parse_(Expr * &);
+
     std::vector<Token> & tokens;
     std::vector<Token>::iterator iter;
-    Token lasttoken;
+    Token * lasttoken;
 
     void next();
 
@@ -28,7 +29,6 @@ private:
     Token & last();
     bool is(TokenType);
     bool is_a(TokenType);
-    bool is(TokenType, std::string const &);
     void want(bool);
 
     void endOfStmt();

@@ -15,10 +15,10 @@ expr(string input)
     vector<Token> tokens;
     REQUIRE(lexer.tokenize(tokens));
     Parser parser(tokens);
-    Stmt stmt;
-    REQUIRE(parser.parseStmt(stmt));
+    Stmt * stmt;
+    REQUIRE(parser.parse(stmt));
     stringstream ss;
-    ss << stmt;
+    ss << *stmt;
     return ss.str();
 }
 

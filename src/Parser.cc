@@ -4,23 +4,23 @@ using namespace llvmPy::AST;
 using namespace std;
 
 Parser::Parser(vector<Token> & tokens)
-: tokens(tokens), lasttoken((TokenType) 0)
+: tokens(tokens), lasttoken(nullptr)
 {
     iter = tokens.begin();
 }
 
 bool
-Parser::parse(Stmt & out)
+Parser::parse(Stmt * & out)
 {
     try {
-        return parseStmt(out);
+        return parse_(out);
     } catch (...) {
         return false;
     }
 }
 
 bool
-Parser::parseStmt(Stmt & out)
+Parser::parse_(Stmt * & out)
 {
     /*
     if (is(tok_ident, "def")) {
@@ -36,69 +36,64 @@ Parser::parseStmt(Stmt & out)
 
     is(tok_indent); // Ignore indentation for now.
 
-    if (is(tok_ident, "import")) {
-        out.type = stmt_import;
+    if (is(kw_import)) {
         want(is(tok_ident));
-        out.import.module = last();
+        Token& module = last();
         endOfStmt();
+        out = new ImportStmt(module.str);
         return true;
     }
 
     auto state = save();
 
     if (is(tok_ident)) {
-        Token & tok = last();
+        Token& tok = last();
         if (is_a(tok_assign)) {
-            out.type = stmt_assign;
-            return parseExpr(out.expr);
+            Expr * expr;
+            if (!parse_(expr)) return false;
+            out = new AssignStmt(tok.str, expr);
+            return true;
         } else {
             restore(state);
         }
     }
 
-    out.type = stmt_expr;
-    if (!parseExpr(out.expr)) return false;
+    Expr * expr;
+    if (!parse_(expr)) return false;
     endOfStmt();
+    out = new ExprStmt(expr);
     return true;
 }
 
 bool
-Parser::parseExpr(Expr & out)
+Parser::parse_(Expr * & out)
 {
-    Expr lhs, rhs;
+    Expr* lhs;
+    Expr* rhs;
 
     if (is(tok_lp)) {
-        if (!parseExpr(lhs))
+        if (!parse_(lhs))
             return false;
         want(is(tok_rp));
     } else if (is(tok_string)) {
         Token tok = last();
-        lhs.type = expr_strlit;
-        lhs.strlit = tok.str.substr(1, tok.str.length() - 1);
+        lhs = new StrLitExpr(tok.str->substr(1, tok.str->length() - 1));
     } else if (is(tok_number)) {
          // TODO: Negative, positive numbers.
         Token tok = last();
-        lhs.type = expr_numlit;
-
-        if (tok.str.find('.') != string::npos) {
-            lhs.numlit.type = num_double;
-            lhs.numlit.dval = atof(tok.str.c_str());
+        if (tok.str->find('.') != string::npos) {
+            lhs = new DecLitExpr(atof(tok.str->c_str()));
         } else {
-            lhs.numlit.type = num_int;
-            lhs.numlit.ival = atol(tok.str.c_str());
+            lhs = new IntLitExpr(atol(tok.str->c_str()));
         }
-    } else if (is(tok_ident, "lambda")) {
+    } else if (is(kw_lambda)) {
         want(is(tok_colon));
-        return parseExpr(out);
-    } else if (is(tok_ident), "True") {
-        lhs.type = expr_boollit;
-        lhs.bval = true;
-    } else if (is(tok_ident), "False") {
-        lhs.type = expr_boollit;
-        lhs.bval = false;
+        Expr* body;
+        if (!parse_(body)) return false;
+        out = new LambdaExpr(body);
+        return true;
     } else if (is(tok_ident)) {
-        lhs.type = expr_ident;
-        lhs.ident = last();
+        lhs = new IdentExpr(last().str);
     }
 
     out = lhs;
@@ -109,7 +104,7 @@ Parser::parseExpr(Expr & out)
 void
 Parser::next()
 {
-    lasttoken = *iter;
+    lasttoken = &(*iter);
     iter++;
 }
 
@@ -128,7 +123,7 @@ Parser::restore(std::vector<Token>::iterator iter)
 Token &
 Parser::last()
 {
-    return lasttoken;
+    return *lasttoken;
 }
 
 bool
@@ -146,17 +141,6 @@ bool
 Parser::is_a(TokenType type)
 {
     if ((*iter).type & type) {
-        next();
-        return true;
-    } else {
-        return false;
-    }
-}
-
-bool
-Parser::is(TokenType type, std::string const & str)
-{
-    if ((*iter).type == type && (*iter).str == str) {
         next();
         return true;
     } else {

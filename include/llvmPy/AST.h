@@ -11,7 +11,6 @@ enum ExprType {
     expr_ident,
     expr_strlit,
     expr_numlit,
-    expr_boollit,
 };
 
 enum NumType {
@@ -28,45 +27,93 @@ enum StmtType {
 
 class Expr {
 public:
-    Expr() : type(expr_ignore) {}
+    virtual ~Expr() = default;
+    virtual void toStream(std::ostream &) const;
+protected:
+    Expr() = default;
+};
 
-    ExprType type;
-    Token ident;
-    std::string strlit;
+class StrLitExpr : public Expr {
+public:
+    std::string const & str;
+    StrLitExpr(std::string str) : str(std::move(str)) {}
+    void toStream(std::ostream &) const override;
+};
 
-    union {
-        bool bval;
+class NumLitExpr : public Expr {
+protected:
+    NumLitExpr() = default;
+};
 
-        struct {
-            NumType type = num_int;
-            union {
-                double dval;
-                long ival = 0;
-            };
-        } numlit;
+class DecLitExpr : public NumLitExpr {
+public:
+    double const value;
+    explicit DecLitExpr(double v) : value(v) {}
+    void toStream(std::ostream &) const override;
+};
 
-        struct {
-            Expr * lhs = nullptr;
-            Expr * rhs;
-        } cmp;
-    };
+class IntLitExpr : public NumLitExpr {
+public:
+    long const value;
+    explicit IntLitExpr(long v) : value(v) {}
+    void toStream(std::ostream &) const override;
+};
+
+class IdentExpr : public Expr {
+public:
+    std::string const & name;
+    explicit IdentExpr(std::string const * str) : name(*str) {}
+    void toStream(std::ostream &) const override;
+};
+
+class LambdaExpr : public Expr {
+public:
+    Expr const & body;
+    explicit LambdaExpr(Expr * body) : body(*body) {}
+    void toStream(std::ostream &) const override;
+};
+
+class BinaryExpr : public Expr {
+public:
+    Expr const & lhs;
+    TokenType const op;
+    Expr const & rhs;
+    BinaryExpr(Expr * lhs, TokenType op, Expr * rhs)
+        : lhs(*lhs),
+          op(op),
+          rhs(*rhs) {}
+    void toStream(std::ostream &) const override;
 };
 
 class Stmt {
 public:
-    Stmt() : type(stmt_ignore) {}
+    virtual ~Stmt() = default;
+    virtual void toStream(std::ostream &) const;
 
-    StmtType type;
-    Expr expr;
+protected:
+    Stmt() = default;
+};
 
-    struct {
-        Token lhs;
-        Expr rhs;
-    } assign;
+class ExprStmt : public Stmt {
+public:
+    Expr const & expr;
+    explicit ExprStmt(Expr * expr) : expr(*expr) {}
+    void toStream(std::ostream &) const override;
+};
 
-    struct {
-        Token module;
-    } import;
+class AssignStmt : public Stmt {
+public:
+    std::string const & lhs;
+    Expr const & rhs;
+    AssignStmt(std::string const * lhs, Expr * rhs) : lhs(*lhs), rhs(*rhs) {}
+    void toStream(std::ostream &) const override;
+};
+
+class ImportStmt : public Stmt {
+public:
+    std::string const & modname;
+    explicit ImportStmt(std::string const * modname) : modname(*modname) {}
+    void toStream(std::ostream &) const override;
 };
 
 } // namespace AST
