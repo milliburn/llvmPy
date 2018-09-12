@@ -78,22 +78,37 @@ Parser::parse_(Expr * & out)
     } else if (is(tok_string)) {
         Token tok = last();
         lhs = new StrLitExpr(tok.str->substr(1, tok.str->length() - 1));
-    } else if (is(tok_number)) {
-         // TODO: Negative, positive numbers.
-        Token tok = last();
-        if (tok.str->find('.') != string::npos) {
-            lhs = new DecLitExpr(atof(tok.str->c_str()));
-        } else {
-            lhs = new IntLitExpr(atol(tok.str->c_str()));
+    } else {
+        bool neg = false;
+        auto state = save();
+
+        if (is(tok_add) || is(tok_sub)) {
+            Token s = last();
+            neg = (s.type == tok_sub);
         }
-    } else if (is(kw_lambda)) {
-        want(is(tok_colon));
-        Expr* body;
-        if (!parse_(body)) return false;
-        out = new LambdaExpr(body);
-        return true;
-    } else if (is(tok_ident)) {
-        lhs = new IdentExpr(last().str);
+
+        if (is(tok_number)) {
+            Token num = last();
+            if (num.str->find('.') != string::npos) {
+                double val = atof(num.str->c_str());
+                lhs = new DecLitExpr(neg ? -val : val);
+            } else {
+                long val = atol(num.str->c_str());
+                lhs = new IntLitExpr(neg ? -val : val);
+            }
+        } else {
+            restore(state);
+
+            if (is(kw_lambda)) {
+                want(is(tok_colon));
+                Expr* body;
+                if (!parse_(body)) return false;
+                out = new LambdaExpr(body);
+                return true;
+            } else if (is(tok_ident)) {
+                lhs = new IdentExpr(last().str);
+            }
+        }
     }
 
     if (!is_a(tok_oper)) {

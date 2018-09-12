@@ -25,6 +25,7 @@ expr(string input)
 TEST_CASE("Parser", "[Parser]") {
     SECTION("Numeric literals") {
         REQUIRE(expr("1") == "1i");
+        REQUIRE(expr("-1") == "-1i");
         REQUIRE(expr("2.5") == "2.5d");
     }
 
@@ -36,8 +37,10 @@ TEST_CASE("Parser", "[Parser]") {
     }
 
     SECTION("Binary expressions") {
-        REQUIRE(expr("1 + 2") == "(1i+2i)");
-        REQUIRE(expr("x + 1") == "(x+1i)");
-        REQUIRE(expr("lambda: x + 1") == "(lambda: (x+1i))");
+        REQUIRE(expr("1 + 2") == "(1i + 2i)");
+        REQUIRE(expr("1 - 2") == "(1i - 2i)");
+        REQUIRE(expr("1 + - 2") == "(1i + -2i)");
+        REQUIRE(expr("x + 1") == "(x + 1i)");
+        REQUIRE(expr("lambda: x + 1") == "(lambda: (x + 1i))");
     }
 }

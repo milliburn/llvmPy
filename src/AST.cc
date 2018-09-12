@@ -40,7 +40,7 @@ LambdaExpr::toStream(std::ostream & s) const
 void
 BinaryExpr::toStream(std::ostream & s) const
 {
-    s << '(' << lhs << Token(op) << rhs << ')';
+    s << '(' << lhs << ' ' << Token(op) << ' ' << rhs << ')';
 }
 
 void
