@@ -15,12 +15,6 @@ add_library(
         ${name}
         include/llvmPy/Token.h
         src/Token.cc
-        #        include/llvmPy/AST/Expr.h
-        #        src/AST/Expr.cc
-        #        include/llvmPy/Codegen.h
-        #        src/Codegen.cc
-        #        include/llvmPy/AST/Stmt.h
-        #        src/AST/Stmt.cc
         src/Parser.cc
         include/llvmPy/Parser.h
         include/llvmPy/SyntaxError.h
