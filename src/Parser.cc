@@ -1,6 +1,6 @@
 #include <llvmPy/Parser.h>
 #include <llvmPy/SyntaxError.h>
-using namespace llvmPy::AST;
+using namespace llvmPy;
 using namespace std;
 
 Parser::Parser(vector<Token> & tokens)

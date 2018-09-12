@@ -6,7 +6,6 @@
 
 #ifdef __cplusplus
 namespace llvmPy {
-namespace AST {
 
 class Parser {
 public:
@@ -34,6 +33,5 @@ private:
     void endOfStmt();
 };
 
-} // namespace AST
 } // namespace llvmPy
 #endif // __cplusplus

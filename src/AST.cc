@@ -1,5 +1,5 @@
 #include <llvmPy/AST.h>
-using namespace llvmPy::AST;
+using namespace llvmPy;
 
 void
 Expr::toStream(std::ostream & s) const

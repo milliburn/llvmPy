@@ -6,9 +6,8 @@
 
 #ifdef __cplusplus
 namespace llvmPy {
-namespace AST {
 
-class Token; // llvmPy/AST/Token.h
+class Token;
 
 class Lexer {
 public:
@@ -55,6 +54,5 @@ private:
     bool syntax();
 };
 
-} // namespace AST
 } // namespace llvmPy
 #endif // __cplusplus

@@ -1,5 +1,5 @@
 #include <llvmPy/Token.h>
-using namespace llvmPy::AST;
+using namespace llvmPy;
 using namespace std;
 
 std::ostream &

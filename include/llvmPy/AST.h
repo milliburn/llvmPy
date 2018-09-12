@@ -4,7 +4,6 @@
 
 #ifdef __cplusplus
 namespace llvmPy {
-namespace AST {
 
 enum ExprType {
     expr_ignore,
@@ -116,10 +115,9 @@ public:
     void toStream(std::ostream &) const override;
 };
 
-} // namespace AST
 } // namespace llvmPy
 
-std::ostream & operator<< (std::ostream &, llvmPy::AST::Expr const &);
-std::ostream & operator<< (std::ostream &, llvmPy::AST::Stmt const &);
+std::ostream & operator<< (std::ostream &, llvmPy::Expr const &);
+std::ostream & operator<< (std::ostream &, llvmPy::Stmt const &);
 
 #endif // __cplusplus

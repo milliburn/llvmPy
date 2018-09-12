@@ -5,7 +5,6 @@
 
 #ifdef __cplusplus
 namespace llvmPy {
-namespace AST {
 
 enum TokenType {
     // Modifiers
@@ -79,9 +78,8 @@ public:
     };
 };
 
-} // namespace AST
 } // namespace llvmPy
 
-std::ostream & operator<< (std::ostream &, llvmPy::AST::Token const &);
+std::ostream & operator<< (std::ostream &, llvmPy::Token const &);
 
 #endif // __cplusplus

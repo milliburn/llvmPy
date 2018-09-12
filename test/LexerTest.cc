@@ -2,7 +2,7 @@
 #include <string>
 #include <sstream>
 #include <catch2/catch.hpp>
-using namespace llvmPy::AST;
+using namespace llvmPy;
 using namespace std;
 
 static string

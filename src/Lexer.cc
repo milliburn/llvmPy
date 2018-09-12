@@ -1,6 +1,6 @@
 #include <llvmPy/Lexer.h>
 #include <llvmPy/SyntaxError.h>
-using namespace llvmPy::AST;
+using namespace llvmPy;
 using namespace std;
 
 static constexpr int eof = std::istream::traits_type::eof();
