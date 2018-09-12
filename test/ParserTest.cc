@@ -29,8 +29,8 @@ TEST_CASE("Parser", "[Parser]") {
     }
 
     SECTION("Identifiers") {
-        REQUIRE(expr("True") == "1b");
-        REQUIRE(expr("False") == "0b");
+        REQUIRE(expr("True") == "True");
+        REQUIRE(expr("False") == "False");
         REQUIRE(expr("x") == "x");
         REQUIRE(expr("abc") == "abc");
     }
@@ -38,6 +38,6 @@ TEST_CASE("Parser", "[Parser]") {
     SECTION("Binary expressions") {
         REQUIRE(expr("1 + 2") == "(1i+2i)");
         REQUIRE(expr("x + 1") == "(x+1i)");
-        REQUIRE(expr("lambda: x + 1") == "(lambda: (x+1))");
+        REQUIRE(expr("lambda: x + 1") == "(lambda: (x+1i))");
     }
 }

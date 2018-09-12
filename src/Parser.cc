@@ -96,8 +96,14 @@ Parser::parse_(Expr * & out)
         lhs = new IdentExpr(last().str);
     }
 
-    out = lhs;
+    if (!is_a(tok_oper)) {
+        out = lhs;
+        return true;
+    }
 
+    Token& op = last();
+    if (!parse_(rhs)) return false;
+    out = new BinaryExpr(lhs, op.type, rhs);
     return true;
 }
 

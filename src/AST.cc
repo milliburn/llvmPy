@@ -34,13 +34,13 @@ IdentExpr::toStream(std::ostream & s) const
 void
 LambdaExpr::toStream(std::ostream & s) const
 {
-    s << "lambda: " << body;
+    s << "(lambda: " << body << ')';
 }
 
 void
 BinaryExpr::toStream(std::ostream & s) const
 {
-
+    s << '(' << lhs << Token(op) << rhs << ')';
 }
 
 void

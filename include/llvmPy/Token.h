@@ -12,6 +12,7 @@ enum TokenType {
     tok_assign = 0x80000000,
     tok_cmpeq = 0x40000000,
     tok_kw = 0x20000000,
+    tok_oper = 0x10000000,
 
     tok_ignore = 1,
     tok_ident,
@@ -21,28 +22,30 @@ enum TokenType {
     tok_eof,
     tok_eol,
 
-    tok_dot, // .
     tok_semicolon, // ;
     tok_colon, // :
     tok_comma, // ,
     tok_eqsign, // =
+    tok_not,
     tok_lp, // (
     tok_rp, // )
     tok_lb, // [
     tok_rb, // ]
 
-    // Logical
-    tok_not,
+    // Operators
+    tok_dot = 100 | tok_oper, // .
+
+    // Logical operators
     tok_lt,
     tok_gt,
 
-    tok_lte = tok_lt | tok_cmpeq,
-    tok_gte = tok_gt | tok_cmpeq,
-    tok_neq = tok_not | tok_cmpeq,
-    tok_eq = tok_eqsign | tok_cmpeq,
+    tok_lte = tok_lt | tok_cmpeq | tok_oper,
+    tok_gte = tok_gt | tok_cmpeq | tok_oper,
+    tok_neq = tok_not | tok_cmpeq | tok_oper,
+    tok_eq = tok_eqsign | tok_cmpeq | tok_oper,
 
-    // Arithmetic
-    tok_add, // +
+    // Arithmetic operators
+    tok_add = 200 | tok_oper, // +
     tok_sub, // -
     tok_mul, // *
     tok_div, // /
