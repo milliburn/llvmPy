@@ -1,10 +1,11 @@
 #include <llvmPy/AST.h>
+#include <stdexcept>
 using namespace llvmPy;
 
 void
-Expr::toStream(std::ostream & s) const
+AST::toStream(std::ostream &) const
 {
-    throw "Not implemented";
+    throw std::runtime_error("Not Implemented");
 }
 
 void
@@ -41,12 +42,6 @@ void
 BinaryExpr::toStream(std::ostream & s) const
 {
     s << '(' << lhs << ' ' << Token(op) << ' ' << rhs << ')';
-}
-
-void
-Stmt::toStream(std::ostream &) const
-{
-    throw "Not implemented";
 }
 
 void

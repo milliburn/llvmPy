@@ -22,7 +22,11 @@ add_library(
         include/llvmPy/Lexer.h
         src/Lexer.cc
         include/llvmPy/AST.h
-        src/AST.cc)
+        src/AST.cc
+        include/llvmPy/Emitter.h
+        src/Emitter.cc
+        include/llvmPy/RT.h
+        src/RT.cc)
 
 target_include_directories(
         ${name}
