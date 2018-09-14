@@ -1,7 +1,9 @@
 #include <llvmPy/Parser.h>
 #include <llvmPy/SyntaxError.h>
 using namespace llvmPy;
-using namespace std;
+using std::vector;
+using std::string;
+using std::to_string;
 
 Parser::Parser(vector<Token> & tokens)
 : tokens(tokens), lasttoken(nullptr)
@@ -9,39 +11,32 @@ Parser::Parser(vector<Token> & tokens)
     iter = tokens.begin();
 }
 
-bool
-Parser::parse(Stmt * & out)
+void
+Parser::parse(vector<Stmt *> &stmts)
 {
-    try {
-        return parse_(out);
-    } catch (...) {
-        return false;
+    while (true) {
+        Stmt *stmt = parseStmt();
+        if (!stmt) break;
+        stmts.push_back(stmt);
     }
 }
 
-bool
-Parser::parse_(Stmt * & out)
+Stmt *
+Parser::parseStmt()
 {
-    /*
-    if (is(tok_ident, "def")) {
-        // TODO: Read indent.
-        want(is(tok_lp));
-        want(is(tok_rp));
-        want(is(tok_colon));
-        want(is(tok_eol));
-        // TODO: Require deeper indent.
-        do stmt(); while (is(tok_indent));
-        return true;
-    } else */
+    while (is(tok_eol));
+
+    if (is(tok_eof)) {
+        return nullptr;
+    }
 
     is(tok_indent); // Ignore indentation for now.
 
     if (is(kw_import)) {
-        want(is(tok_ident));
+        want(tok_ident);
         Token& module = last();
-        endOfStmt();
-        out = new ImportStmt(module.str);
-        return true;
+        parseEndOfStmt();
+        return new ImportStmt(module.str);
     }
 
     auto state = save();
@@ -49,32 +44,27 @@ Parser::parse_(Stmt * & out)
     if (is(tok_ident)) {
         Token& tok = last();
         if (is_a(tok_assign)) {
-            Expr * expr;
-            if (!parse_(expr)) return false;
-            out = new AssignStmt(tok.str, expr);
-            return true;
+            Expr * expr = parseExpr();
+            return new AssignStmt(tok.str, expr);
         } else {
             restore(state);
         }
     }
 
-    Expr * expr;
-    if (!parse_(expr)) return false;
-    endOfStmt();
-    out = new ExprStmt(expr);
-    return true;
+    Expr * expr = parseExpr();
+    parseEndOfStmt();
+    return new ExprStmt(expr);
 }
 
-bool
-Parser::parse_(Expr * & out)
+Expr *
+Parser::parseExpr()
 {
-    Expr* lhs;
-    Expr* rhs;
+    Expr *lhs = nullptr;
+    Expr *rhs = nullptr;
 
     if (is(tok_lp)) {
-        if (!parse_(lhs))
-            return false;
-        want(is(tok_rp));
+        lhs = parseExpr();
+        want(tok_rp);
     } else if (is(tok_string)) {
         Token tok = last();
         lhs = new StrLitExpr(tok.str->substr(1, tok.str->length() - 1));
@@ -100,11 +90,9 @@ Parser::parse_(Expr * & out)
             restore(state);
 
             if (is(kw_lambda)) {
-                want(is(tok_colon));
-                Expr* body;
-                if (!parse_(body)) return false;
-                out = new LambdaExpr(body);
-                return true;
+                want(tok_colon);
+                Expr *body = parseExpr();
+                return new LambdaExpr(body);
             } else if (is(tok_ident)) {
                 lhs = new IdentExpr(last().str);
             }
@@ -112,14 +100,12 @@ Parser::parse_(Expr * & out)
     }
 
     if (!is_a(tok_oper)) {
-        out = lhs;
-        return true;
+        return lhs;
     }
 
-    Token& op = last();
-    if (!parse_(rhs)) return false;
-    out = new BinaryExpr(lhs, op.type, rhs);
-    return true;
+    Token &op = last();
+    rhs = parseExpr();
+    return new BinaryExpr(lhs, op.type, rhs);
 }
 
 void
@@ -170,16 +156,25 @@ Parser::is_a(TokenType type)
 }
 
 void
-Parser::want(bool cond)
+Parser::want(TokenType type)
 {
-    if (!cond) {
-        throw SyntaxError("Wanted something!");
+    if (!is(type)) {
+        throw ParserError("Expected " + to_string((int) type));
     }
 }
 
 void
-Parser::endOfStmt()
+Parser::want_a(TokenType type)
 {
-    if (!is(tok_semicolon) && !is(tok_eol) && !is(tok_eof))
-        throw SyntaxError("Expected end of statement");
+    if (!is_a(type)) {
+        throw ParserError("Expected a " + to_string((int) type));
+    }
+}
+
+void
+Parser::parseEndOfStmt()
+{
+    if (!is(tok_semicolon) && !is(tok_eol) && !is(tok_eof)) {
+        throw ParserError("Expected end of statement");
+    }
 }

@@ -18,7 +18,7 @@ tokenize(string input)
         if (i > 0
             && tokens[i].type != tok_eol
             && tokens[i-1].type != tok_eol) {
-            
+
             output += ' ';
         }
 

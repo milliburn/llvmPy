@@ -10,12 +10,13 @@ namespace llvmPy {
 class Parser {
 public:
     explicit Parser(std::vector<Token> &);
-    bool parse(Stmt * &);
+
+    void   parse(std::vector<Stmt *> &);
+    Stmt * parseStmt();
+    Expr * parseExpr();
+    void   parseEndOfStmt();
 
 private:
-    bool parse_(Stmt * &);
-    bool parse_(Expr * &);
-
     std::vector<Token> & tokens;
     std::vector<Token>::iterator iter;
     Token * lasttoken;
@@ -28,9 +29,9 @@ private:
     Token & last();
     bool is(TokenType);
     bool is_a(TokenType);
-    void want(bool);
 
-    void endOfStmt();
+    void want(TokenType);
+    void want_a(TokenType);
 };
 
 } // namespace llvmPy
