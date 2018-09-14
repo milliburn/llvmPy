@@ -26,6 +26,8 @@ public:
     RTScope *parent = nullptr;
     std::unordered_map<std::string, RTValue *> slots;
     // std::vector<llvm::BasicBlock *> text;
+
+    RTValue &addSlot(std::string const &);
 };
 
 class RTFunc : public RTScope {
@@ -37,7 +39,8 @@ class RT {
 public:
     std::unordered_map<std::string, RTScope *> modules;
     void setMainModule(RTScope *);
-    RTScope * createScope();
+    RTScope & createScope();
+    RTScope & createScope(RTScope &);
 };
 
 } // namespace llvmPy

@@ -20,7 +20,10 @@ Emitter::Emitter(RT &rt) noexcept
 }
 
 llvm::Value *
-Emitter::emit(AST const &ast, RTScope &scope)
+Emitter::emit(
+        AST const &ast,
+        llvm::Module &module,
+        RTScope &scope)
 {
     switch (ast.getType()) {
 
@@ -39,7 +42,7 @@ Emitter::emit(AST const &ast, RTScope &scope)
                     "Slot " + ident + " has already been assigned");
         }
 
-        value->ir = emit(stmt.rhs, scope);
+        value->ir = emit(stmt.rhs, module, scope);
         return value->ir;
     }
 
@@ -71,10 +74,51 @@ Emitter::emit(AST const &ast, RTScope &scope)
         return value->ir;
     }
 
+    case ASTType::ExprLambda: {
+        auto &lambda = cast<LambdaExpr>(ast);
+        RTScope &inner = rt.createScope(scope);
+
+        for (auto arg : lambda.args) {
+            inner.addSlot(*arg);
+        }
+
+        // TODO: Support types other than double.
+        vector<llvm::Type *> types(
+                lambda.args.size(),
+                llvm::Type::getDoubleTy(ctx));
+
+        auto *fty = llvm::FunctionType::get(
+                llvm::Type::getDoubleTy(ctx),
+                types,
+                false);
+
+        auto *f = llvm::Function::Create(
+                fty,
+                llvm::Function::ExternalLinkage,
+                "lambda",
+                &module);
+
+        int iArg = 0;
+        for (auto &arg : f->args()) {
+            auto &name = *lambda.args[iArg];
+            arg.setName(name);
+            inner.slots[name]->ir = &arg;
+        }
+
+        auto *bb = llvm::BasicBlock::Create(ctx, "start", f);
+
+        ir.SetInsertPoint(bb);
+
+        llvm::Value *value = emit(lambda.body, module, inner);
+        ir.CreateRet(value);
+        llvm::verifyFunction(*f);
+        return f;
+    }
+
     case ASTType::ExprBinary: {
         auto &expr = cast<BinaryExpr>(ast);
-        auto *lhs = emit(expr.lhs, scope);
-        auto *rhs = emit(expr.rhs, scope);
+        auto *lhs = emit(expr.lhs, module, scope);
+        auto *rhs = emit(expr.rhs, module, scope);
 
         // TODO: At this point we'd have to type-check.
 
@@ -87,7 +131,7 @@ Emitter::emit(AST const &ast, RTScope &scope)
 
     case ASTType::StmtExpr: {
         auto &expr = cast<ExprStmt>(ast);
-        return emit(expr.expr, scope);
+        return emit(expr.expr, module, scope);
     }
 
     default:
@@ -102,9 +146,8 @@ Emitter::emitModule(
         vector<Stmt *> const &stmts,
         string const &name)
 {
-    vector<Stmt *> body;
     llvm::Module &module = *new llvm::Module(name, ctx);
-    RTScope scope(rt);
+    RTScope &scope = rt.createScope();
 
     // Scan the module for assignment to module-level slots,
     // which is used to pre-populate global scope.
@@ -128,10 +171,6 @@ Emitter::emitModule(
         }
     }
 
-    for (auto stmt : stmts) {
-        body.push_back(stmt);
-    }
-
     // Emit bytecode for the module prototype and body.
     vector<llvm::Type *> types;
 
@@ -150,10 +189,10 @@ Emitter::emitModule(
 
     llvm::BasicBlock *bb = llvm::BasicBlock::Create(ctx, "start", f);
     llvm::Value *value = nullptr;
-    ir.SetInsertPoint(bb);
 
-    for (auto stmt : body) {
-        value = emit(*stmt, scope);
+    for (auto stmt : stmts) {
+        ir.SetInsertPoint(bb);
+        value = emit(*stmt, module, scope);
     }
 
     ir.CreateRet(value);
