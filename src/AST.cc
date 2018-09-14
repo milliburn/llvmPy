@@ -52,6 +52,19 @@ BinaryExpr::toStream(std::ostream & s) const
 }
 
 void
+CallExpr::toStream(std::ostream &s) const
+{
+    s << lhs << '(';
+
+    for (int i = 0; i < args.size(); ++i) {
+        if (i > 0) s << ", ";
+        s << *args[i];
+    }
+
+    s << ')';
+}
+
+void
 ExprStmt::toStream(std::ostream & s) const
 {
     s << expr;

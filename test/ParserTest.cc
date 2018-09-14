@@ -77,4 +77,10 @@ TEST_CASE("Parser", "[Parser]") {
         REQUIRE(module(" x =  1 \ny = x + 1\ny\n") ==
                 "x = 1i\ny = (x + 1i)\ny");
     }
+
+    SECTION("Function calls") {
+        REQUIRE(expr("f()") == "f()");
+        REQUIRE(expr("f(1)") == "f(1i)");
+        REQUIRE(expr("f(x+1, 2)") == "f((x + 1i), 2i)");
+    }
 }

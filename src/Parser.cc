@@ -62,12 +62,13 @@ Parser::parseExpr()
     Expr *lhs = nullptr;
     Expr *rhs = nullptr;
 
-    if (is(tok_lp)) {
+    // Parse left-hand-side expression.
+
+    if ((lhs = parseLitExpr())) {
+        // Ignore.
+    } else if (is(tok_lp)) {
         lhs = parseExpr();
         want(tok_rp);
-    } else if (is(tok_string)) {
-        Token tok = last();
-        lhs = new StrLitExpr(tok.str->substr(1, tok.str->length() - 1));
     } else if (is(kw_lambda)) {
         vector<string const *> args;
 
@@ -84,42 +85,65 @@ Parser::parseExpr()
 
         Expr *body = parseExpr();
         return new LambdaExpr(args, body);
+    } else if (is(tok_ident)) {
+        lhs = new IdentExpr(last().str);
     } else {
-        bool neg = false;
-        auto state = save();
-
-        if (is(tok_add) || is(tok_sub)) {
-            Token s = last();
-            neg = (s.type == tok_sub);
-        }
-
-        if (is(tok_number)) {
-            Token num = last();
-            if (num.str->find('.') != string::npos) {
-                double val = atof(num.str->c_str());
-                lhs = new DecLitExpr(neg ? -val : val);
-            } else {
-                long val = atol(num.str->c_str());
-                lhs = new IntLitExpr(neg ? -val : val);
-            }
-        } else {
-            restore(state);
-
-            if (is(tok_ident)) {
-                lhs = new IdentExpr(last().str);
-            } else {
-                throw ParserError("Unknown situation");
-            }
-        }
+        throw ParserError("Unknown situation");
     }
 
-    if (!is_a(tok_oper)) {
+    // Parse right-hand-side expression.
+
+    if (is(tok_lp)) {
+        vector<Expr const *> args;
+
+        if (!is(tok_rp)) {
+            while (true) {
+                args.push_back(parseExpr());
+                if (is(tok_rp)) break;
+                else want(tok_comma);
+            }
+        }
+
+        return new CallExpr(lhs, args);
+    } else if (is_a(tok_oper)) {
+        Token &op = last();
+        rhs = parseExpr();
+        return new BinaryExpr(lhs, op.type, rhs);
+    } else {
         return lhs;
     }
+}
 
-    Token &op = last();
-    rhs = parseExpr();
-    return new BinaryExpr(lhs, op.type, rhs);
+LitExpr *
+Parser::parseLitExpr()
+{
+    if (is(tok_string)) {
+        Token tok = last();
+        return new StrLitExpr(tok.str->substr(1, tok.str->length() - 1));
+    }
+
+    int sign = 0;
+    auto state = save();
+
+    if (is(tok_add) || is(tok_sub)) {
+        sign = last().type == tok_sub ? -1 : 1;
+    }
+
+    if (is(tok_number)) {
+        Token num = last();
+        if (num.str->find('.') != string::npos) {
+            double val = atof(num.str->c_str());
+            return new DecLitExpr(sign < 0 ? -val : val);
+        } else {
+            long val = atol(num.str->c_str());
+            return new IntLitExpr(sign < 0 ? -val : val);
+        }
+    } else if (sign) {
+        // Un-consume the sign (likely an operator instead).
+        restore(state);
+    }
+
+    return nullptr;
 }
 
 void
@@ -147,10 +171,20 @@ Parser::last()
     return *lasttoken;
 }
 
+TokenType
+Parser::current()
+{
+    if (iter != tokens.end()) {
+        return (*iter).type;
+    } else {
+        return tok_eof;
+    }
+}
+
 bool
 Parser::is(TokenType type)
 {
-    if ((*iter).type == type) {
+    if (current() == type) {
         next();
         return true;
     } else {
@@ -161,7 +195,7 @@ Parser::is(TokenType type)
 bool
 Parser::is_a(TokenType type)
 {
-    if ((*iter).type & type) {
+    if (current() & type) {
         next();
         return true;
     } else {

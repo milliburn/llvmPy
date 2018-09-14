@@ -15,12 +15,15 @@ public:
     Stmt * parseStmt();
     Expr * parseExpr();
     void   parseEndOfStmt();
+    LitExpr * parseLitExpr();
 
 private:
     std::vector<Token> & tokens;
     std::vector<Token>::iterator iter;
+
     Token * lasttoken;
 
+    TokenType current();
     void next();
 
     typeof(iter) save();

@@ -16,6 +16,7 @@ enum class ASTType {
     ExprLitAny,
     ExprBinary,
     ExprLambda,
+    ExprCall,
     ExprAny,
     Stmt,
     StmtExpr,
@@ -163,6 +164,21 @@ public:
           lhs(*lhs),
           op(op),
           rhs(*rhs) {}
+    void toStream(std::ostream &) const override;
+};
+
+class CallExpr : public Expr {
+public:
+    static bool classof(AST const *ast) {
+        return ast->isType(ASTType::ExprCall);
+    }
+
+    Expr const &lhs;
+    std::vector<Expr const *> const args;
+    CallExpr(Expr *lhs, std::vector<Expr const *> args)
+        : Expr(ASTType::ExprCall),
+          lhs(*lhs),
+          args(std::move(args)) {}
     void toStream(std::ostream &) const override;
 };
 
