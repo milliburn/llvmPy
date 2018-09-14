@@ -15,8 +15,12 @@ tokenize(string input)
     string output;
 
     for (int i = 0; i < tokens.size(); ++i) {
-        if (i > 0)
+        if (i > 0
+            && tokens[i].type != tok_eol
+            && tokens[i-1].type != tok_eol) {
+            
             output += ' ';
+        }
 
         ostringstream ss;
         ss << tokens[i];
@@ -26,7 +30,7 @@ tokenize(string input)
     return output;
 }
 
-TEST_CASE("Tokenizer", "[Tokenizer]") {
+TEST_CASE("Lexer", "[Lexer]") {
     SECTION("Numbers") {
         REQUIRE(tokenize("2") == ">0 2n ;eof");
         REQUIRE(tokenize("2.0") == ">0 2.0n ;eof");
@@ -62,5 +66,10 @@ TEST_CASE("Tokenizer", "[Tokenizer]") {
         REQUIRE(tokenize("(*)") == ">0 ( * ) ;eof");
         REQUIRE(tokenize("+=") == ">0 += ;eof");
         REQUIRE(tokenize("+ =") == ">0 + = ;eof");
+    }
+
+    SECTION("Multiple statements") {
+        REQUIRE(tokenize("x = 1 \ny = x + 1 \ny \n") ==
+                ">0 x = 1n\n>0 y = x + 1n\n>0 y\n;eof");
     }
 }

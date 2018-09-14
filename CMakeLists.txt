@@ -64,8 +64,8 @@ add_subdirectory(library/Catch2)
 add_executable(
         ${name}Test
         test/main.cc
+        test/LexerTest.cc
         test/ParserTest.cc
-        test/LexerTest.cc)
 
 target_link_libraries(
         ${name}Test
