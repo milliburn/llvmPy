@@ -137,9 +137,12 @@ public:
         return ast->isType(ASTType::ExprLambda);
     }
 
+    std::vector<std::string const *> const args;
     Expr const & body;
-    explicit LambdaExpr(Expr * body)
+
+    explicit LambdaExpr(decltype(args) args, Expr * body)
         : Expr(ASTType::ExprLambda),
+          args(std::move(args)),
           body(*body) {}
     void toStream(std::ostream &) const override;
 };

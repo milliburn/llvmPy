@@ -65,7 +65,12 @@ TEST_CASE("Parser", "[Parser]") {
         REQUIRE(expr("1 - 2") == "(1i - 2i)");
         REQUIRE(expr("1 + - 2") == "(1i + -2i)");
         REQUIRE(expr("x + 1") == "(x + 1i)");
+    }
+
+    SECTION("Lambda expressions") {
         REQUIRE(expr("lambda: x + 1") == "(lambda: (x + 1i))");
+        REQUIRE(expr("lambda x: x + 1") == "(lambda x: (x + 1i))");
+        REQUIRE(expr("lambda x, y: x + 1") == "(lambda x, y: (x + 1i))");
     }
 
     SECTION("Small modules") {

@@ -339,7 +339,7 @@ Lexer::syntax()
 
         add(Token(static_cast<TokenType>(t)));
         return true;
-    } else if (oneof(".:;()[]")) {
+    } else if (oneof(".,:;()[]")) {
         int t;
 
         switch (a) {

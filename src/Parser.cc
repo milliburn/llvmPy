@@ -68,6 +68,22 @@ Parser::parseExpr()
     } else if (is(tok_string)) {
         Token tok = last();
         lhs = new StrLitExpr(tok.str->substr(1, tok.str->length() - 1));
+    } else if (is(kw_lambda)) {
+        vector<string const *> args;
+
+        while (true) {
+            if (is(tok_ident)) {
+                Token &ident = last();
+                args.push_back(ident.str);
+                if (is(tok_comma)) continue;
+            }
+
+            want(tok_colon);
+            break;
+        }
+
+        Expr *body = parseExpr();
+        return new LambdaExpr(args, body);
     } else {
         bool neg = false;
         auto state = save();
@@ -89,12 +105,10 @@ Parser::parseExpr()
         } else {
             restore(state);
 
-            if (is(kw_lambda)) {
-                want(tok_colon);
-                Expr *body = parseExpr();
-                return new LambdaExpr(body);
-            } else if (is(tok_ident)) {
+            if (is(tok_ident)) {
                 lhs = new IdentExpr(last().str);
+            } else {
+                throw ParserError("Unknown situation");
             }
         }
     }

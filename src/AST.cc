@@ -35,7 +35,14 @@ IdentExpr::toStream(std::ostream & s) const
 void
 LambdaExpr::toStream(std::ostream & s) const
 {
-    s << "(lambda: " << body << ')';
+    s << "(lambda";
+
+    for (int i = 0; i < args.size(); ++i) {
+        if (i > 0) s << ',';
+        s << ' ' << *args[i];
+    }
+
+    s << ": " << body << ')';
 }
 
 void
