@@ -9,11 +9,11 @@ enum class ASTType {
     Ignore,
     Expr,
     ExprIdent,
+    ExprLit,
     ExprStrLit,
-    ExprNumLit,
-    ExprNumLitDec,
-    ExprNumLitInt,
-    ExprNumLitAny,
+    ExprDecLit,
+    ExprIntLit,
+    ExprLitAny,
     ExprBinary,
     ExprLambda,
     ExprAny,
@@ -69,7 +69,19 @@ protected:
     explicit Expr(ASTType type) : AST(type) {}
 };
 
-class StrLitExpr : public Expr {
+class LitExpr : public Expr {
+public:
+    static bool classof(AST const *ast) {
+        return ast->isTypeBetween(
+                ASTType::ExprLit,
+                ASTType::ExprLitAny);
+    }
+
+protected:
+    explicit LitExpr(ASTType type) : Expr(type) {}
+};
+
+class StrLitExpr : public LitExpr {
 public:
     static bool classof(AST const *ast) {
         return ast->isType(ASTType::ExprStrLit);
@@ -77,43 +89,33 @@ public:
 
     std::string const & str;
     explicit StrLitExpr(std::string str)
-        : Expr(ASTType::ExprStrLit),
+        : LitExpr(ASTType::ExprStrLit),
           str(std::move(str)) {}
     void toStream(std::ostream &) const override;
 };
 
-class NumLitExpr : public Expr {
+class DecLitExpr : public LitExpr {
 public:
     static bool classof(AST const *ast) {
-        return ast->isTypeBetween(ASTType::ExprNumLit, ASTType::ExprNumLitAny);
-    }
-
-protected:
-    explicit NumLitExpr(ASTType type) : Expr(type) {}
-};
-
-class DecLitExpr : public NumLitExpr {
-public:
-    static bool classof(AST const *ast) {
-        return ast->isType(ASTType::ExprNumLitDec);
+        return ast->isType(ASTType::ExprDecLit);
     }
 
     double const value;
     explicit DecLitExpr(double v)
-        : NumLitExpr(ASTType::ExprNumLitDec),
+        : LitExpr(ASTType::ExprDecLit),
           value(v) {}
     void toStream(std::ostream &) const override;
 };
 
-class IntLitExpr : public NumLitExpr {
+class IntLitExpr : public LitExpr {
 public:
     static bool classof(AST const *ast) {
-        return ast->isType(ASTType::ExprNumLitInt);
+        return ast->isType(ASTType::ExprIntLit);
     }
 
     long const value;
     explicit IntLitExpr(long v)
-        : NumLitExpr(ASTType::ExprNumLitInt),
+        : LitExpr(ASTType::ExprIntLit),
           value(v) {}
     void toStream(std::ostream &) const override;
 };

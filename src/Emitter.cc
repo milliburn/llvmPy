@@ -46,12 +46,12 @@ Emitter::emit(
         return value->ir;
     }
 
-    case ASTType::ExprNumLitDec: {
+    case ASTType::ExprDecLit: {
         auto &expr = cast<DecLitExpr>(ast);
         return llvm::ConstantFP::get(ctx, llvm::APFloat(expr.value));
     }
 
-    case ASTType::ExprNumLitInt: {
+    case ASTType::ExprIntLit: {
         // XXX: Proper integers.
         auto &expr = cast<IntLitExpr>(ast);
         return llvm::ConstantFP::get(ctx, llvm::APFloat((double) expr.value));
