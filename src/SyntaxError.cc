@@ -1,6 +1,12 @@
 #include <llvmPy/SyntaxError.h>
 using namespace llvmPy;
-using namespace std;
+using std::string;
+using std::runtime_error;
+
+EmitterError::EmitterError(std::string const & what)
+: runtime_error(what)
+{
+}
 
 ParserError::ParserError(std::string const & what)
 : runtime_error(what)

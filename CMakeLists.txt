@@ -13,20 +13,22 @@ llvm_map_components_to_libnames(llvm_libs support core irreader)
 
 add_library(
         ${name}
-        include/llvmPy/Token.h
-        src/Token.cc
-        src/Parser.cc
-        include/llvmPy/Parser.h
-        include/llvmPy/SyntaxError.h
-        src/SyntaxError.cc
-        include/llvmPy/Lexer.h
-        src/Lexer.cc
         include/llvmPy/AST.h
-        src/AST.cc
+        include/llvmPy/Compiler.h
         include/llvmPy/Emitter.h
-        src/Emitter.cc
+        include/llvmPy/Lexer.h
+        include/llvmPy/Parser.h
         include/llvmPy/RT.h
-        src/RT.cc)
+        include/llvmPy/SyntaxError.h
+        include/llvmPy/Token.h
+        src/AST.cc
+        src/Compiler.cc
+        src/Emitter.cc
+        src/Lexer.cc
+        src/Parser.cc
+        src/RT.cc
+        src/SyntaxError.cc
+        src/Token.cc)
 
 target_include_directories(
         ${name}
@@ -66,6 +68,7 @@ add_executable(
         test/main.cc
         test/LexerTest.cc
         test/ParserTest.cc
+        test/EmitterTest.cc)
 
 target_link_libraries(
         ${name}Test

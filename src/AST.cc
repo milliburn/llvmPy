@@ -53,7 +53,7 @@ ExprStmt::toStream(std::ostream & s) const
 void
 AssignStmt::toStream(std::ostream & s) const
 {
-    s << lhs << '=' << rhs;
+    s << lhs << " = " << rhs;
 }
 
 void

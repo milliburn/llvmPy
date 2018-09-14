@@ -13,8 +13,7 @@ namespace llvmPy {
 
 class RTValue {
 public:
-    RTValue(llvm::Value *ir) : ir(ir) {}
-    llvm::Value *ir;
+    llvm::Value *ir = nullptr;
 };
 
 class RT;
@@ -26,7 +25,7 @@ public:
     RT &rt;
     RTScope *parent = nullptr;
     std::unordered_map<std::string, RTValue *> slots;
-    std::vector<llvm::BasicBlock *> text;
+    // std::vector<llvm::BasicBlock *> text;
 };
 
 class RTFunc : public RTScope {

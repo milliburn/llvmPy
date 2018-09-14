@@ -2,9 +2,13 @@
 #include <llvmPy/AST.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
-#include <llvm/IR/Value.h>
 
 #ifdef __cplusplus
+namespace llvm {
+class Module;
+class Value;
+} // namespace llvm
+
 namespace llvmPy {
 
 class RT;
@@ -12,8 +16,11 @@ class RTScope;
 
 class Emitter {
 public:
-    Emitter(RT &);
+    explicit Emitter(RT &) noexcept;
     llvm::Value * emit(AST const &, RTScope &);
+    llvm::Module * emitModule(
+            std::vector<Stmt *> const &stmts,
+            std::string const &name);
 
 private:
     RT &rt;
