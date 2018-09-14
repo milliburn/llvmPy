@@ -18,7 +18,7 @@ static char const *PROG1_SRC =
 
 static char const *PROG2_SRC =
         "x = lambda x: x + 1 \n"
-        "y = x + 1 \n"
+        "y = x(2) + 1 \n"
         "y \n";
 
 static void

@@ -74,6 +74,16 @@ Emitter::emit(
         return value->ir;
     }
 
+    case ASTType::ExprCall: {
+        auto &call = cast<CallExpr>(ast);
+        auto *callee = emit(call.lhs, module, scope);
+        vector<llvm::Value *> args;
+        for (auto arg : call.args) {
+            args.push_back(emit(*arg, module, scope));
+        }
+        return ir.CreateCall(callee, args, "call");
+    }
+
     case ASTType::ExprLambda: {
         auto &lambda = cast<LambdaExpr>(ast);
         RTScope &inner = rt.createScope(scope);
