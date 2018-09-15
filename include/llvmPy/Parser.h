@@ -35,6 +35,7 @@ private:
 
     void want(TokenType);
     void want_a(TokenType);
+
 };
 
 } // namespace llvmPy

@@ -1,6 +1,37 @@
 #include <llvmPy/AST.h>
 #include <stdexcept>
 using namespace llvmPy;
+using std::ostream;
+using std::string;
+using std::stringstream;
+
+static constexpr char eof = (char) std::istream::traits_type::eof();
+
+static void
+indentToStream(ostream &s, Stmt const &stmt, int indent)
+{
+    stringstream ss;
+    ss << stmt;
+    ss.seekg(0, std::ios::beg);
+
+    bool indentNext = true;
+    while (true) {
+        if (ss.eof()) break;
+        if (indentNext) {
+            for (int i = 0; i < indent; ++i) {
+                s << ' ';
+            }
+            indentNext = false;
+        }
+
+        char ch = (char) ss.get();
+        if (ch == eof) break;
+        s << ch;
+        if (ch == '\n') {
+            indentNext = true;
+        }
+    }
+}
 
 void
 AST::toStream(std::ostream &) const
@@ -80,6 +111,24 @@ void
 ImportStmt::toStream(std::ostream & s) const
 {
     s << modname;
+}
+
+void
+DefStmt::toStream(std::ostream &s) const
+{
+    s << "def " << name << "(";
+
+    for (int i = 0; i < args.size(); ++i) {
+        if (i > 0) s << ", ";
+        s << *args[i];
+    }
+
+    s << "):\n";
+
+    for (int i = 0; i < stmts.size(); ++i) {
+        if (i > 0) s << '\n';
+        indentToStream(s, *stmts[i], 2);
+    }
 }
 
 std::ostream &

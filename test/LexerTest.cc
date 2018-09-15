@@ -13,10 +13,16 @@ tokenize(string input)
     vector<Token> tokens;
     lexer.tokenize(tokens);
     string output;
+    int eofcount = 0;
 
     for (int i = 0; i < tokens.size(); ++i) {
+        if (tokens[i].type == tok_eof) {
+            eofcount++;
+        }
+
         if (i > 0
             && tokens[i].type != tok_eol
+            && tokens[i].type != tok_eof
             && tokens[i-1].type != tok_eol) {
 
             output += ' ';
@@ -27,49 +33,59 @@ tokenize(string input)
         output += ss.str();
     }
 
+
+    // EOF is not printable, but ensure it's the last token.
+    REQUIRE(eofcount == 1);
+    REQUIRE(tokens.back().type == tok_eof);
+
     return output;
 }
 
 TEST_CASE("Lexer", "[Lexer]") {
     SECTION("Numbers") {
-        REQUIRE(tokenize("2") == ">0 2n ;eof");
-        REQUIRE(tokenize("2.0") == ">0 2.0n ;eof");
-        REQUIRE(tokenize("-2") == ">0 - 2n ;eof");
+        REQUIRE(tokenize("2") == ">0 2n");
+        REQUIRE(tokenize("2.0") == ">0 2.0n");
+        REQUIRE(tokenize("-2") == ">0 - 2n");
     }
 
     SECTION("Strings") {
-        REQUIRE(tokenize("\"Hello!\"") == ">0 \"Hello!\" ;eof");
+        REQUIRE(tokenize("\"Hello!\"") == ">0 \"Hello!\"");
 
         // Preserve the type of string delimiter used
-        REQUIRE(tokenize("\'Hello!\'") == ">0 \'Hello!\' ;eof");
+        REQUIRE(tokenize("\'Hello!\'") == ">0 \'Hello!\'");
 
         // Preserve escaped delimiters
         REQUIRE(tokenize("\"Escaped \\\"String\\\"\"") ==
-                ">0 \"Escaped \\\"String\\\"\" ;eof");
+                ">0 \"Escaped \\\"String\\\"\"");
 
         // Ensure the lexer can handle strings longer than its internal buffer.
         string str(Lexer::BUFFER_SIZE * 2, 'x');
-        REQUIRE(tokenize("\"" + str + "\"") == ">0 \"" + str + "\" ;eof");
+        REQUIRE(tokenize("\"" + str + "\"") == ">0 \"" + str + "\"");
     }
 
     SECTION("Identifiers") {
-        REQUIRE(tokenize("xyz") == ">0 xyz ;eof");
-        REQUIRE(tokenize("True") == ">0 True ;eof");
-        REQUIRE(tokenize("False") == ">0 False ;eof");
-        REQUIRE(tokenize("None") == ">0 None ;eof");
-        REQUIRE(tokenize("_under_score_123") == ">0 _under_score_123 ;eof");
-        REQUIRE(tokenize("def") == ">0 def ;eof");
+        REQUIRE(tokenize("xyz") == ">0 xyz");
+        REQUIRE(tokenize("True") == ">0 True");
+        REQUIRE(tokenize("False") == ">0 False");
+        REQUIRE(tokenize("None") == ">0 None");
+        REQUIRE(tokenize("_under_score_123") == ">0 _under_score_123");
+        REQUIRE(tokenize("def") == ">0 def");
     }
 
     SECTION("Operators and syntax") {
-        REQUIRE(tokenize("*") == ">0 * ;eof");
-        REQUIRE(tokenize("(*)") == ">0 ( * ) ;eof");
-        REQUIRE(tokenize("+=") == ">0 += ;eof");
-        REQUIRE(tokenize("+ =") == ">0 + = ;eof");
+        REQUIRE(tokenize("*") == ">0 *");
+        REQUIRE(tokenize("(*)") == ">0 ( * )");
+        REQUIRE(tokenize("+=") == ">0 +=");
+        REQUIRE(tokenize("+ =") == ">0 + =");
     }
 
     SECTION("Multiple statements") {
         REQUIRE(tokenize("x = 1 \ny = x + 1 \ny \n") ==
-                ">0 x = 1n\n>0 y = x + 1n\n>0 y\n;eof");
+                ">0 x = 1n\n>0 y = x + 1n\n>0 y\n");
+    }
+
+    SECTION("Function definitions") {
+        REQUIRE(tokenize("def f():\n  x = y + 1\n") ==
+                ">0 def f ( ) :\n>2 x = y + 1n\n");
     }
 }

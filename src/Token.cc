@@ -11,7 +11,7 @@ operator<< (std::ostream & s, Token const &t)
     case tok_indent: s << ">" << t.depth; break;
     case tok_number: s << *t.str << 'n'; break;
     case tok_string: s << *t.str; break;
-    case tok_eof: s << ";eof"; break;
+    case tok_eof: break;
     case tok_eol: s << "\n"; break;
     case tok_dot: s << '.'; break;
     case tok_semicolon: s << ';'; break;

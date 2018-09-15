@@ -70,7 +70,7 @@ public:
         : type(type), str(str) {}
 
     Token(TokenType type, long depth)
-        : type(type), str(nullptr) {}
+        : type(type), depth(depth) {}
 
     TokenType type;
     union {

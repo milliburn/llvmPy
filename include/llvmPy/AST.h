@@ -22,6 +22,7 @@ enum class ASTType {
     StmtExpr,
     StmtAssign,
     StmtImport,
+    StmtDef,
     StmtAny,
     Any,
 };
@@ -230,6 +231,27 @@ public:
     explicit ImportStmt(std::string const * modname)
         : Stmt(ASTType::StmtImport),
           modname(*modname) {}
+    void toStream(std::ostream &) const override;
+};
+
+class DefStmt : public Stmt {
+public:
+    static bool classof(AST const *ast) {
+        return ast->isType(ASTType::StmtDef);
+    }
+
+    std::string const &name;
+    std::vector<std::string const *> args;
+    std::vector<Stmt *> const stmts;
+
+    DefStmt(std::string const &name,
+            std::vector<std::string const *> args,
+            std::vector<Stmt *> stmts)
+            : Stmt(ASTType::StmtDef),
+              name(name),
+              args(std::move(args)),
+              stmts(std::move(stmts)) {}
+
     void toStream(std::ostream &) const override;
 };
 

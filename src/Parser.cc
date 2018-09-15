@@ -30,13 +30,56 @@ Parser::parseStmt()
         return nullptr;
     }
 
-    is(tok_indent); // Ignore indentation for now.
+    long indent = 0;
+
+    if (is(tok_indent)) {
+        indent = last().depth;
+    }
 
     if (is(kw_import)) {
         want(tok_ident);
-        Token& module = last();
+        Token &module = last();
         parseEndOfStmt();
         return new ImportStmt(module.str);
+    } else if (is(kw_def)) {
+        want(tok_ident);
+        Token &ident = last();
+        want(tok_lp);
+        vector<string const *> args;
+        vector<Stmt *> stmts;
+
+        if (!is(tok_rp)) {
+            while (true) {
+                want(tok_ident);
+                args.push_back(last().str);
+                if (is(tok_rp)) break;
+                else want(tok_comma);
+            }
+        }
+
+        want(tok_colon);
+        want(tok_eol);
+
+        want(tok_indent);
+        long innerIndent = last().depth;
+
+        if (innerIndent <= indent) {
+            throw SyntaxError("Invalid indent");
+        }
+
+        stmts.push_back(parseStmt());
+
+        while (true) {
+            if (is(tok_eof)) break;
+            want(tok_indent);
+            if (last().depth < indent) break;
+            if (last().depth != innerIndent) {
+                throw SyntaxError("Invalid indent");
+            }
+            stmts.push_back(parseStmt());
+        }
+
+        return new DefStmt(*ident.str, args, stmts);
     }
 
     auto state = save();
@@ -45,6 +88,7 @@ Parser::parseStmt()
         Token& tok = last();
         if (is_a(tok_assign)) {
             Expr * expr = parseExpr();
+            parseEndOfStmt();
             return new AssignStmt(tok.str, expr);
         } else {
             restore(state);

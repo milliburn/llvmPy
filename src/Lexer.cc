@@ -23,7 +23,7 @@ Lexer::tokenize(std::vector<Token> & out)
     bool newline = true;
     int indent = 0;
 
-    do {
+    while (true) {
         reset();
 
         // Skip preceding whitespace, but record the indent level.
@@ -56,7 +56,7 @@ Lexer::tokenize(std::vector<Token> & out)
         if (numlit()) continue;
         if (syntax()) continue;
         if (ident()) continue;
-    } while (true);
+    }
 
     out = tokens;
     return true;
