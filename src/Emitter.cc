@@ -14,8 +14,8 @@ using std::string;
 using std::to_string;
 using std::vector;
 
-Emitter::Emitter(RT &rt) noexcept
-: ir(ctx), rt(rt)
+Emitter::Emitter(RT &rt, llvm::DataLayout &dl) noexcept
+: ir(ctx), rt(rt), dataLayout(dl), types(ctx, dl)
 {
 }
 
@@ -48,13 +48,18 @@ Emitter::emit(
 
     case ASTType::ExprDecLit: {
         auto &expr = cast<DecLitExpr>(ast);
-        return llvm::ConstantFP::get(ctx, llvm::APFloat(expr.value));
+        return emit(RTAtom(expr.value));
     }
 
     case ASTType::ExprIntLit: {
-        // XXX: Proper integers.
+        // TODO: Proper integers.
         auto &expr = cast<IntLitExpr>(ast);
-        return llvm::ConstantFP::get(ctx, llvm::APFloat((double) expr.value));
+        return emit(RTAtom((double) expr.value));
+    }
+
+    case ASTType::ExprBoolLit: {
+        auto &expr = cast<BoolLitExpr>(ast);
+        return emit(RTAtom(expr.value));
     }
 
     case ASTType::ExprIdent: {
@@ -84,56 +89,26 @@ Emitter::emit(
         return ir.CreateCall(callee, args, "call");
     }
 
-    case ASTType::ExprLambda: {
-        auto &lambda = cast<LambdaExpr>(ast);
-        RTScope &inner = rt.createScope(scope);
-
-        for (auto arg : lambda.args) {
-            inner.addSlot(*arg);
-        }
-
-        // TODO: Support types other than double.
-        vector<llvm::Type *> types(
-                lambda.args.size(),
-                llvm::Type::getDoubleTy(ctx));
-
-        auto *fty = llvm::FunctionType::get(
-                llvm::Type::getDoubleTy(ctx),
-                types,
-                false);
-
-        auto *f = llvm::Function::Create(
-                fty,
-                llvm::Function::ExternalLinkage,
-                "lambda",
-                &module);
-
-        int iArg = 0;
-        for (auto &arg : f->args()) {
-            auto &name = *lambda.args[iArg];
-            arg.setName(name);
-            inner.slots[name]->ir = &arg;
-        }
-
-        auto *bb = llvm::BasicBlock::Create(ctx, "start", f);
-
-        ir.SetInsertPoint(bb);
-
-        llvm::Value *value = emit(lambda.body, module, inner);
-        ir.CreateRet(value);
-        llvm::verifyFunction(*f);
-        return f;
+    case ASTType::StmtDef: {
+        auto *func = emitFunction(ast, module, scope);
+        // Assign module to a slot.
+        return func;
     }
+
+    case ASTType::ExprLambda:
+        return emitFunction(ast, module, scope);
 
     case ASTType::ExprBinary: {
         auto &expr = cast<BinaryExpr>(ast);
         auto *lhs = emit(expr.lhs, module, scope);
         auto *rhs = emit(expr.rhs, module, scope);
 
-        // TODO: At this point we'd have to type-check.
-
         switch (expr.op) {
-        case tok_add: return ir.CreateFAdd(lhs, rhs, "add");
+        case tok_add:
+            return ir.CreateCall(
+                    module.getOrInsertFunction("lpy_add", types.lpy_add),
+                    { lhs, rhs });
+
         default: return nullptr;
         }
 
@@ -209,4 +184,109 @@ Emitter::emitModule(
     llvm::verifyFunction(*f);
 
     return &module;
+}
+
+RTFunc *
+Emitter::emit(
+        AST const &ast,
+        llvm::Module &module,
+        RTScope &scope)
+{
+    RTScope &inner = rt.createScope(scope);
+    vector<Stmt *> body;
+    vector<string const *> args;
+    string name;
+
+    if (isa<LambdaExpr>(ast)) {
+        auto &lambda = cast<LambdaExpr>(ast);
+        args = lambda.args;
+        body.push_back(new ReturnStmt(lambda.expr));
+        name = "lambda";
+    } else if (isa<DefStmt>(ast)) {
+        auto &def = cast<DefStmt>(ast);
+        name = def.name;
+        body = def.stmts;
+        args = def.args;
+    } else {
+        throw EmitterError("Unknown function AST");
+    }
+
+    for (auto arg : args) {
+        inner.addSlot(*arg);
+    }
+
+    vector<llvm::Type *> argTypes(args.size(), types.RTAtom);
+
+    llvm::Function *function =
+            llvm::Function::Create(
+                    llvm::FunctionType::get(
+                            types.RTAtom,
+                            argTypes,
+                            false),
+                    llvm::Function::ExternalLinkage,
+                    name,
+                    &module);
+
+    auto *bb = llvm::BasicBlock::Create(ctx, "start", function);
+    ir.SetInsertPoint(bb);
+    llvm::Value *value;
+
+    int iArg = 0;
+    for (auto &arg : function->args()) {
+        auto &name = *args[iArg];
+        arg.setName(name);
+        llvm::AllocaInst *alloca = ir.CreateAlloca(types.RTAtom);
+        ir.CreateStore(&arg, alloca);
+        // TODO: Finish initialising the RTAtom on the stack.
+        inner.slots[name]->ir = alloca;
+    }
+
+    for (auto stmt : body) {
+        ir.SetInsertPoint(bb);
+
+        if (isa<ReturnStmt>(stmt)) {
+            auto &ret = *cast<ReturnStmt>(stmt);
+            value = emit(ret.expr, module, inner);
+            ir.CreateRet(value);
+        } else {
+            emit(*stmt, module, inner);
+        }
+    }
+
+    llvm::verifyFunction(*function);
+
+    return new RTFunc(name, function);
+}
+
+llvm::Value *
+Emitter::address(llvmPy::RTAny &any)
+{
+    return address(&any);
+}
+
+llvm::Value *
+Emitter::address(llvmPy::RTAny *any)
+{
+    return llvm::ConstantInt::get(types.RawPtr, (uint64_t) any);
+}
+
+llvm::Value *
+Emitter::emit(RTAtom const &atom)
+{
+    return llvm::ConstantStruct::get(
+            types.RTAtom,
+            llvm::ConstantInt::get(
+                    types.RawPtr,
+                    static_cast<uint64_t>(atom.getType())),
+            llvm::ConstantInt::get(
+                    types.RawPtr,
+                    reinterpret_cast<uint64_t>(atom.atom.any)));
+}
+
+llvm::Value *
+Emitter::ptr(RTAtom const &atom)
+{
+    return llvm::ConstantInt::get(
+            types.RawPtr,
+            reinterpret_cast<uint64_t >(&atom));
 }

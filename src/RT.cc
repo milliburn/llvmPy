@@ -1,9 +1,23 @@
 #include <llvmPy/RT.h>
 #include <llvmPy/SyntaxError.h>
+#include <llvm/Support/Casting.h>
 #include <stdexcept>
 using namespace llvmPy;
+using llvm::cast;
+using llvm::isa;
 using std::make_pair;
 using std::runtime_error;
+
+RTAny *
+RTAny::access(RTName const &)
+{
+    return nullptr;
+}
+
+void
+RTAny::assign(RTName const &, RTAny *)
+{
+}
 
 RTValue &
 RTScope::addSlot(std::string const &name)
@@ -15,32 +29,4 @@ RTScope::addSlot(std::string const &name)
     }
 
     return *slots[name]; // XXX: Get from the insert.
-}
-
-void
-RT::setMainModule(RTScope *scope)
-{
-    if (scope->parent) {
-        throw runtime_error("The __main__ module cannot have a parent scope.");
-    }
-
-    bool ok = modules.insert(make_pair("__main__", scope)).second;
-
-    if (!ok) {
-        throw runtime_error("The __main__ module already exists.");
-    }
-}
-
-RTScope &
-RT::createScope()
-{
-    return *new RTScope(*this);
-}
-
-RTScope &
-RT::createScope(RTScope &parent)
-{
-    RTScope &scope = createScope();
-    scope.parent = &parent;
-    return scope;
 }

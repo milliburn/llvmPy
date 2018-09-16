@@ -16,6 +16,7 @@ add_library(
         include/llvmPy/AST.h
         include/llvmPy/Compiler.h
         include/llvmPy/Emitter.h
+        include/llvmPy/Instr.h
         include/llvmPy/Lexer.h
         include/llvmPy/Parser.h
         include/llvmPy/RT.h
@@ -24,6 +25,7 @@ add_library(
         src/AST.cc
         src/Compiler.cc
         src/Emitter.cc
+        src/Instr.cc
         src/Lexer.cc
         src/Parser.cc
         src/RT.cc

@@ -73,7 +73,7 @@ LambdaExpr::toStream(std::ostream & s) const
         s << ' ' << *args[i];
     }
 
-    s << ": " << body << ')';
+    s << ": " << expr << ')';
 }
 
 void

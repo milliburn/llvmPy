@@ -13,6 +13,7 @@ enum class ASTType {
     ExprStrLit,
     ExprDecLit,
     ExprIntLit,
+    ExprBoolLit,
     ExprLitAny,
     ExprBinary,
     ExprLambda,
@@ -23,6 +24,7 @@ enum class ASTType {
     StmtAssign,
     StmtImport,
     StmtDef,
+    StmtReturn,
     StmtAny,
     Any,
 };
@@ -122,6 +124,19 @@ public:
     void toStream(std::ostream &) const override;
 };
 
+class BoolLitExpr : public LitExpr {
+public:
+    static bool classof(AST const *ast) {
+        return ast->isType(ASTType::ExprBoolLit);
+    }
+
+    bool const value;
+    explicit BoolLitExpr(bool v)
+            : LitExpr(ASTType::ExprBoolLit),
+              value(v) {}
+    void toStream(std::ostream &) const override;
+};
+
 class IdentExpr : public Expr {
 public:
     static bool classof(AST const *ast) {
@@ -142,12 +157,12 @@ public:
     }
 
     std::vector<std::string const *> const args;
-    Expr const & body;
+    Expr const & expr;
 
     explicit LambdaExpr(decltype(args) args, Expr * body)
         : Expr(ASTType::ExprLambda),
           args(std::move(args)),
-          body(*body) {}
+          expr(*body) {}
     void toStream(std::ostream &) const override;
 };
 
@@ -252,6 +267,19 @@ public:
               args(std::move(args)),
               stmts(std::move(stmts)) {}
 
+    void toStream(std::ostream &) const override;
+};
+
+class ReturnStmt : public Stmt {
+public:
+    static bool classof(AST const *ast) {
+        return ast->isType(ASTType::StmtReturn);
+    }
+
+    Expr const &expr;
+    explicit ReturnStmt(Expr const &expr)
+        : Stmt(ASTType::StmtReturn),
+          expr(expr) {}
     void toStream(std::ostream &) const override;
 };
 
