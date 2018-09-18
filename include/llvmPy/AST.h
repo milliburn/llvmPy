@@ -1,5 +1,6 @@
 #pragma once
 #include <llvmPy/Token.h>
+#include <llvmPy/Typed.h>
 #include <string>
 
 #ifdef __cplusplus
@@ -29,9 +30,8 @@ enum class ASTType {
     Any,
 };
 
-class AST {
+class AST : public Typed<ASTType> {
 public:
-    ASTType getType() const { return type; }
     virtual void toStream(std::ostream &) const;
     virtual ~AST() = default;
 
@@ -40,27 +40,7 @@ public:
     }
 
 protected:
-    explicit AST(ASTType type) : type(type) {};
-
-public:
-    bool isTypeAbove(ASTType t) const {
-        return static_cast<int>(type) >= static_cast<int>(t);
-    }
-
-    bool isTypeBelow(ASTType t) const {
-        return static_cast<int>(type) < static_cast<int>(t);
-    }
-
-    bool isTypeBetween(ASTType a, ASTType b) const {
-        return isTypeAbove(a) && isTypeBelow(b);
-    }
-
-    bool isType(ASTType t) const {
-        return type == t;
-    }
-
-private:
-    ASTType const type;
+    explicit AST(ASTType type) : Typed(type) {};
 };
 
 class Expr : public AST {

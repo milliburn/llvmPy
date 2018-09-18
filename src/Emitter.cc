@@ -14,8 +14,15 @@ using std::string;
 using std::to_string;
 using std::vector;
 
-Emitter::Emitter(RT &rt, llvm::DataLayout &dl) noexcept
-: ir(ctx), rt(rt), dataLayout(dl), types(ctx, dl)
+static constexpr int RTAtom_type = 0;
+static constexpr int RTAtom_atom = 1;
+
+Emitter::Emitter(Compiler &c) noexcept
+: rt(c.getRT()),
+  dl(c.getDataLayout()),
+  ctx(c.getContext()),
+  ir(ctx),
+  types(ctx, dl)
 {
 }
 
@@ -30,20 +37,9 @@ Emitter::emit(
     case ASTType::StmtAssign: {
         auto &stmt = cast<AssignStmt>(ast);
         auto &ident = stmt.lhs;
-        auto *value = scope.slots[ident];
-
-        if (!value) {
-            throw SyntaxError(
-                    "Slot " + ident + " for assignment does not exist");
-        }
-
-        if (value->ir) {
-            throw SyntaxError(
-                    "Slot " + ident + " has already been assigned");
-        }
-
-        value->ir = emit(stmt.rhs, module, scope);
-        return value->ir;
+        auto *slot = scope.slots[ident];
+        auto *rhs = emit(stmt.rhs, module, scope);
+        return ir.CreateStore(rhs, slot);
     }
 
     case ASTType::ExprDecLit: {
@@ -70,13 +66,7 @@ Emitter::emit(
             throw SyntaxError("Slot " + ident.name + " does not exist");
         }
 
-        if (!value->ir) {
-            throw SyntaxError(
-                    "IR for identifier " + ident.name +
-                    " has not been emitted");
-        }
-
-        return value->ir;
+        return ir.CreateLoad(value, ident.name);
     }
 
     case ASTType::ExprCall: {
@@ -90,24 +80,40 @@ Emitter::emit(
     }
 
     case ASTType::StmtDef: {
-        auto *func = emitFunction(ast, module, scope);
-        // Assign module to a slot.
-        return func;
+        auto &def = cast<DefStmt>(ast);
+        auto *func = emitFunction(
+                def.name,
+                def.args,
+                def.stmts,
+                module,
+                scope);
+        // TODO: Assign to slot.
+        return func->ir;
     }
 
-    case ASTType::ExprLambda:
-        return emitFunction(ast, module, scope);
+    case ASTType::ExprLambda: {
+        auto &lambda = cast<LambdaExpr>(ast);
+        auto *func = emitFunction(
+                "lambda",
+                lambda.args,
+                { new ReturnStmt(lambda.expr) },
+                module,
+                scope);
+        return func->ir;
+    }
 
     case ASTType::ExprBinary: {
         auto &expr = cast<BinaryExpr>(ast);
         auto *lhs = emit(expr.lhs, module, scope);
         auto *rhs = emit(expr.rhs, module, scope);
+        auto *rv = ir.CreateAlloca(types.RTAtom, 0, "rv");
 
         switch (expr.op) {
         case tok_add:
-            return ir.CreateCall(
+            ir.CreateCall(
                     module.getOrInsertFunction("lpy_add", types.lpy_add),
-                    { lhs, rhs });
+                    { rv, lhs, rhs });
+            return rv;
 
         default: return nullptr;
         }
@@ -132,23 +138,33 @@ Emitter::emitModule(
         string const &name)
 {
     llvm::Module &module = *new llvm::Module(name, ctx);
-    RTScope &scope = rt.createScope();
+    RTFunc &func = *emitFunction(
+            "__body__",
+            {},
+            stmts,
+            module,
+            RTScope::getNullScope());
 
-    // Scan the module for assignment to module-level slots,
-    // which is used to pre-populate global scope.
-    //
-    // Then emit a special slot, __body__, to which the body
-    // statements are bound. __body__ is executed as soon as
-    // the module has been loaded.
+    return &module;
+}
 
-    for (auto stmt : stmts) {
+RTFunc *
+Emitter::emitFunction(
+        string const &name,
+        vector<string const *> args,
+        vector<Stmt *> body,
+        llvm::Module &module,
+        RTScope &outer)
+{
+    RTScope &scope = *new RTScope(outer);
+
+    for (auto stmt : body) {
         switch (stmt->getType()) {
-
         case ASTType::StmtAssign: {
-            // Pre-register slots referenced in assignments.
+            // Pre-register all assigned identifiers in the scope.
             auto &assign = *cast<AssignStmt>(stmt);
             auto &ident = assign.lhs;
-            scope.slots.insert(make_pair(ident, new RTValue()));
+            scope.slots[ident] = nullptr;
             break;
         }
 
@@ -156,71 +172,12 @@ Emitter::emitModule(
         }
     }
 
-    // Emit bytecode for the module prototype and body.
-    vector<llvm::Type *> types;
-
-    llvm::FunctionType *fty =
-            llvm::FunctionType::get(
-                    llvm::Type::getDoubleTy(ctx),
-                    types,
-                    false);
-
-    llvm::Function *f =
-            llvm::Function::Create(
-                    fty,
-                    llvm::Function::ExternalLinkage,
-                    "__body__",
-                    &module);
-
-    llvm::BasicBlock *bb = llvm::BasicBlock::Create(ctx, "start", f);
-    llvm::Value *value = nullptr;
-
-    for (auto stmt : stmts) {
-        ir.SetInsertPoint(bb);
-        value = emit(*stmt, module, scope);
-    }
-
-    ir.CreateRet(value);
-    llvm::verifyFunction(*f);
-
-    return &module;
-}
-
-RTFunc *
-Emitter::emit(
-        AST const &ast,
-        llvm::Module &module,
-        RTScope &scope)
-{
-    RTScope &inner = rt.createScope(scope);
-    vector<Stmt *> body;
-    vector<string const *> args;
-    string name;
-
-    if (isa<LambdaExpr>(ast)) {
-        auto &lambda = cast<LambdaExpr>(ast);
-        args = lambda.args;
-        body.push_back(new ReturnStmt(lambda.expr));
-        name = "lambda";
-    } else if (isa<DefStmt>(ast)) {
-        auto &def = cast<DefStmt>(ast);
-        name = def.name;
-        body = def.stmts;
-        args = def.args;
-    } else {
-        throw EmitterError("Unknown function AST");
-    }
-
-    for (auto arg : args) {
-        inner.addSlot(*arg);
-    }
-
-    vector<llvm::Type *> argTypes(args.size(), types.RTAtom);
+    vector<llvm::Type *> argTypes(args.size() + 1, types.RTAtomPtr);
 
     llvm::Function *function =
             llvm::Function::Create(
                     llvm::FunctionType::get(
-                            types.RTAtom,
+                            llvm::Type::getVoidTy(ctx),
                             argTypes,
                             false),
                     llvm::Function::ExternalLinkage,
@@ -233,12 +190,15 @@ Emitter::emit(
 
     int iArg = 0;
     for (auto &arg : function->args()) {
-        auto &name = *args[iArg];
+        if (iArg == 0) {
+            arg.addAttr(llvm::Attribute::AttrKind::StructRet);
+        }
+
+        auto &name = *args[iArg++];
         arg.setName(name);
-        llvm::AllocaInst *alloca = ir.CreateAlloca(types.RTAtom);
+        llvm::AllocaInst *alloca = ir.CreateAlloca(types.RTAtom, 0, name);
         ir.CreateStore(&arg, alloca);
-        // TODO: Finish initialising the RTAtom on the stack.
-        inner.slots[name]->ir = alloca;
+        scope.slots[name] = alloca;
     }
 
     for (auto stmt : body) {
@@ -246,16 +206,20 @@ Emitter::emit(
 
         if (isa<ReturnStmt>(stmt)) {
             auto &ret = *cast<ReturnStmt>(stmt);
-            value = emit(ret.expr, module, inner);
-            ir.CreateRet(value);
+            // The result is a RTAtom.
+            value = emit(ret.expr, module, scope);
+
+
+            ir.CreateStore(value, function->arg_begin());
+            ir.CreateRetVoid();
         } else {
-            emit(*stmt, module, inner);
+            emit(*stmt, module, scope);
         }
     }
 
     llvm::verifyFunction(*function);
 
-    return new RTFunc(name, function);
+    return new RTFunc(name, scope, function);
 }
 
 llvm::Value *

@@ -8,6 +8,8 @@ using llvm::isa;
 using std::make_pair;
 using std::runtime_error;
 
+static RTScope NULL_SCOPE;
+
 RTAny *
 RTAny::access(RTName const &)
 {
@@ -19,14 +21,8 @@ RTAny::assign(RTName const &, RTAny *)
 {
 }
 
-RTValue &
-RTScope::addSlot(std::string const &name)
+RTScope &
+RTScope::getNullScope()
 {
-    auto result = slots.insert(make_pair(name, new RTValue()));
-
-    if (!result.second) {
-        throw EmitterError("Slot " + name + " already exists.");
-    }
-
-    return *slots[name]; // XXX: Get from the insert.
+    return NULL_SCOPE;
 }

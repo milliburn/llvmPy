@@ -40,6 +40,12 @@ AST::toStream(std::ostream &) const
 }
 
 void
+BoolLitExpr::toStream(std::ostream &s) const
+{
+    s << (value ? "True" : "False");
+}
+
+void
 StrLitExpr::toStream(std::ostream & s) const
 {
     s << '"' << str << '"';
@@ -131,6 +137,12 @@ DefStmt::toStream(std::ostream &s) const
     }
 }
 
+void
+ReturnStmt::toStream(std::ostream &s) const
+{
+    s << "return " << expr << '\n';
+}
+
 std::ostream &
 operator<< (std::ostream & s, Expr const & expr)
 {
@@ -144,3 +156,4 @@ operator<< (std::ostream & s, Stmt const & stmt)
     stmt.toStream(s);
     return s;
 }
+

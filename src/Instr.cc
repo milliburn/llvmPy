@@ -1,4 +1,5 @@
 #include "llvm/ADT/APInt.h"
+#include <llvm/IR/DataLayout.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvmPy/Instr.h>
@@ -21,26 +22,16 @@ Types::Types(
     RTAtomPtr = llvm::PointerType::getUnqual(RTAtom);
 
     lpy_add = llvm::FunctionType::get(
-            RTAtom,
-            { RTAtomPtr, RTAtomPtr },
+            llvm::Type::getVoidTy(ctx),
+            { RTAtomPtr, RTAtomPtr, RTAtomPtr },
             false);
+
 }
 
-extern "C" llvm::Function *
-lpy_getfuncptr(RTAtom &atom)
-{
-    switch (atom.getType()) {
-    case RTType::RTPtrAtom:
-        RTAny &inner = *atom.atom.any;
-        switch (inner.getType()) {
-        case RTType::RTFunc:
-            return cast<RTFunc>(inner).ir;
-        }
-    }
-}
-
-extern "C" RTAtom
-lpy_add(RTAtom &lhs, RTAtom &rhs)
+extern "C" void
+lpy_add(RTAtom * __restrict__ rv,
+        RTAtom & __restrict__ lhs,
+        RTAtom & __restrict__ rhs)
 {
     switch (lhs.getType()) {
     case RTType::RTDecimalAtom:
@@ -48,24 +39,38 @@ lpy_add(RTAtom &lhs, RTAtom &rhs)
         switch (rhs.getType()) {
         case RTType::RTDecimalAtom:
         case RTType::RTDecimal:
-            return RTAtom(lhs.atom.decimal + rhs.atom.decimal);
-        }
-    }
-}
+            *rv = RTAtom(lhs.atom.decimal + rhs.atom.decimal);
+            return;
 
-extern "C" RTAtom
-lpy_eq(RTAtom &lhs, RTAtom &rhs)
-{
-    switch (lhs.getType()) {
-
-    case RTType::RTDecimalAtom:
-    case RTType::RTDecimal:
-        switch (rhs.getType()) {
-        case RTType::RTDecimalAtom:
-        case RTType::RTDecimal:
-            return RTAtom(lhs.atom.decimal == rhs.atom.decimal);
         default:
-            return RTAtom(false);
+            return;
+        }
+
+    default:
+        return;
+    }
+
+    throw "Oops!";
+}
+
+extern "C" void
+lpy_eq(
+        RTAtom * __restrict__ rv,
+        RTAtom & __restrict__ lhs,
+        RTAtom & __restrict__ rhs)
+{
+    switch (lhs.getType()) {
+
+    case RTType::RTDecimalAtom:
+    case RTType::RTDecimal:
+        switch (rhs.getType()) {
+        case RTType::RTDecimalAtom:
+        case RTType::RTDecimal:
+            *rv = RTAtom(lhs.atom.decimal == rhs.atom.decimal);
+            return;
+        default:
+            *rv = RTAtom(false);
+            return;
         }
 
     case RTType::RTBoolAtom:
@@ -73,12 +78,14 @@ lpy_eq(RTAtom &lhs, RTAtom &rhs)
         switch (rhs.getType()) {
         case RTType::RTBoolAtom:
         case RTType::RTBool:
-            return RTAtom(lhs.atom.boolean == rhs.atom.boolean);
+            *rv = RTAtom(lhs.atom.boolean == rhs.atom.boolean);
+            return;
         default:
-            return RTAtom(false);
+            *rv = RTAtom(false);
+            return;
         }
 
     default:
-        return RTAtom(false);
+        *rv = RTAtom(false);
     }
 }

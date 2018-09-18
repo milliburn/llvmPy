@@ -30,8 +30,8 @@ public:
 
 extern "C" {
 
-llvmPy::RTAtom lpy_add(llvmPy::RTAtom &, llvmPy::RTAtom &);
-llvmPy::RTAtom lpy_eq(llvmPy::RTAtom &, llvmPy::RTAtom &);
+void lpy_add(llvmPy::RTAtom *, llvmPy::RTAtom &, llvmPy::RTAtom &);
+void lpy_eq(llvmPy::RTAtom *, llvmPy::RTAtom &, llvmPy::RTAtom &);
 
 } // extern "C"
 

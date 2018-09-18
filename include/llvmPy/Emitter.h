@@ -1,5 +1,6 @@
 #pragma once
 #include <llvmPy/AST.h>
+#include <llvmPy/Compiler.h>
 #include <llvmPy/Instr.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
@@ -22,33 +23,35 @@ class RTFunc;
 
 class Emitter {
 public:
-    explicit Emitter(RT &, llvm::DataLayout &) noexcept;
+    explicit Emitter(Compiler &c) noexcept;
 
     llvm::Value * emit(
             AST const &ast,
             llvm::Module &module,
-            RTScope &scope);
+            RTScope &outer);
 
     llvm::Module * emitModule(
             std::vector<Stmt *> const &stmts,
             std::string const &name);
 
-    llvm::Function * emitFunction(
-            AST const &ast,
+    RTFunc *
+    emitFunction(
+            std::string const &name,
+            std::vector<std::string const *> args,
+            std::vector<Stmt *> body,
             llvm::Module &module,
             RTScope &scope);
 
 private:
     RT &rt;
-    llvm::DataLayout const &dataLayout;
-    llvm::LLVMContext ctx;
+    llvm::DataLayout const &dl;
+    llvm::LLVMContext &ctx;
     llvm::IRBuilder<> ir;
     Types types;
 
     llvm::Value * address(RTAny &);
     llvm::Value * address(RTAny *);
 
-    RTFunc * func(AST const &, llvm::Module &, RTScope &);
     llvm::Value * emit(RTAtom const &);
     llvm::Value * ptr(RTAtom const &);
 };

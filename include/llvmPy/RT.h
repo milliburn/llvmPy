@@ -1,4 +1,5 @@
 #pragma once
+#include <llvmPy/Typed.h>
 #include <unordered_map>
 #include <string>
 #include <vector>
@@ -14,7 +15,6 @@ namespace llvmPy {
 class RT;
 class RTAtom;
 class RTAny;
-class RTValue;
 class RTScope;
 class RTNone;
 class RTBool;
@@ -33,7 +33,6 @@ enum class RTType : long {
     RTDecimalAtom,
     RTNoneAtom,
     RTPtrAtom,
-    RTValue,
     RTScope,
     RTNone,
     RTBool,
@@ -51,26 +50,26 @@ public:
     std::string const name;
 };
 
-class RTAtom {
+class RTAtom : public Typed<RTType> {
 public:
+    static bool classof(RTAtom const *x) {
+        return x->isTypeBetween(RTType::RTAtom, RTType::RTPtrAtom);
+    }
+
     explicit inline
     RTAtom(bool v)
-    : type(RTType::RTBoolAtom)
+    : Typed(RTType::RTBoolAtom)
     { atom.boolean = v; }
 
     explicit inline
     RTAtom(double v)
-    : type(RTType::RTDecimalAtom)
+    : Typed(RTType::RTDecimalAtom)
     { atom.decimal = v; }
 
     explicit inline
     RTAtom(RTAny *v)
-    : type(RTType::RTPtrAtom)
+    : Typed(RTType::RTPtrAtom)
     { atom.any = v; }
-
-    RTType getType() const;
-
-    RTType const type;
 
     union {
         bool boolean;
@@ -80,32 +79,35 @@ public:
     } atom;
 
 protected:
-    explicit RTAtom(RTType type) : type(type) {}
+    explicit inline
+    RTAtom(RTType type)
+    : Typed(type) {}
 
 private:
 } __attribute__((packed));
 
-class RTAny : private RTAtom {
+class RTAny : public RTAtom {
 public:
-    using RTAtom::getType;
-
     virtual ~RTAny() = default;
     virtual RTAny * access(RTName const &);
     virtual void assign(RTName const &, RTAny *);
 
 protected:
-    using RTAtom::atom;
     explicit RTAny(RTType type) : RTAtom(type) {}
 };
 
 class RTScope : public RTAny {
 public:
-    explicit RTScope() : RTAny(RTType::RTScope) {}
+    static RTScope &getNullScope();
 
-    RTScope *parent = nullptr;
-    std::unordered_map<std::string, RTValue *> slots;
+    RTScope() : RTScope(nullptr) {}
 
-    RTValue &addSlot(std::string const &);
+    explicit RTScope(RTScope *parent)
+    : RTAny(RTType::RTScope), parent(parent)
+    {}
+
+    RTScope * const parent;
+    std::unordered_map<std::string, llvm::Value *> slots;
 };
 
 class RTNone : public RTAny {
@@ -132,12 +134,6 @@ public:
     inline double getValue() const { return atom.decimal; }
 };
 
-class RTValue : public RTAny {
-public:
-    explicit RTValue() : RTAny(RTType::RTValue) {}
-    llvm::Value *ir = nullptr;
-};
-
 class RTClass : public RTAny {
 public:
     explicit RTClass() : RTAny(RTType::RTClass) {}
@@ -153,20 +149,21 @@ public:
 
     RTClass &cls;
     std::unordered_map<std::string, RTObj *> members;
-
-    RTObj * access(RTName) override;
-    void assign(RTName, RTAny *) override;
 };
 
 class RTFunc : public RTAny {
 public:
-    RTFunc(
-            std::string name,
-            llvm::Function *ir)
+    static bool classof(RTAtom const *atom) {
+        return atom->isType(RTType::RTFunc);
+    }
+
+    RTFunc(std::string name, RTScope &scope, llvm::Function *ir)
         : RTAny(RTType::RTFunc),
           name(name),
+          scope(scope),
           ir(ir) {}
     std::string name;
+    RTScope &scope;
     llvm::Function *ir;
 };
 

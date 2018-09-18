@@ -9,7 +9,13 @@ set(CMAKE_CXX_STANDARD 14)
 find_package(LLVM REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
-llvm_map_components_to_libnames(llvm_libs support core irreader)
+llvm_map_components_to_libnames(
+        llvm_libs
+        support
+        core
+        executionengine
+        irreader
+        native)
 
 add_library(
         ${name}
@@ -22,6 +28,7 @@ add_library(
         include/llvmPy/RT.h
         include/llvmPy/SyntaxError.h
         include/llvmPy/Token.h
+        include/llvmPy/Typed.h
         src/AST.cc
         src/Compiler.cc
         src/Emitter.cc
