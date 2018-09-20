@@ -46,6 +46,6 @@ emit(char const *prog)
 }
 
 TEST_CASE("Emitter", "[Emitter]") {
-    emit(PROG1_SRC);
+    emit(PROG2_SRC);
     // emit(PROG2_SRC);
 }

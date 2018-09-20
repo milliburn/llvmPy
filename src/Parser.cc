@@ -135,7 +135,7 @@ Parser::parseExpr()
         throw ParserError("Unknown situation");
     }
 
-    // Parse right-hand-side expression.
+    // Extended parse of left-hand-side expression.
 
     if (is(tok_lp)) {
         vector<Expr const *> args;
@@ -148,8 +148,12 @@ Parser::parseExpr()
             }
         }
 
-        return new CallExpr(lhs, args);
-    } else if (is_a(tok_oper)) {
+        lhs = new CallExpr(lhs, args);
+    }
+
+    // Parse right-hand-side expression.
+
+    if (is_a(tok_oper)) {
         Token &op = last();
         rhs = parseExpr();
         return new BinaryExpr(lhs, op.type, rhs);
