@@ -9,6 +9,7 @@ using std::make_pair;
 using std::runtime_error;
 
 static RTScope NULL_SCOPE;
+static RTNone const RTNone_INSTANCE;
 
 RTAny *
 RTAny::access(RTName const &)
@@ -19,6 +20,12 @@ RTAny::access(RTName const &)
 void
 RTAny::assign(RTName const &, RTAny *)
 {
+}
+
+RTNone const &
+RTNone::getInstance()
+{
+    return RTNone_INSTANCE;
 }
 
 RTScope &

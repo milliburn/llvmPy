@@ -34,28 +34,30 @@ Emitter::emit(
 {
     switch (ast.getType()) {
 
+    /* Constant expressions */
+
+    case ASTType::ExprDecLit: {
+        auto &expr = cast<DecLitExpr>(ast);
+        return alloca(expr.value);
+    }
+
+    case ASTType::ExprIntLit: {
+        // TODO: Proper integers.
+        auto &expr = cast<IntLitExpr>(ast);
+        return alloca((double) expr.value);
+    }
+
+    case ASTType::ExprBoolLit: {
+        auto &expr = cast<BoolLitExpr>(ast);
+        return alloca(expr.value);
+    }
+
     case ASTType::StmtAssign: {
         auto &stmt = cast<AssignStmt>(ast);
         auto &ident = stmt.lhs;
         auto *slot = scope.slots[ident];
         auto *rhs = emit(stmt.rhs, module, scope);
         return ir.CreateStore(rhs, slot);
-    }
-
-    case ASTType::ExprDecLit: {
-        auto &expr = cast<DecLitExpr>(ast);
-        return emit(RTAtom(expr.value));
-    }
-
-    case ASTType::ExprIntLit: {
-        // TODO: Proper integers.
-        auto &expr = cast<IntLitExpr>(ast);
-        return emit(RTAtom((double) expr.value));
-    }
-
-    case ASTType::ExprBoolLit: {
-        auto &expr = cast<BoolLitExpr>(ast);
-        return emit(RTAtom(expr.value));
     }
 
     case ASTType::ExprIdent: {
@@ -86,7 +88,7 @@ Emitter::emit(
                 def.args,
                 def.stmts,
                 module,
-                scope);
+                &scope);
         // TODO: Assign to slot.
         return func->ir;
     }
@@ -98,7 +100,7 @@ Emitter::emit(
                 lambda.args,
                 { new ReturnStmt(lambda.expr) },
                 module,
-                scope);
+                &scope);
         return func->ir;
     }
 
@@ -132,31 +134,48 @@ Emitter::emit(
     }
 }
 
-llvm::Module *
+RTModule *
 Emitter::emitModule(
         vector<Stmt *> const &stmts,
         string const &name)
 {
-    llvm::Module &module = *new llvm::Module(name, ctx);
+    llvm::Module &ir = *new llvm::Module(name, ctx);
+
     RTFunc &func = *emitFunction(
             "__body__",
             {},
             stmts,
-            module,
-            RTScope::getNullScope());
+            ir,
+            nullptr);
 
-    return &module;
+    RTModule *rtmodule = new RTModule(
+            name,
+            func.scope,
+            func,
+            ir);
+
+    rt.modules.insert(make_pair(name, rtmodule));
+
+    return rtmodule;
 }
 
 RTFunc *
 Emitter::emitFunction(
         string const &name,
-        vector<string const *> args,
-        vector<Stmt *> body,
+        vector<string const *> const args,
+        vector<Stmt *> const body,
         llvm::Module &module,
-        RTScope &outer)
+        RTScope * const outer)
 {
     RTScope &scope = *new RTScope(outer);
+
+    // Create the BB as soon as possible to capture allocas.
+    auto *bb = llvm::BasicBlock::Create(ctx, "start");
+
+    for (auto *arg : args) {
+        ir.SetInsertPoint(bb);
+        scope.slots[*arg] = alloca(RTNone::getInstance());
+    }
 
     for (auto stmt : body) {
         switch (stmt->getType()) {
@@ -164,7 +183,8 @@ Emitter::emitFunction(
             // Pre-register all assigned identifiers in the scope.
             auto &assign = *cast<AssignStmt>(stmt);
             auto &ident = assign.lhs;
-            scope.slots[ident] = nullptr;
+            ir.SetInsertPoint(bb);
+            scope.slots[ident] = alloca(RTNone::getInstance());
             break;
         }
 
@@ -172,9 +192,10 @@ Emitter::emitFunction(
         }
     }
 
-    vector<llvm::Type *> argTypes(args.size() + 1, types.RTAtomPtr);
+    // The first argument is always a structural return pointer.
+    vector<llvm::Type *> argTypes(1 + args.size(), types.RTAtomPtr);
 
-    llvm::Function *function =
+    llvm::Function *func =
             llvm::Function::Create(
                     llvm::FunctionType::get(
                             llvm::Type::getVoidTy(ctx),
@@ -184,21 +205,18 @@ Emitter::emitFunction(
                     name,
                     &module);
 
-    auto *bb = llvm::BasicBlock::Create(ctx, "start", function);
-    ir.SetInsertPoint(bb);
+    bb->insertInto(func);
     llvm::Value *value;
 
-    int iArg = 0;
-    for (auto &arg : function->args()) {
-        if (iArg == 0) {
-            arg.addAttr(llvm::Attribute::AttrKind::StructRet);
-        }
+    for (auto *arg = func->arg_begin(); arg < func->arg_end(); arg++) {
+        arg->setName(name);
 
-        auto &name = *args[iArg++];
-        arg.setName(name);
-        llvm::AllocaInst *alloca = ir.CreateAlloca(types.RTAtom, 0, name);
-        ir.CreateStore(&arg, alloca);
-        scope.slots[name] = alloca;
+        if (arg == func->arg_begin()) {
+            arg->addAttr(llvm::Attribute::AttrKind::StructRet);
+        } else {
+            // TODO: Store the argument in the pre-allocated slot above.
+            // ir.CreateStore(arg, alloca);
+        }
     }
 
     for (auto stmt : body) {
@@ -208,18 +226,21 @@ Emitter::emitFunction(
             auto &ret = *cast<ReturnStmt>(stmt);
             // The result is a RTAtom.
             value = emit(ret.expr, module, scope);
-
-
-            ir.CreateStore(value, function->arg_begin());
+            ir.SetInsertPoint(bb);
+            ir.CreateStore(value, func->arg_begin());
             ir.CreateRetVoid();
         } else {
             emit(*stmt, module, scope);
         }
     }
 
-    llvm::verifyFunction(*function);
+    // Catch-all at the end.
+    ir.SetInsertPoint(bb);
+    ir.CreateRetVoid();
 
-    return new RTFunc(name, scope, function);
+    llvm::verifyFunction(*func);
+
+    return new RTFunc(name, scope, func);
 }
 
 llvm::Value *
@@ -234,17 +255,28 @@ Emitter::address(llvmPy::RTAny *any)
     return llvm::ConstantInt::get(types.RawPtr, (uint64_t) any);
 }
 
-llvm::Value *
-Emitter::emit(RTAtom const &atom)
+/**
+ * Emit a constant value on the stack.
+ * @returns Pointer to the allocated region. **/
+llvm::AllocaInst *
+Emitter::alloca(RTAtom const &atom)
 {
-    return llvm::ConstantStruct::get(
-            types.RTAtom,
-            llvm::ConstantInt::get(
-                    types.RawPtr,
-                    static_cast<uint64_t>(atom.getType())),
-            llvm::ConstantInt::get(
-                    types.RawPtr,
-                    reinterpret_cast<uint64_t>(atom.atom.any)));
+    auto *alloca = ir.CreateAlloca(types.RTAtom);
+
+    ir.CreateStore(
+            llvm::ConstantStruct::get(
+                    types.RTAtom,
+                    {
+                            llvm::ConstantInt::get(
+                                    types.RawPtr,
+                                    static_cast<uint64_t>(atom.getTypeValue())),
+                            llvm::ConstantInt::get(
+                                    types.RawPtr,
+                                    reinterpret_cast<uint64_t>(atom.atom.any)),
+                    }),
+            alloca);
+
+    return alloca;
 }
 
 llvm::Value *

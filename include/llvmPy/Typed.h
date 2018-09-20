@@ -14,6 +14,10 @@ public:
         return type;
     }
 
+    long getTypeValue() const {
+        return static_cast<long>(type);
+    }
+
     bool isTypeAbove(T t) const {
         return static_cast<long>(type) >= static_cast<long>(t);
     }

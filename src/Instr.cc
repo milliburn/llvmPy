@@ -15,7 +15,7 @@ Types::Types(
 
     RTAtom = llvm::StructType::create(
             ctx,
-            { (llvm::Type *) &RawPtr, (llvm::Type *) &RawPtr },
+            { RawPtr, RawPtr },
             "RTAtom",
             true);
 

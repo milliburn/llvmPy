@@ -7,6 +7,7 @@
 #ifdef __cplusplus
 namespace llvm {
 class Function;
+class Module;
 class Value;
 } // namespace llvm
 
@@ -56,17 +57,17 @@ public:
         return x->isTypeBetween(RTType::RTAtom, RTType::RTPtrAtom);
     }
 
-    explicit inline
+    inline
     RTAtom(bool v)
     : Typed(RTType::RTBoolAtom)
     { atom.boolean = v; }
 
-    explicit inline
+    inline
     RTAtom(double v)
     : Typed(RTType::RTDecimalAtom)
     { atom.decimal = v; }
 
-    explicit inline
+    inline
     RTAtom(RTAny *v)
     : Typed(RTType::RTPtrAtom)
     { atom.any = v; }
@@ -113,6 +114,7 @@ public:
 class RTNone : public RTAny {
 public:
     explicit RTNone() : RTAny(RTType::RTNone) {}
+    static RTNone const &getInstance();
 };
 
 class RTBool : public RTAny {
@@ -167,9 +169,28 @@ public:
     llvm::Function *ir;
 };
 
+class RTModule : public RTAny {
+public:
+    RTModule(
+            std::string const &name,
+            RTScope &scope,
+            RTFunc &func,
+            llvm::Module &ir)
+    : RTAny(RTType::RTModule),
+      scope(scope),
+      func(func),
+      ir(ir),
+      name(name) {}
+
+    RTScope &scope;
+    RTFunc &func;
+    llvm::Module &ir;
+    std::string const &name;
+};
+
 class RT {
 public:
-    std::unordered_map<std::string, RTScope *> modules;
+    std::unordered_map<std::string, RTModule *> modules;
 };
 
 } // namespace llvmPy

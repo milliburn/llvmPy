@@ -14,7 +14,7 @@ using std::string;
 using std::vector;
 
 static char const *PROG1_SRC =
-        "x = 1 \n";
+        "1 \n";
 
 static char const *PROG2_SRC =
         "x = lambda x: x + 1 \n"
@@ -39,8 +39,8 @@ emit(char const *prog)
     vector<Stmt *> stmts;
     parser.parse(stmts);
 
-    llvm::Module *module = emitter.emitModule(stmts, "__main__");
-    module->print(llvm::errs(), nullptr);
+    RTModule *module = emitter.emitModule(stmts, "__main__");
+    module->ir.print(llvm::errs(), nullptr);
 }
 
 TEST_CASE("Emitter", "[Emitter]") {

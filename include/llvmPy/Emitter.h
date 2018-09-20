@@ -20,17 +20,14 @@ class RT;
 class RTScope;
 class RTAny;
 class RTFunc;
+class RTModule;
 
 class Emitter {
 public:
     explicit Emitter(Compiler &c) noexcept;
 
-    llvm::Value * emit(
-            AST const &ast,
-            llvm::Module &module,
-            RTScope &outer);
-
-    llvm::Module * emitModule(
+    RTModule *
+    emitModule(
             std::vector<Stmt *> const &stmts,
             std::string const &name);
 
@@ -40,19 +37,24 @@ public:
             std::vector<std::string const *> args,
             std::vector<Stmt *> body,
             llvm::Module &module,
-            RTScope &scope);
+            RTScope *scope);
 
 private:
     RT &rt;
     llvm::DataLayout const &dl;
     llvm::LLVMContext &ctx;
-    llvm::IRBuilder<> ir;
+    llvm::IRBuilder<llvm::NoFolder> ir;
     Types types;
+
+    llvm::Value * emit(
+            AST const &ast,
+            llvm::Module &module,
+            RTScope &outer);
 
     llvm::Value * address(RTAny &);
     llvm::Value * address(RTAny *);
 
-    llvm::Value * emit(RTAtom const &);
+    llvm::AllocaInst * alloca(RTAtom const &);
     llvm::Value * ptr(RTAtom const &);
 };
 
