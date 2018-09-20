@@ -38,18 +38,18 @@ Emitter::emit(
 
     case ASTType::ExprDecLit: {
         auto &expr = cast<DecLitExpr>(ast);
-        return emitAlloca(expr.value, "lit");
+        return emitAlloca(RTDecAtom(expr.value), "lit");
     }
 
     case ASTType::ExprIntLit: {
         // TODO: Proper integers.
         auto &expr = cast<IntLitExpr>(ast);
-        return emitAlloca(expr.value, "lit");
+        return emitAlloca(RTIntAtom(expr.value), "lit");
     }
 
     case ASTType::ExprBoolLit: {
         auto &expr = cast<BoolLitExpr>(ast);
-        return emitAlloca(expr.value, "lit");
+        return emitAlloca(RTBoolAtom(expr.value), "lit");
     }
 
     case ASTType::StmtAssign: {
@@ -135,23 +135,23 @@ Emitter::emit(
     }
 }
 
-RTModule *
+RTModuleObj *
 Emitter::emitModule(
         vector<Stmt *> const &stmts,
         string const &name)
 {
-    llvm::Module &ir = *new llvm::Module(name, ctx);
+    llvm::Module *ir = new llvm::Module(name, ctx);
 
-    RTFunc &func = *emitFunction(
+    RTFuncObj *func = emitFunction(
             "__body__",
             {},
             stmts,
-            ir,
+            *ir,
             nullptr);
 
-    RTModule *rtmodule = new RTModule(
+    RTModuleObj *rtmodule = new RTModuleObj(
             name,
-            func.scope,
+            func->scope,
             func,
             ir);
 
@@ -160,7 +160,7 @@ Emitter::emitModule(
     return rtmodule;
 }
 
-RTFunc *
+RTFuncObj *
 Emitter::emitFunction(
         string const &name,
         vector<string const *> const args,
@@ -210,7 +210,7 @@ Emitter::emitFunction(
             // Pre-register all assigned identifiers in the scope.
             auto &assign = *cast<AssignStmt>(stmt);
             auto &ident = assign.lhs;
-            scope.slots[ident] = emitAlloca(RTNone::getInstance(), ident);
+            scope.slots[ident] = emitAlloca(RTNoneAtom(), ident);
             break;
         }
 
@@ -239,7 +239,7 @@ Emitter::emitFunction(
 
     if (!lastIsRet) {
         // Return None if not an explicit return.
-        value = emitAlloca(RTNone::getInstance());
+        value = emitAlloca(RTNoneAtom());
         ir.CreateStore(value, func->arg_begin());
         ir.CreateRetVoid();
     }
@@ -247,19 +247,7 @@ Emitter::emitFunction(
     llvm::verifyFunction(*func);
     ir.SetInsertPoint(insertPoint);
 
-    return new RTFunc(name, scope, func);
-}
-
-llvm::Value *
-Emitter::address(llvmPy::RTAny &any)
-{
-    return address(&any);
-}
-
-llvm::Value *
-Emitter::address(llvmPy::RTAny *any)
-{
-    return llvm::ConstantInt::get(types.RawPtr, (uint64_t) any);
+    return new RTFuncObj(name, &scope, func);
 }
 
 llvm::AllocaInst *
@@ -278,30 +266,30 @@ Emitter::emitAlloca(
 {
     auto *alloca = ir.CreateAlloca(types.RTAtom, 0, name);
 
-    long tval = (long) atom.getTypeValue();
+    long tval = atom.getTypeValue();
+    double dval;
     uint64_t ival;
 
     switch (atom.getType()) {
-    case RTType::RTBoolAtom:
-        ival = atom.atom.boolean ? 1 : 0;
-        break;
-
-    case RTType::RTIntegerAtom:
-        ival = (uint64_t) atom.atom.integer;
-        break;
-
-    case RTType::RTDecimal:
-    case RTType::RTDecimalAtom:
-        ival = * ((uint64_t *) &atom.atom.decimal);
-        break;
-
-    case RTType::RTNone:
-    case RTType::RTNoneAtom:
+    case RTAtomType::None:
         ival = 0;
         break;
 
-    case RTType::RTPtrAtom:
-        ival = (uint64_t) atom.atom.any;
+    case RTAtomType::Bool:
+        ival = atom.getBoolValue() ? 1 : 0;
+        break;
+
+    case RTAtomType::Int:
+        ival = (uint64_t) atom.getIntValue();
+        break;
+
+    case RTAtomType::Dec:
+        dval = atom.getDecValue();
+        ival = * ((uint64_t *) &dval);
+        break;
+
+    case RTAtomType::Obj:
+        ival = (uint64_t) atom.getObjValue();
         break;
 
     default:
@@ -318,12 +306,4 @@ Emitter::emitAlloca(
             alloca);
 
     return alloca;
-}
-
-llvm::Value *
-Emitter::ptr(RTAtom const &atom)
-{
-    return llvm::ConstantInt::get(
-            types.RawPtr,
-            reinterpret_cast<uint64_t >(&atom));
 }

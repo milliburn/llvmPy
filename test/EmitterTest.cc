@@ -41,8 +41,8 @@ emit(char const *prog)
     vector<Stmt *> stmts;
     parser.parse(stmts);
 
-    RTModule *module = emitter.emitModule(stmts, "__main__");
-    module->ir.print(llvm::errs(), nullptr);
+    auto *module = emitter.emitModule(stmts, "__main__");
+    module->ir->print(llvm::errs(), nullptr);
 }
 
 TEST_CASE("Emitter", "[Emitter]") {

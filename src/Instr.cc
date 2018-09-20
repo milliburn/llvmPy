@@ -36,12 +36,26 @@ lpy_add(RTAtom * __restrict__ rv,
         RTAtom & __restrict__ rhs)
 {
     switch (lhs.getType()) {
-    case RTType::RTDecimalAtom:
-    case RTType::RTDecimal:
+
+    case RTAtomType::Int:
         switch (rhs.getType()) {
-        case RTType::RTDecimalAtom:
-        case RTType::RTDecimal:
-            *rv = RTAtom(lhs.atom.decimal + rhs.atom.decimal);
+        case RTAtomType::Int:
+            *rv = RTIntAtom(lhs.getIntValue() + rhs.getIntValue());
+            return;
+
+        case RTAtomType::Dec:
+            *rv = RTDecAtom((double) lhs.getIntValue() + rhs.getDecValue());
+            return;
+        }
+
+    case RTAtomType::Dec:
+        switch (rhs.getType()) {
+        case RTAtomType::Int:
+            *rv = RTDecAtom(lhs.getDecValue() + (double) rhs.getDecValue());
+            return;
+
+        case RTAtomType::Dec:
+            *rv = RTDecAtom(lhs.getDecValue() + rhs.getDecValue());
             return;
 
         default:
@@ -51,8 +65,6 @@ lpy_add(RTAtom * __restrict__ rv,
     default:
         return;
     }
-
-    throw "Oops!";
 }
 
 extern "C" void
@@ -63,31 +75,28 @@ lpy_eq(
 {
     switch (lhs.getType()) {
 
-    case RTType::RTDecimalAtom:
-    case RTType::RTDecimal:
+    case RTAtomType::Dec:
         switch (rhs.getType()) {
-        case RTType::RTDecimalAtom:
-        case RTType::RTDecimal:
-            *rv = RTAtom(lhs.atom.decimal == rhs.atom.decimal);
+        case RTAtomType::Dec:
+            *rv = RTBoolAtom(lhs.getDecValue() == rhs.getDecValue());
             return;
         default:
-            *rv = RTAtom(false);
+            *rv = RTBoolAtom(false);
             return;
         }
 
-    case RTType::RTBoolAtom:
-    case RTType::RTBool:
+    case RTAtomType::Bool:
         switch (rhs.getType()) {
-        case RTType::RTBoolAtom:
-        case RTType::RTBool:
-            *rv = RTAtom(lhs.atom.boolean == rhs.atom.boolean);
+        case RTAtomType::Bool:
+            *rv = RTBoolAtom(lhs.getBoolValue() == rhs.getBoolValue());
             return;
+
         default:
-            *rv = RTAtom(false);
+            *rv = RTBoolAtom(false);
             return;
         }
 
     default:
-        *rv = RTAtom(false);
+        *rv = RTBoolAtom(false);
     }
 }

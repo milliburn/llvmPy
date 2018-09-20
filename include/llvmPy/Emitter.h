@@ -17,21 +17,21 @@ class Value;
 namespace llvmPy {
 
 class RT;
+class RTAtom;
 class RTScope;
-class RTAny;
-class RTFunc;
-class RTModule;
+class RTFuncObj;
+class RTModuleObj;
 
 class Emitter {
 public:
     explicit Emitter(Compiler &c) noexcept;
 
-    RTModule *
+    RTModuleObj *
     emitModule(
             std::vector<Stmt *> const &stmts,
             std::string const &name);
 
-    RTFunc *
+    RTFuncObj *
     emitFunction(
             std::string const &name,
             std::vector<std::string const *> args,
@@ -51,12 +51,8 @@ private:
             llvm::Module &module,
             RTScope &outer);
 
-    llvm::Value * address(RTAny &);
-    llvm::Value * address(RTAny *);
-
     llvm::AllocaInst * emitAlloca(RTAtom const &);
     llvm::AllocaInst * emitAlloca(RTAtom const &, std::string const &);
-    llvm::Value * ptr(RTAtom const &);
 };
 
 } // namespace llvmPy
