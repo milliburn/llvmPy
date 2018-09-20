@@ -38,18 +38,18 @@ Emitter::emit(
 
     case ASTType::ExprDecLit: {
         auto &expr = cast<DecLitExpr>(ast);
-        return alloca(expr.value);
+        return emitAlloca(expr.value, "lit");
     }
 
     case ASTType::ExprIntLit: {
         // TODO: Proper integers.
         auto &expr = cast<IntLitExpr>(ast);
-        return alloca((double) expr.value);
+        return emitAlloca(expr.value, "lit");
     }
 
     case ASTType::ExprBoolLit: {
         auto &expr = cast<BoolLitExpr>(ast);
-        return alloca(expr.value);
+        return emitAlloca(expr.value, "lit");
     }
 
     case ASTType::StmtAssign: {
@@ -68,7 +68,8 @@ Emitter::emit(
             throw SyntaxError("Slot " + ident.name + " does not exist");
         }
 
-        return ir.CreateLoad(value, ident.name);
+        //return ir.CreateLoad(value, ident.name);
+        return value;
     }
 
     case ASTType::ExprCall: {
@@ -168,9 +169,11 @@ Emitter::emitFunction(
         RTScope * const outer)
 {
     RTScope &scope = *new RTScope(outer);
+    long const irArgCount = 1 + args.size();
+    llvm::BasicBlock *insertPoint = ir.GetInsertBlock();
 
     // The first argument is always a structural return pointer.
-    vector<llvm::Type *> argTypes(1 + args.size(), types.RTAtomPtr);
+    vector<llvm::Type *> argTypes(irArgCount, types.RTAtomPtr);
 
     llvm::Function *func =
             llvm::Function::Create(
@@ -184,10 +187,21 @@ Emitter::emitFunction(
 
     // Create the BB as soon as possible to capture allocas.
     auto *bb = llvm::BasicBlock::Create(ctx, "start", func);
+    ir.SetInsertPoint(bb);
 
-    for (auto *arg : args) {
-        ir.SetInsertPoint(bb);
-        scope.slots[*arg] = alloca(RTNone::getInstance());
+    for (long i = 0; i < irArgCount; ++i) {
+        auto *irArg = func->arg_begin() + i;
+
+        if (i == 0) {
+            irArg->setName("rv");
+            irArg->addAttr(llvm::Attribute::AttrKind::StructRet);
+        } else {
+            auto *argName = args[i - 1];
+            irArg->setName(*argName);
+            auto *argMemory = ir.CreateAlloca(types.RTAtom, 0, *argName);
+            scope.slots[*argName] = argMemory;
+            ir.CreateStore(irArg, argMemory);
+        }
     }
 
     for (auto stmt : body) {
@@ -196,8 +210,7 @@ Emitter::emitFunction(
             // Pre-register all assigned identifiers in the scope.
             auto &assign = *cast<AssignStmt>(stmt);
             auto &ident = assign.lhs;
-            ir.SetInsertPoint(bb);
-            scope.slots[ident] = alloca(RTNone::getInstance());
+            scope.slots[ident] = emitAlloca(RTNone::getInstance(), ident);
             break;
         }
 
@@ -206,17 +219,7 @@ Emitter::emitFunction(
     }
 
     llvm::Value *value;
-
-    for (auto *arg = func->arg_begin(); arg < func->arg_end(); arg++) {
-        arg->setName(name);
-
-        if (arg == func->arg_begin()) {
-            arg->addAttr(llvm::Attribute::AttrKind::StructRet);
-        } else {
-            // TODO: Store the argument in the pre-allocated slot above.
-            // ir.CreateStore(arg, alloca);
-        }
-    }
+    bool lastIsRet = false; // True if last statement was a return.
 
     for (auto stmt : body) {
         ir.SetInsertPoint(bb);
@@ -225,19 +228,24 @@ Emitter::emitFunction(
             auto &ret = *cast<ReturnStmt>(stmt);
             // The result is a RTAtom.
             value = emit(ret.expr, module, scope);
-            ir.SetInsertPoint(bb);
             ir.CreateStore(value, func->arg_begin());
             ir.CreateRetVoid();
+            lastIsRet = true;
         } else {
-            emit(*stmt, module, scope);
+            value = emit(*stmt, module, scope);
+            lastIsRet = false;
         }
     }
 
-    // Catch-all at the end.
-    ir.SetInsertPoint(bb);
-    ir.CreateRetVoid();
+    if (!lastIsRet) {
+        // Return None if not an explicit return.
+        value = emitAlloca(RTNone::getInstance());
+        ir.CreateStore(value, func->arg_begin());
+        ir.CreateRetVoid();
+    }
 
     llvm::verifyFunction(*func);
+    ir.SetInsertPoint(insertPoint);
 
     return new RTFunc(name, scope, func);
 }
@@ -254,15 +262,23 @@ Emitter::address(llvmPy::RTAny *any)
     return llvm::ConstantInt::get(types.RawPtr, (uint64_t) any);
 }
 
+llvm::AllocaInst *
+Emitter::emitAlloca(RTAtom const &atom)
+{
+    return emitAlloca(atom, "");
+}
+
 /**
  * Emit a constant value on the stack.
  * @returns Pointer to the allocated region. **/
 llvm::AllocaInst *
-Emitter::alloca(RTAtom const &atom)
+Emitter::emitAlloca(
+        RTAtom const &atom,
+        string const &name)
 {
-    auto *alloca = ir.CreateAlloca(types.RTAtom);
+    auto *alloca = ir.CreateAlloca(types.RTAtom, 0, name);
 
-    uint16_t tval = (uint16_t) atom.getTypeValue();
+    long tval = (long) atom.getTypeValue();
     uint64_t ival;
 
     switch (atom.getType()) {

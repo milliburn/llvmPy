@@ -13,7 +13,7 @@ Types::Types(
 {
     RawPtr = llvm::IntegerType::get(ctx, dl.getPointerSizeInBits());
 
-    RTType = llvm::IntegerType::get(ctx, 16);
+    RTType = RawPtr;
 
     RTAtom = llvm::StructType::create(
             ctx,

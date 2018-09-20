@@ -26,13 +26,12 @@ class RTFunc;
 class RTObj;
 class RTModule;
 
-enum class RTType : uint16_t {
-    RTAny = 1,
-    RTAtom,
+enum class RTType : long {
+    RTNoneAtom = 0,
+    RTAtom = 0,
     RTBoolAtom,
     RTIntegerAtom,
     RTDecimalAtom,
-    RTNoneAtom,
     RTPtrAtom,
     RTScope,
     RTNone,
@@ -66,6 +65,11 @@ public:
     RTAtom(double v)
     : Typed(RTType::RTDecimalAtom)
     { atom.decimal = v; }
+
+    inline
+    RTAtom(long v)
+    : Typed(RTType::RTIntegerAtom)
+    { atom.integer = v; }
 
     inline
     RTAtom(RTAny *v)

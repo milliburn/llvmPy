@@ -14,6 +14,7 @@ using std::string;
 using std::vector;
 
 static char const *PROG1_SRC =
+        "z = lambda x: x + 1 \n"
         "y = 1 \n"
         "x = y + 1 \n";
 

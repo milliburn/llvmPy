@@ -54,7 +54,8 @@ private:
     llvm::Value * address(RTAny &);
     llvm::Value * address(RTAny *);
 
-    llvm::AllocaInst * alloca(RTAtom const &);
+    llvm::AllocaInst * emitAlloca(RTAtom const &);
+    llvm::AllocaInst * emitAlloca(RTAtom const &, std::string const &);
     llvm::Value * ptr(RTAtom const &);
 };
 
