@@ -21,6 +21,7 @@ public:
     Types(llvm::LLVMContext &, llvm::DataLayout const &);
 
     llvm::IntegerType *RawPtr;
+    llvm::IntegerType *RTType;
     llvm::StructType *RTAtom;
     llvm::Type *RTAtomPtr;
     llvm::FunctionType *lpy_add;

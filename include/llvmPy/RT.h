@@ -26,8 +26,8 @@ class RTFunc;
 class RTObj;
 class RTModule;
 
-enum class RTType : long {
-    RTAny,
+enum class RTType : uint16_t {
+    RTAny = 1,
     RTAtom,
     RTBoolAtom,
     RTIntegerAtom,
@@ -85,7 +85,7 @@ protected:
     : Typed(type) {}
 
 private:
-} __attribute__((packed));
+};
 
 class RTAny : public RTAtom {
 public:

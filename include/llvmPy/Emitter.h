@@ -43,7 +43,7 @@ private:
     RT &rt;
     llvm::DataLayout const &dl;
     llvm::LLVMContext &ctx;
-    llvm::IRBuilder<llvm::NoFolder> ir;
+    llvm::IRBuilder<> ir;
     Types types;
 
     llvm::Value * emit(

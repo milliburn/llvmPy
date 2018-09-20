@@ -11,11 +11,13 @@ Types::Types(
         llvm::LLVMContext &ctx,
         llvm::DataLayout const &dl)
 {
-    RawPtr = llvm::IntegerType::get(ctx, dl.getPointerSize());
+    RawPtr = llvm::IntegerType::get(ctx, dl.getPointerSizeInBits());
+
+    RTType = llvm::IntegerType::get(ctx, 16);
 
     RTAtom = llvm::StructType::create(
             ctx,
-            { RawPtr, RawPtr },
+            { RTType, RawPtr },
             "RTAtom",
             true);
 

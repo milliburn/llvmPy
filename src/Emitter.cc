@@ -169,8 +169,21 @@ Emitter::emitFunction(
 {
     RTScope &scope = *new RTScope(outer);
 
+    // The first argument is always a structural return pointer.
+    vector<llvm::Type *> argTypes(1 + args.size(), types.RTAtomPtr);
+
+    llvm::Function *func =
+            llvm::Function::Create(
+                    llvm::FunctionType::get(
+                            llvm::Type::getVoidTy(ctx),
+                            argTypes,
+                            false),
+                    llvm::Function::ExternalLinkage,
+                    name,
+                    &module);
+
     // Create the BB as soon as possible to capture allocas.
-    auto *bb = llvm::BasicBlock::Create(ctx, "start");
+    auto *bb = llvm::BasicBlock::Create(ctx, "start", func);
 
     for (auto *arg : args) {
         ir.SetInsertPoint(bb);
@@ -192,20 +205,6 @@ Emitter::emitFunction(
         }
     }
 
-    // The first argument is always a structural return pointer.
-    vector<llvm::Type *> argTypes(1 + args.size(), types.RTAtomPtr);
-
-    llvm::Function *func =
-            llvm::Function::Create(
-                    llvm::FunctionType::get(
-                            llvm::Type::getVoidTy(ctx),
-                            argTypes,
-                            false),
-                    llvm::Function::ExternalLinkage,
-                    name,
-                    &module);
-
-    bb->insertInto(func);
     llvm::Value *value;
 
     for (auto *arg = func->arg_begin(); arg < func->arg_end(); arg++) {
@@ -263,16 +262,42 @@ Emitter::alloca(RTAtom const &atom)
 {
     auto *alloca = ir.CreateAlloca(types.RTAtom);
 
+    uint16_t tval = (uint16_t) atom.getTypeValue();
+    uint64_t ival;
+
+    switch (atom.getType()) {
+    case RTType::RTBoolAtom:
+        ival = atom.atom.boolean ? 1 : 0;
+        break;
+
+    case RTType::RTIntegerAtom:
+        ival = (uint64_t) atom.atom.integer;
+        break;
+
+    case RTType::RTDecimal:
+    case RTType::RTDecimalAtom:
+        ival = * ((uint64_t *) &atom.atom.decimal);
+        break;
+
+    case RTType::RTNone:
+    case RTType::RTNoneAtom:
+        ival = 0;
+        break;
+
+    case RTType::RTPtrAtom:
+        ival = (uint64_t) atom.atom.any;
+        break;
+
+    default:
+        throw "Oops!";
+    }
+
     ir.CreateStore(
             llvm::ConstantStruct::get(
                     types.RTAtom,
                     {
-                            llvm::ConstantInt::get(
-                                    types.RawPtr,
-                                    static_cast<uint64_t>(atom.getTypeValue())),
-                            llvm::ConstantInt::get(
-                                    types.RawPtr,
-                                    reinterpret_cast<uint64_t>(atom.atom.any)),
+                            llvm::ConstantInt::get(types.RTType, tval),
+                            llvm::ConstantInt::get(types.RawPtr, ival),
                     }),
             alloca);
 
