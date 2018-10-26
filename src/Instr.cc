@@ -31,6 +31,14 @@ Types::Types(
 }
 
 extern "C" void
+lpy_call(
+        RTAtom * __restrict__ rv,
+        RTAtom & __restrict__ callee)
+{
+    auto &func = cast<RTFuncObj>(*cast<RTObjAtom>(callee).getObjValue());
+}
+
+extern "C" void
 lpy_add(RTAtom * __restrict__ rv,
         RTAtom & __restrict__ lhs,
         RTAtom & __restrict__ rhs)

@@ -23,6 +23,8 @@ static char const *PROG2_SRC =
         "y = x(2) + 1 \n"
         "y \n";
 
+static char const *PROG3_SRC = "3\n";
+
 static void
 emit(char const *prog)
 {
@@ -46,6 +48,7 @@ emit(char const *prog)
 }
 
 TEST_CASE("Emitter", "[Emitter]") {
-    emit(PROG2_SRC);
     // emit(PROG2_SRC);
+    // emit(PROG2_SRC);
+    emit(PROG3_SRC);
 }

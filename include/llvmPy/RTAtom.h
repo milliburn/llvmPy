@@ -5,6 +5,7 @@
 namespace llvmPy {
 
 class RTObj;
+class RTFuncObj;
 
 enum class RTAtomType : long {
     None = 0,
@@ -12,6 +13,11 @@ enum class RTAtomType : long {
     Dec = 2,
     Bool = 3,
     Obj = 4,
+    FuncObj = 0x100,
+    Func0 = FuncObj,
+    Func1,
+    Func2,
+    FuncN = 0x1FF,
 };
 
 class RTAtom : public Typed<RTAtomType> {
@@ -24,6 +30,7 @@ public:
     inline double getDecValue() const { return val.decimal; }
     inline bool getBoolValue() const { return val.boolean; }
     inline RTObj * getObjValue() const { return val.obj; }
+    inline RTFuncObj * getFuncValue() const { return val.func; }
 
 protected:
     explicit inline RTAtom(RTAtomType type) : Typed(type) {}
@@ -33,6 +40,7 @@ protected:
         double decimal;
         bool boolean;
         RTObj *obj;
+        RTFuncObj *func;
     } val;
 };
 
