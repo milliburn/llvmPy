@@ -37,4 +37,5 @@ test(string section, int index)
 TEST_CASE("Emitter", "[Emitter]") {
     test("IntLiterals", 1, "Integer literal");
     test("AssignStmt", 1, "Assign statement");
+    test("BinOp", 1, "Binary addition operator");
 }

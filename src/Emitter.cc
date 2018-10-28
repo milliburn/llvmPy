@@ -70,6 +70,17 @@ Emitter::emit(RTModule &mod, AST const &ast)
         return emit(mod, expr.expr);
     }
 
+    case ASTType::ExprBinary: {
+        auto &expr = cast<BinaryExpr>(ast);
+        auto *lhs = emit(mod, expr.lhs);
+        auto *rhs = emit(mod, expr.rhs);
+
+        switch (expr.op) {
+        case tok_add: return ir.CreateCall(mod.llvmPy_add(), { lhs, rhs });
+        default: return nullptr;
+        }
+    }
+
     default:
         return nullptr;
     }
