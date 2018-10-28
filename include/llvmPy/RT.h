@@ -14,6 +14,9 @@ class Value;
 namespace llvmPy {
 
 class Types;
+class RTModule;
+class RTScope;
+class RTFunc;
 
 class RTScope {
 public:
@@ -44,12 +47,26 @@ public:
     llvm::Value *llvmPy_int() const;
     llvm::Value *llvmPy_none() const;
     llvm::Value *llvmPy_callN(int N) const;
+    llvm::Value *llvmPy_func() const;
 
 private:
     llvm::Module &ir;
     Types const &types;
     llvm::Function &func;
     RTScope scope;
+};
+
+class RTFunc {
+public:
+    RTFunc(llvm::Function *func, RTScope *scope) : func(*func), scope(*scope) {}
+
+public:
+    llvm::Function &getFunction() const { return func; }
+    RTScope &getScope() const { return scope; }
+
+private:
+    llvm::Function &func;
+    RTScope &scope;
 };
 
 class RT {

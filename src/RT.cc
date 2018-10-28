@@ -40,3 +40,9 @@ RTModule::llvmPy_callN(int N) const
             "llvmPy_call" + std::to_string(N),
             types.llvmPy_callN[N]);
 }
+
+llvm::Value *
+RTModule::llvmPy_func() const
+{
+    return ir.getOrInsertFunction("llvmPy_func", types.llvmPy_func);
+}

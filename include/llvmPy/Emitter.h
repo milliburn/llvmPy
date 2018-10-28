@@ -31,6 +31,11 @@ public:
     llvm::Value *emit(RTModule &mod, AST const &ast);
     llvm::Value *emit(RTModule &mod, std::vector<Stmt *> const &stmts);
 
+    RTFunc *emitFunc(
+            std::string const &name,
+            RTModule &mod,
+            std::vector<Stmt *> const &stmts);
+
 private:
     RT &rt;
     llvm::DataLayout const &dl;

@@ -29,6 +29,7 @@ public:
     llvm::FunctionType *llvmPy_add;
     llvm::FunctionType *llvmPy_int;
     llvm::FunctionType *llvmPy_none;
+    llvm::FunctionType *llvmPy_func;
 
     static constexpr unsigned long CALL_N_COUNT = 2;
     llvm::FunctionType *llvmPy_callN[CALL_N_COUNT];
@@ -43,6 +44,7 @@ llvmPy::PyInt *llvmPy_int(int64_t value);
 llvmPy::PyNone *llvmPy_none();
 llvmPy::PyObj *llvmPy_call0(llvmPy::PyFunc &func);
 llvmPy::PyObj *llvmPy_call1(llvmPy::PyFunc &func, llvmPy::PyObj &arg0);
+llvmPy::PyFunc *llvmPy_func(llvm::Function *function);
 
 } // extern "C"
 

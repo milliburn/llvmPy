@@ -6,6 +6,8 @@
 #ifdef __cplusplus
 namespace llvmPy {
 
+class RTFunc;
+
 enum class PyObjType : long {
     None = 0,
     Int = 1,
@@ -47,13 +49,13 @@ public:
         return x->isType(PyObjType::Func);
     }
 
-    PyFunc() : PyObj(PyObjType::Func) {}
+    PyFunc(RTFunc &func) : PyObj(PyObjType::Func), func(func) {}
 
 public:
-    long getArity() const { return arity; }
+    RTFunc &getFunc() const { return func; }
 
 private:
-    long const arity = 0;
+    RTFunc &func;
 };
 
 } // namespace llvmPy

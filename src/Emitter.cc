@@ -113,6 +113,15 @@ Emitter::emit(RTModule &mod, AST const &ast)
         }
     }
 
+    case ASTType::ExprLambda: {
+        auto &lambda = cast<LambdaExpr>(ast);
+        auto *func = emitFunc(
+                "lambda",
+                mod,
+                { new ReturnStmt(lambda.expr) });
+        return ir.CreateCall(mod.llvmPy_func(), { &func->getFunction() });
+    }
+
     default:
         return nullptr;
     }
@@ -154,4 +163,59 @@ Emitter::emit(RTModule &mod, std::vector<Stmt *> const &stmts)
     ir.SetInsertPoint(insertPoint);
 
     return lastValue;
+}
+
+RTFunc *
+Emitter::emitFunc(
+        std::string const &name,
+        RTModule &mod,
+        std::vector<Stmt *> const &stmts)
+{
+    RTScope *scope = new RTScope(mod.getScope());
+    llvm::BasicBlock *insertPoint = ir.GetInsertBlock();
+    vector<llvm::Type *> argTypes;
+
+    llvm::Function *func =
+            llvm::Function::Create(
+                    llvm::FunctionType::get(
+                            types.Ptr,
+                            argTypes,
+                            false),
+                    llvm::Function::ExternalLinkage,
+                    name,
+                    &mod.getModule());
+
+    llvm::BasicBlock *prog = llvm::BasicBlock::Create(ctx, "", func);
+    bool lastIsRet = false;
+
+    for (auto *stmt : stmts) {
+        ir.SetInsertPoint(prog);
+
+        if (isa<ReturnStmt>(stmt)) {
+            auto &ret = *cast<ReturnStmt>(stmt);
+            llvm::Value *value = emit(mod, ret.expr);
+            ir.CreateRet(value);
+            lastIsRet = true;
+        } else {
+            emit(mod, *stmt);
+            lastIsRet = false;
+        }
+    }
+
+    if (!lastIsRet) {
+        // Return None if no explicit return.
+        ir.CreateRet(llvm::ConstantPointerNull::get(types.Ptr));
+    }
+
+    llvm::verifyFunction(*func);
+    ir.SetInsertPoint(insertPoint);
+
+    RTFunc *rtFunc = new RTFunc(func, scope);
+
+    func->setPrefixData(
+            llvm::ConstantInt::get(
+                    types.PyIntValue,
+                    (uint64_t) rtFunc));
+
+    return rtFunc;
 }
