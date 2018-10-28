@@ -27,6 +27,17 @@ public:
     explicit Emitter(Compiler &c) noexcept;
 
     RTModuleObj *
+    emitModuleNaked(std::vector<Stmt *> const &stmts, std::string &name);
+
+    RTModuleObj *
+    emitModuleNaked(std::vector<Stmt *> const &stmts);
+
+    llvm::Value *emitValue(
+            AST const &ast,
+            llvm::Module &mod,
+            RTScope &scope);
+
+    RTModuleObj *
     emitModule(
             std::vector<Stmt *> const &stmts,
             std::string const &name);

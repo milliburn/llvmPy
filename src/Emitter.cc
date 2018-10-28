@@ -27,6 +27,53 @@ Emitter::Emitter(Compiler &c) noexcept
 }
 
 llvm::Value *
+Emitter::emitValue(AST const &ast, llvm::Module &mod, RTScope &scope)
+{
+    switch (ast.getType()) {
+
+        /* Constant expressions */
+
+    case ASTType::ExprDecLit: {
+        auto &expr = cast<DecLitExpr>(ast);
+        return emitAlloca(RTDecAtom(expr.value), "lit");
+    }
+
+    case ASTType::ExprIntLit: {
+        // TODO: Proper integers.
+        auto &expr = cast<IntLitExpr>(ast);
+        return emitAlloca(RTIntAtom(expr.value), "lit");
+    }
+
+    case ASTType::ExprBoolLit: {
+        auto &expr = cast<BoolLitExpr>(ast);
+        return emitAlloca(RTBoolAtom(expr.value), "lit");
+    }
+
+    case ASTType::ExprIdent: {
+        auto &ident = cast<IdentExpr>(ast);
+        auto *value = scope.slots[ident.name];
+
+        if (!value) {
+            throw SyntaxError("Slot " + ident.name + " does not exist");
+        }
+
+        //return ir.CreateLoad(value, ident.name);
+        return value;
+    }
+
+    case ASTType::StmtExpr: {
+        auto &expr = cast<ExprStmt>(ast);
+        return emitValue(expr.expr, mod, scope);
+    }
+
+    default:
+        throw EmitterError(
+                "Unrecognised ASTType " + to_string(
+                        static_cast<int>(ast.getType())));
+    }
+}
+
+llvm::Value *
 Emitter::emit(
         AST const &ast,
         llvm::Module &module,
@@ -158,6 +205,66 @@ Emitter::emitModule(
     rt.modules.insert(make_pair(name, rtmodule));
 
     return rtmodule;
+}
+
+RTModuleObj *
+Emitter::emitModuleNaked(std::vector<Stmt *> const &stmts, std::string &name)
+{
+    llvm::Module *mod = new llvm::Module(name, ctx);
+    RTScope *scope = new RTScope();
+
+    // Store original insert point.
+    llvm::BasicBlock *insertPoint = ir.GetInsertBlock();
+
+    vector<llvm::Type *> argTypes;
+
+    llvm::Function *func =
+            llvm::Function::Create(
+                    llvm::FunctionType::get(
+                            llvm::Type::getVoidTy(ctx),
+                            argTypes,
+                            false),
+                    llvm::Function::ExternalLinkage,
+                    "__body__",
+                    mod);
+
+    llvm::BasicBlock *bb =
+            llvm::BasicBlock::Create(ctx, "", func);
+
+    ir.SetInsertPoint(bb);
+
+    for (auto stmt : stmts) {
+        switch (stmt->getType()) {
+        case ASTType::StmtAssign: {
+            // Pre-register all assigned identifiers in the scope.
+            auto &assign = *cast<AssignStmt>(stmt);
+            auto &ident = assign.lhs;
+            scope->slots[ident] = emitAlloca(RTNoneAtom(), ident);
+            break;
+        }
+
+        default: break;
+        }
+    }
+
+    for (auto stmt : stmts) {
+        ir.SetInsertPoint(bb);
+        emit(*stmt, *mod, *scope);
+    }
+
+    // Restore original insert point.
+    ir.SetInsertPoint(insertPoint);
+
+    RTFuncObj *rtFunc = new RTFuncObj("__body__", scope, func);
+    RTModuleObj *rtModule = new RTModuleObj(name, rtFunc->scope, rtFunc, mod);
+    return rtModule;
+}
+
+RTModuleObj *
+Emitter::emitModuleNaked(std::vector<Stmt *> const &stmts)
+{
+    std::string name("");
+    return emitModuleNaked(stmts, name);
 }
 
 RTFuncObj *

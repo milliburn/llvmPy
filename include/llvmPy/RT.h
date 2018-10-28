@@ -23,6 +23,11 @@ public:
     std::unordered_map<std::string, llvm::Value *> slots;
 };
 
+class RTModule {
+    RTModule(llvm::Module *ir) : ir(ir) {}
+    llvm::Module * const ir;
+};
+
 class RT {
 public:
     std::unordered_map<std::string, RTModuleObj *> modules;
