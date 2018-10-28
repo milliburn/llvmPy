@@ -7,7 +7,7 @@ using namespace llvmPy;
 using llvm::cast;
 
 TEST_CASE("Instr", "[Instr]") {
-    SECTION("llvmPy_add will add two integers") {
+    SECTION("llvmPy_add: adding two ints will return an int") {
         PyInt lhs(1);
         PyInt rhs(2);
         PyObj *rv = llvmPy_add(lhs, rhs);
@@ -15,7 +15,7 @@ TEST_CASE("Instr", "[Instr]") {
         CHECK(cast<PyInt>(rv)->getValue() == 3);
     }
 
-    SECTION("llvmPy_int will generate an integer") {
+    SECTION("llvmPy_int: will return an int") {
         PyObj *rv = llvmPy_int(5);
         REQUIRE(rv->isType(PyObjType::Int));
         CHECK(cast<PyInt>(rv)->getValue() == 5);
