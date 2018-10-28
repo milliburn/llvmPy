@@ -3,6 +3,7 @@
 #include <llvm/IR/Function.h>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvmPy/Instr.h>
+#include <llvmPy/PyObj.h>
 #include <llvmPy/RT.h>
 using namespace llvmPy;
 using llvm::cast;
@@ -11,6 +12,11 @@ Types::Types(
         llvm::LLVMContext &ctx,
         llvm::DataLayout const &dl)
 {
+    PyObj = llvm::StructType::create(ctx, "PyObj");
+    Ptr = llvm::PointerType::getUnqual(PyObj);
+
+    PyIntValue = llvm::IntegerType::get(ctx, 64);
+
     RawPtr = llvm::IntegerType::get(ctx, dl.getPointerSizeInBits());
 
     RTType = RawPtr;
@@ -23,88 +29,60 @@ Types::Types(
 
     RTAtomPtr = llvm::PointerType::getUnqual(RTAtom);
 
-    lpy_add = llvm::FunctionType::get(
-            llvm::Type::getVoidTy(ctx),
-            { RTAtomPtr, RTAtomPtr, RTAtomPtr },
-            false);
-
+    lpy_add = llvm::FunctionType::get(Ptr, { Ptr, Ptr }, false);
+    lpy_int = llvm::FunctionType::get(Ptr, { PyIntValue }, false);
 }
 
-extern "C" void
-lpy_call(
-        RTAtom * __restrict__ rv,
-        RTAtom & __restrict__ callee)
+extern "C" PyObj *
+lpy_add(PyObj &l, PyObj &r)
 {
-    auto &func = cast<RTFuncObj>(*cast<RTObjAtom>(callee).getObjValue());
-}
-
-extern "C" void
-lpy_add(RTAtom * __restrict__ rv,
-        RTAtom & __restrict__ lhs,
-        RTAtom & __restrict__ rhs)
-{
-    switch (lhs.getType()) {
-
-    case RTAtomType::Int:
-        switch (rhs.getType()) {
-        case RTAtomType::Int:
-            *rv = RTIntAtom(lhs.getIntValue() + rhs.getIntValue());
-            return;
-
-        case RTAtomType::Dec:
-            *rv = RTDecAtom((double) lhs.getIntValue() + rhs.getDecValue());
-            return;
+    switch (l.getType()) {
+    case Type::Int:
+        switch (r.getType()) {
+        case Type::Int: {
+            PyInt &lhs = cast<PyInt>(l);
+            PyInt &rhs = cast<PyInt>(r);
+            return new PyInt(lhs.getValue() + rhs.getValue());
         }
 
-    case RTAtomType::Dec:
-        switch (rhs.getType()) {
-        case RTAtomType::Int:
-            *rv = RTDecAtom(lhs.getDecValue() + (double) rhs.getDecValue());
-            return;
-
-        case RTAtomType::Dec:
-            *rv = RTDecAtom(lhs.getDecValue() + rhs.getDecValue());
-            return;
+        case Type::Dec: {
+            PyInt &lhs = cast<PyInt>(l);
+            PyDec &rhs = cast<PyDec>(r);
+            return new PyDec(lhs.getValue() + rhs.getValue());
+        }
 
         default:
-            return;
+            return new PyNone();
+
         }
 
+    case Type::Dec: {
+        switch (r.getType()) {
+        case Type::Int: {
+            PyDec &lhs = cast<PyDec>(l);
+            PyInt &rhs = cast<PyInt>(r);
+            return new PyDec(lhs.getValue() + rhs.getValue());
+        }
+
+        case Type::Dec: {
+            PyDec &lhs = cast<PyDec>(l);
+            PyDec &rhs = cast<PyDec>(r);
+            return new PyDec(lhs.getValue() + rhs.getValue());
+        }
+
+        default:
+            return new PyNone();
+
+        }
+    }
+
     default:
-        return;
+        return new PyNone();
     }
 }
 
-extern "C" void
-lpy_eq(
-        RTAtom * __restrict__ rv,
-        RTAtom & __restrict__ lhs,
-        RTAtom & __restrict__ rhs)
+extern "C" PyInt *
+lpy_int(int64_t value)
 {
-    switch (lhs.getType()) {
-
-    case RTAtomType::Dec:
-        switch (rhs.getType()) {
-        case RTAtomType::Dec:
-            *rv = RTBoolAtom(lhs.getDecValue() == rhs.getDecValue());
-            return;
-        default:
-            *rv = RTBoolAtom(false);
-            return;
-        }
-
-    case RTAtomType::Bool:
-        switch (rhs.getType()) {
-        case RTAtomType::Bool:
-            *rv = RTBoolAtom(lhs.getBoolValue() == rhs.getBoolValue());
-            return;
-
-        default:
-            *rv = RTBoolAtom(false);
-            return;
-        }
-
-    default:
-        *rv = RTBoolAtom(false);
-    }
+    return new PyInt(value);
 }

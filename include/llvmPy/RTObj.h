@@ -18,6 +18,7 @@ enum class RTObjType : long {
     Func = 2,
     Module = 3,
     Class = 4,
+    IntLiteral = 5,
 };
 
 class RTObj : public Typed<RTObjType> {
@@ -35,6 +36,17 @@ public:
 protected:
     bool isReadOnly_ = false;
     explicit inline RTObj(RTObjType t) : Typed(t) {}
+};
+
+class RTObj_ : public Typed<RTObjType> {
+public:
+    explicit RTObj_(RTObjType type) : Typed(type) {}
+};
+
+class RTIntLiteral : public RTObj_ {
+public:
+    explicit RTIntLiteral(long value) : RTObj_(RTObjType::IntLiteral), value(value) {}
+    long const value;
 };
 
 class RTFuncObj : public RTObj {

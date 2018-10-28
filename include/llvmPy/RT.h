@@ -7,10 +7,14 @@
 
 #ifdef __cplusplus
 namespace llvm {
+class Function;
+class LLVMContext;
 class Value;
 } // namespace llvm
 
 namespace llvmPy {
+
+class Types;
 
 class RTScope {
 public:
@@ -24,8 +28,27 @@ public:
 };
 
 class RTModule {
-    RTModule(llvm::Module *ir) : ir(ir) {}
-    llvm::Module * const ir;
+public:
+    RTModule(
+            std::string const &name,
+            llvm::Module *module,
+            Types &types,
+            llvm::Function *func);
+
+public:
+    llvm::Function &getFunction() const { return func; }
+    llvm::Module &getModule() const { return ir; }
+    RTScope &getScope() { return scope; }
+
+public:
+    llvm::Value *llvmPy_add() const;
+    llvm::Value *llvmPy_int() const;
+
+private:
+    llvm::Module &ir;
+    Types &types;
+    llvm::Function &func;
+    RTScope scope;
 };
 
 class RT {

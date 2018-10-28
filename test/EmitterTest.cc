@@ -92,8 +92,17 @@ TEST_CASE("Emitter", "[Emitter]") {
 
     SECTION("ExprDecLit") {
         vector<Stmt *> stmts = parseStmts("1");
-        auto *mod = em.emitModuleNaked(stmts);
+        auto &mod = *em.createModule("");
+        llvm::Value *v = em.emit(mod, stmts);
+        // auto *mod = em.emitModuleNaked(stmts);
         // Value *v = em.emitValue(*stmt, *module, scope);
-        mod->ir->print(llvm::errs(), nullptr);
+        mod.getModule().print(llvm::errs(), nullptr);
+    }
+
+    SECTION("Assign statement") {
+        vector<Stmt *> stmts = parseStmts("x = 1");
+        auto &mod = *em.createModule("");
+        llvm::Value *v = em.emit(mod, stmts);
+        mod.getModule().print(llvm::errs(), nullptr);
     }
 }

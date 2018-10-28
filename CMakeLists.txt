@@ -40,7 +40,7 @@ add_library(
         src/RT.cc
         src/SyntaxError.cc
         src/Token.cc
-)
+        include/llvmPy/PyObj.h src/PyObj.cc)
 
 target_include_directories(
         ${name}

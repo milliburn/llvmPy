@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 
 namespace llvm {
@@ -7,32 +9,40 @@ class DataLayout;
 class IntegerType;
 class LLVMContext;
 class FunctionType;
+class PointerType;
 class StructType;
 class Type;
 } // namespace llvm
 
 namespace llvmPy {
 
-class RTAtom;
-class RTAny;
+class PyObj;
+class PyInt;
 
 class Types {
 public:
     Types(llvm::LLVMContext &, llvm::DataLayout const &);
 
+    llvm::StructType *PyObj; ///< Opaque structure type.
+    llvm::PointerType *Ptr; ///< Pointer to PyObj.
+
+    llvm::IntegerType *PyIntValue;
+
     llvm::IntegerType *RawPtr;
     llvm::IntegerType *RTType;
     llvm::StructType *RTAtom;
     llvm::Type *RTAtomPtr;
+
     llvm::FunctionType *lpy_add;
+    llvm::FunctionType *lpy_int;
 };
 
 }
 
 extern "C" {
 
-void lpy_add(llvmPy::RTAtom *, llvmPy::RTAtom &, llvmPy::RTAtom &);
-void lpy_eq(llvmPy::RTAtom *, llvmPy::RTAtom &, llvmPy::RTAtom &);
+llvmPy::PyObj *lpy_add(llvmPy::PyObj &, llvmPy::PyObj &);
+llvmPy::PyInt *lpy_int(int64_t value);
 
 } // extern "C"
 

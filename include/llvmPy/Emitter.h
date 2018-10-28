@@ -3,13 +3,12 @@
 #include <llvmPy/Compiler.h>
 #include <llvmPy/Instr.h>
 #include <llvm/IR/IRBuilder.h>
-#include <llvm/IR/LLVMContext.h>
-#include "llvm/IR/NoFolder.h"
 
 #ifdef __cplusplus
 namespace llvm {
 class DataLayout;
 class IntegerType;
+class LLVMContext;
 class Module;
 class Value;
 } // namespace llvm
@@ -20,11 +19,19 @@ class RT;
 class RTAtom;
 class RTScope;
 class RTFuncObj;
+class RTModule;
 class RTModuleObj;
 
 class Emitter {
 public:
     explicit Emitter(Compiler &c) noexcept;
+
+    RTModule *createModule(std::string const &name);
+
+    llvm::Value *emit(RTModule &mod, AST const &ast);
+    llvm::Value *emit(RTModule &mod, std::vector<Stmt *> const &stmts);
+
+    RTModule *emitModuleNaked2(std::vector<Stmt *> const &stmts);
 
     RTModuleObj *
     emitModuleNaked(std::vector<Stmt *> const &stmts, std::string &name);

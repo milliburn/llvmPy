@@ -1,6 +1,7 @@
-%RTAtom = type <{ i64, i64 }>
+%PyObj = type opaque
 
 define void @__body__() {
-  %lit = alloca %RTAtom
-  store %RTAtom <{ i64 1, i64 1 }>, %RTAtom* %lit
+  %1 = call %PyObj* @llvmPy_int(i64 1)
 }
+
+declare %PyObj* @llvmPy_int(i64)
