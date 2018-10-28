@@ -40,7 +40,7 @@ Emitter::createModule(std::string const &name)
                     "__body__",
                     module);
 
-    llvm::BasicBlock *bb = llvm::BasicBlock::Create(ctx, "", func);
+    llvm::BasicBlock::Create(ctx, "", func);
 
     return new RTModule(name, module, types, func);
 }
@@ -84,11 +84,12 @@ Emitter::emit(RTModule &mod, std::vector<Stmt *> const &stmts)
     llvm::BasicBlock *insertPoint = ir.GetInsertBlock();
 
     // Begin inserting into module body.
-    llvm::BasicBlock *bb = &mod.getFunction().back();
+    llvm::BasicBlock *init = &mod.getFunction().getEntryBlock();
+    llvm::BasicBlock *prog = &mod.getFunction().back();
 
     for (auto *stmt : stmts) {
         if (stmt->getType() == ASTType::StmtAssign) {
-            ir.SetInsertPoint(bb);
+            ir.SetInsertPoint(init);
             // Pre-register all assigned identifiers in the scope.
             auto &assign = *cast<AssignStmt>(stmt);
             auto &ident = assign.lhs;
@@ -102,7 +103,7 @@ Emitter::emit(RTModule &mod, std::vector<Stmt *> const &stmts)
     }
 
     for (auto *stmt : stmts) {
-        ir.SetInsertPoint(bb);
+        ir.SetInsertPoint(prog);
         lastValue = emit(mod, *stmt);
     }
 

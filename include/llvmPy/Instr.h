@@ -28,16 +28,16 @@ public:
 
     llvm::IntegerType *PyIntValue;
 
-    llvm::FunctionType *lpy_add;
-    llvm::FunctionType *lpy_int;
+    llvm::FunctionType *llvmPy_add;
+    llvm::FunctionType *llvmPy_int;
 };
 
 }
 
 extern "C" {
 
-llvmPy::PyObj *lpy_add(llvmPy::PyObj &, llvmPy::PyObj &);
-llvmPy::PyInt *lpy_int(int64_t value);
+llvmPy::PyObj *llvmPy_add(llvmPy::PyObj &, llvmPy::PyObj &);
+llvmPy::PyInt *llvmPy_int(int64_t value);
 
 } // extern "C"
 

@@ -10,6 +10,7 @@
       <w>ival</w>
       <w>keyw</w>
       <w>oper</w>
+      <w>prog</w>
       <w>stmts</w>
       <w>syntaxes</w>
       <w>toks</w>

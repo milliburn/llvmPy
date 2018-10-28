@@ -17,11 +17,11 @@ RTModule::RTModule(
 llvm::Value *
 RTModule::llvmPy_add() const
 {
-    return ir.getOrInsertFunction("llvmPy_add", types.lpy_add);
+    return ir.getOrInsertFunction("llvmPy_add", types.llvmPy_add);
 }
 
 llvm::Value *
 RTModule::llvmPy_int() const
 {
-    return ir.getOrInsertFunction("llvmPy_int", types.lpy_int);
+    return ir.getOrInsertFunction("llvmPy_int", types.llvmPy_int);
 }

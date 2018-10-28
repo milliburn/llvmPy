@@ -17,12 +17,12 @@ Types::Types(
 
     PyIntValue = llvm::IntegerType::get(ctx, 64);
 
-    lpy_add = llvm::FunctionType::get(Ptr, { Ptr, Ptr }, false);
-    lpy_int = llvm::FunctionType::get(Ptr, { PyIntValue }, false);
+    llvmPy_add = llvm::FunctionType::get(Ptr, { Ptr, Ptr }, false);
+    llvmPy_int = llvm::FunctionType::get(Ptr, { PyIntValue }, false);
 }
 
 extern "C" PyObj *
-lpy_add(PyObj &l, PyObj &r)
+llvmPy_add(PyObj &l, PyObj &r)
 {
     switch (l.getType()) {
     case PyObjType::Int:
@@ -44,7 +44,7 @@ lpy_add(PyObj &l, PyObj &r)
 }
 
 extern "C" PyInt *
-lpy_int(int64_t value)
+llvmPy_int(int64_t value)
 {
     return new PyInt(value);
 }

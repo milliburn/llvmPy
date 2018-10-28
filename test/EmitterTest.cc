@@ -1,8 +1,4 @@
-#include <llvmPy/Lexer.h>
-#include <llvmPy/Parser.h>
-#include <llvmPy/Emitter.h>
-#include <llvmPy/Compiler.h>
-#include <llvmPy/RT.h>
+#include <llvmPy.h>
 #include <llvm/Support/raw_ostream.h>
 #include <sstream>
 #include <string>
@@ -13,40 +9,6 @@ using std::istringstream;
 using std::string;
 using std::vector;
 using llvm::Value;
-
-static char const *PROG1_SRC =
-        "z = lambda x: x + 1 \n"
-        "y = 1 \n"
-        "x = y + 1 \n";
-
-static char const *PROG2_SRC =
-        "x = lambda x: x + 1 \n"
-        "y = x(2) + 1 \n"
-        "y \n";
-
-static char const *PROG3_SRC = "3\n";
-
-static void
-emit(char const *prog)
-{
-    RT rt;
-    Compiler compiler(rt);
-    Emitter emitter(compiler);
-
-    string str(prog);
-    istringstream ss(str);
-
-    Lexer lexer(ss);
-    vector<Token> tokens;
-    lexer.tokenize(tokens);
-
-    Parser parser(tokens);
-    vector<Stmt *> stmts;
-    parser.parse(stmts);
-
-    auto *module = emitter.emitModule(stmts, "__main__");
-    module->ir->print(llvm::errs(), nullptr);
-}
 
 static Stmt *
 parseStmt(char const *str)
