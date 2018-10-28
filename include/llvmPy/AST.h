@@ -14,7 +14,6 @@ enum class ASTType {
     ExprStrLit,
     ExprDecLit,
     ExprIntLit,
-    ExprBoolLit,
     ExprLitAny,
     ExprBinary,
     ExprLambda,
@@ -101,19 +100,6 @@ public:
     explicit IntLitExpr(long v)
         : LitExpr(ASTType::ExprIntLit),
           value(v) {}
-    void toStream(std::ostream &) const override;
-};
-
-class BoolLitExpr : public LitExpr {
-public:
-    static bool classof(AST const *ast) {
-        return ast->isType(ASTType::ExprBoolLit);
-    }
-
-    bool const value;
-    explicit BoolLitExpr(bool v)
-            : LitExpr(ASTType::ExprBoolLit),
-              value(v) {}
     void toStream(std::ostream &) const override;
 };
 

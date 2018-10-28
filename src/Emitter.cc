@@ -57,6 +57,16 @@ Emitter::emit(RTModule &mod, AST const &ast)
         return ir.CreateCall(mod.llvmPy_int(), { value });
     }
 
+    case ASTType::ExprIdent: {
+        auto &expr = cast<IdentExpr>(ast);
+
+        if (expr.name == "None") {
+            return ir.CreateCall(mod.llvmPy_none(), {});
+        } else {
+            throw "error";
+        }
+    }
+
     case ASTType::StmtAssign: {
         auto &stmt = cast<AssignStmt>(ast);
         auto &ident = stmt.lhs;

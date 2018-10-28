@@ -7,35 +7,35 @@ using std::string;
 using std::to_string;
 
 static void
-test(string section, int index, string description)
+test(string section, string subsection, string description)
 {
     SECTION(description) {
         string actual = emitFile(
                 "EmitterTest/" +
                 section +
                 "/" +
-                section +
-                "." + to_string(index) + ".py");
+                subsection + ".py");
 
         string expect = readFile(
                 "EmitterTest/" +
                 section +
                 "/" +
-                section +
-                "." + to_string(index) + ".ll");
+                subsection + ".ll");
 
         REQUIRE(actual == expect);
     }
 }
 
 static void
-test(string section, int index)
+test(string section, string subsection)
 {
-    test(section, index, section + " " + to_string(index));
+    test(section, subsection, section + " " + subsection);
 }
 
 TEST_CASE("Emitter", "[Emitter]") {
-    test("IntLiterals", 1, "Integer literal");
-    test("AssignStmt", 1, "Assign statement");
-    test("BinOp", 1, "Binary addition operator");
+    test("Literals", "Int.1", "Integer literal");
+    test("Literals", "None", "None literal");
+    test("Statement", "Assign.1", "Assign statement");
+    test("BinOp", "Add.1", "Binary addition operator");
+    // test("Call", "Call.0", "Function call with no arguments");
 }

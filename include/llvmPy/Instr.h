@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <llvmPy/PyObj.h>
 
 #ifdef __cplusplus
 
@@ -16,10 +17,6 @@ class Type;
 
 namespace llvmPy {
 
-class PyObj;
-class PyInt;
-class PyNone;
-
 class Types {
 public:
     Types(llvm::LLVMContext &, llvm::DataLayout const &);
@@ -31,6 +28,10 @@ public:
 
     llvm::FunctionType *llvmPy_add;
     llvm::FunctionType *llvmPy_int;
+    llvm::FunctionType *llvmPy_none;
+
+    static constexpr unsigned long CALL_N_COUNT = 2;
+    llvm::FunctionType *llvmPy_callN[CALL_N_COUNT];
 };
 
 }
@@ -40,6 +41,8 @@ extern "C" {
 llvmPy::PyObj *llvmPy_add(llvmPy::PyObj &, llvmPy::PyObj &);
 llvmPy::PyInt *llvmPy_int(int64_t value);
 llvmPy::PyNone *llvmPy_none();
+llvmPy::PyObj *llvmPy_call0(llvmPy::PyFunc &func);
+llvmPy::PyObj *llvmPy_call1(llvmPy::PyFunc &func, llvmPy::PyObj &arg0);
 
 } // extern "C"
 

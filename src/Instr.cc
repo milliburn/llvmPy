@@ -19,6 +19,12 @@ Types::Types(
 
     llvmPy_add = llvm::FunctionType::get(Ptr, { Ptr, Ptr }, false);
     llvmPy_int = llvm::FunctionType::get(Ptr, { PyIntValue }, false);
+    llvmPy_none = llvm::FunctionType::get(Ptr, {}, false);
+
+    for (int i = 0; i < CALL_N_COUNT; ++i) {
+        std::vector<llvm::Type *> args(i, Ptr);
+        llvmPy_callN[i] = llvm::FunctionType::get(Ptr, args, false);
+    }
 }
 
 extern "C" PyObj *
@@ -53,4 +59,16 @@ extern "C" llvmPy::PyNone *
 llvmPy_none()
 {
     return PyNone::get();
+}
+
+extern "C" llvmPy::PyObj *
+llvmPy_call0(llvmPy::PyFunc &func)
+{
+    return nullptr;
+}
+
+extern "C" llvmPy::PyObj *
+llvmPy_call1(llvmPy::PyFunc &func, llvmPy::PyObj &arg0)
+{
+    return nullptr;
 }

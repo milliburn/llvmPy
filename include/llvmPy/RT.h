@@ -42,6 +42,8 @@ public:
 public:
     llvm::Value *llvmPy_add() const;
     llvm::Value *llvmPy_int() const;
+    llvm::Value *llvmPy_none() const;
+    llvm::Value *llvmPy_callN(int N) const;
 
 private:
     llvm::Module &ir;

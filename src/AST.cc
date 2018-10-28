@@ -40,12 +40,6 @@ AST::toStream(std::ostream &) const
 }
 
 void
-BoolLitExpr::toStream(std::ostream &s) const
-{
-    s << (value ? "True" : "False");
-}
-
-void
 StrLitExpr::toStream(std::ostream & s) const
 {
     s << '"' << str << '"';

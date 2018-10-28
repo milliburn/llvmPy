@@ -9,6 +9,7 @@ namespace llvmPy {
 enum class PyObjType : long {
     None = 0,
     Int = 1,
+    Func = 2,
 };
 
 class PyObj : public Typed<PyObjType> {
@@ -38,6 +39,21 @@ public:
 
 private:
     int64_t value;
+};
+
+class PyFunc : public PyObj {
+public:
+    static bool classof(Typed const *x) {
+        return x->isType(PyObjType::Func);
+    }
+
+    PyFunc() : PyObj(PyObjType::Func) {}
+
+public:
+    long getArity() const { return arity; }
+
+private:
+    long const arity = 0;
 };
 
 } // namespace llvmPy
