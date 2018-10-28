@@ -28,11 +28,6 @@ public:
 
     llvm::IntegerType *PyIntValue;
 
-    llvm::IntegerType *RawPtr;
-    llvm::IntegerType *RTType;
-    llvm::StructType *RTAtom;
-    llvm::Type *RTAtomPtr;
-
     llvm::FunctionType *lpy_add;
     llvm::FunctionType *lpy_int;
 };

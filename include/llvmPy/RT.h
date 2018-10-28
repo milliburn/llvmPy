@@ -1,6 +1,4 @@
 #pragma once
-#include <llvmPy/RTAtom.h>
-#include <llvmPy/RTObj.h>
 #include <unordered_map>
 #include <string>
 #include <vector>
@@ -9,6 +7,7 @@
 namespace llvm {
 class Function;
 class LLVMContext;
+class Module;
 class Value;
 } // namespace llvm
 
@@ -32,7 +31,7 @@ public:
     RTModule(
             std::string const &name,
             llvm::Module *module,
-            Types &types,
+            Types const &types,
             llvm::Function *func);
 
 public:
@@ -46,14 +45,13 @@ public:
 
 private:
     llvm::Module &ir;
-    Types &types;
+    Types const &types;
     llvm::Function &func;
     RTScope scope;
 };
 
 class RT {
 public:
-    std::unordered_map<std::string, RTModuleObj *> modules;
 };
 
 } // namespace llvmPy

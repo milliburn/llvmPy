@@ -7,7 +7,7 @@ using namespace llvmPy;
 RTModule::RTModule(
         std::string const &name,
         llvm::Module *module,
-        Types &types,
+        Types const &types,
         llvm::Function *func)
 : ir(*module), types(types), func(*func)
 {
