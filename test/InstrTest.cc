@@ -20,4 +20,11 @@ TEST_CASE("Instr", "[Instr]") {
         REQUIRE(rv->isType(PyObjType::Int));
         CHECK(cast<PyInt>(rv)->getValue() == 5);
     }
+
+    SECTION("llvmPy_none: will return the singleton None instance") {
+        PyObj *rv1 = llvmPy_none();
+        PyObj *rv2 = llvmPy_none();
+        CHECK(rv1->isType(PyObjType::None));
+        CHECK(rv1 == rv2);
+    }
 }

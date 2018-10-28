@@ -1,10 +1,10 @@
 #include <llvmPy/PyObj.h>
 using namespace llvmPy;
 
-static PyNone const PY_NONE;
+static PyNone PY_NONE;
 
-PyNone const &
+PyNone *
 PyNone::get()
 {
-    return PY_NONE;
+    return &PY_NONE;
 }

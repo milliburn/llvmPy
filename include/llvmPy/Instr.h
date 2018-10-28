@@ -18,6 +18,7 @@ namespace llvmPy {
 
 class PyObj;
 class PyInt;
+class PyNone;
 
 class Types {
 public:
@@ -38,6 +39,7 @@ extern "C" {
 
 llvmPy::PyObj *llvmPy_add(llvmPy::PyObj &, llvmPy::PyObj &);
 llvmPy::PyInt *llvmPy_int(int64_t value);
+llvmPy::PyNone *llvmPy_none();
 
 } // extern "C"
 

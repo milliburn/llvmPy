@@ -24,7 +24,7 @@ public:
 
     PyNone() : PyObj(PyObjType::None) {}
 
-    static PyNone const &get();
+    static PyNone *get();
 };
 
 class PyInt : public PyObj {

@@ -48,3 +48,9 @@ llvmPy_int(int64_t value)
 {
     return new PyInt(value);
 }
+
+extern "C" llvmPy::PyNone *
+llvmPy_none()
+{
+    return PyNone::get();
+}
