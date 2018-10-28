@@ -29,6 +29,10 @@ public:
 
 class PyInt : public PyObj {
 public:
+    static bool classof(Typed const *x) {
+        return x->isType(PyObjType::Int);
+    }
+
     PyInt(int64_t value) : PyObj(PyObjType::Int), value(value) {}
     int64_t getValue() const { return value; }
 
