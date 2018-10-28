@@ -22,7 +22,8 @@ Types::Types(
     llvmPy_none = llvm::FunctionType::get(Ptr, {}, false);
 
     for (int i = 0; i < CALL_N_COUNT; ++i) {
-        std::vector<llvm::Type *> args(i, Ptr);
+        // The first argument is always the PyFunc*.
+        std::vector<llvm::Type *> args(i + 1, Ptr);
         llvmPy_callN[i] = llvm::FunctionType::get(Ptr, args, false);
     }
 }

@@ -37,5 +37,5 @@ TEST_CASE("Emitter", "[Emitter]") {
     test("Literals", "None", "None literal");
     test("Statement", "Assign.1", "Assign statement");
     test("BinOp", "Add.1", "Binary addition operator");
-    // test("Call", "Call.0", "Function call with no arguments");
+    test("Call", "call0", "Function call with no arguments");
 }

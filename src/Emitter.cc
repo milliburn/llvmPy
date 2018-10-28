@@ -62,8 +62,14 @@ Emitter::emit(RTModule &mod, AST const &ast)
 
         if (expr.name == "None") {
             return ir.CreateCall(mod.llvmPy_none(), {});
+        }
+
+        auto *slot = mod.getScope().slots[expr.name];
+
+        if (slot == nullptr) {
+            throw "Not Implemented";
         } else {
-            throw "error";
+            return ir.CreateLoad(slot);
         }
     }
 
@@ -88,6 +94,22 @@ Emitter::emit(RTModule &mod, AST const &ast)
         switch (expr.op) {
         case tok_add: return ir.CreateCall(mod.llvmPy_add(), { lhs, rhs });
         default: return nullptr;
+        }
+    }
+
+    case ASTType::ExprCall: {
+        auto &call = cast<CallExpr>(ast);
+        auto *lhs = emit(mod, call.lhs);
+        vector<llvm::Value *> args;
+
+        for (auto *arg : call.args) {
+            args.push_back(emit(mod, *arg));
+        }
+
+        if (args.size() == 0) {
+            return ir.CreateCall(mod.llvmPy_callN(0), { lhs });
+        } else {
+            throw "error";
         }
     }
 
