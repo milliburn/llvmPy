@@ -82,10 +82,22 @@ add_executable(
         test/ParserTest.cc
         test/EmitterTest.cc
         test/testutil.h
-        test/testutil.cc test/InstrTest.cc)
+        test/testutil.cc
+        test/InstrTest.cc)
 
 target_link_libraries(
         ${name}Test
         PRIVATE
             ${name}
             Catch2)
+
+# llvmPy.ir
+
+add_executable(
+        ${name}.ir
+        src/ir_main.cc)
+
+target_link_libraries(
+        ${name}.ir
+        PRIVATE ${name})
+
