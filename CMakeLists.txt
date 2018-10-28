@@ -80,7 +80,9 @@ add_executable(
         test/main.cc
         test/LexerTest.cc
         test/ParserTest.cc
-        test/EmitterTest.cc)
+        test/EmitterTest.cc
+        test/testutil.h
+        test/testutil.cc)
 
 target_link_libraries(
         ${name}Test

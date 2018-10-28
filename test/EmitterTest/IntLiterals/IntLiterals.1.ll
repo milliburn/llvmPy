@@ -1,3 +1,4 @@
+
 %PyObj = type opaque
 
 define void @__body__() {

@@ -1,70 +1,40 @@
 #include <llvmPy.h>
-#include <llvm/Support/raw_ostream.h>
-#include <sstream>
-#include <string>
-#include <vector>
 #include <catch2/catch.hpp>
+#include "testutil.h"
+#include <string>
 using namespace llvmPy;
-using std::istringstream;
 using std::string;
-using std::vector;
-using llvm::Value;
+using std::to_string;
 
-static Stmt *
-parseStmt(char const *str)
+static void
+test(string section, int index, string description)
 {
-    string istr(str);
-    istringstream ss(istr);
+    SECTION(description) {
+        string actual = emitFile(
+                "EmitterTest/" +
+                section +
+                "/" +
+                section +
+                "." + to_string(index) + ".py");
 
-    Lexer lexer(ss);
-    vector<Token> tokens;
-    lexer.tokenize(tokens);
+        string expect = readFile(
+                "EmitterTest/" +
+                section +
+                "/" +
+                section +
+                "." + to_string(index) + ".ll");
 
-    Parser parser(tokens);
-    vector<Stmt *> stmts;
-    parser.parse(stmts);
-
-    // REQUIRE(stmts.size() == 1);
-    return stmts.front();
+        REQUIRE(actual == expect);
+    }
 }
 
-static vector<Stmt *>
-parseStmts(char const *str)
+static void
+test(string section, int index)
 {
-    // string istr(str);
-    istringstream ss(str);
-
-    Lexer lexer(ss);
-    vector<Token> tokens;
-    lexer.tokenize(tokens);
-
-    Parser parser(tokens);
-    vector<Stmt *> stmts;
-    parser.parse(stmts);
-
-    return stmts;
+    test(section, index, section + " " + to_string(index));
 }
 
 TEST_CASE("Emitter", "[Emitter]") {
-    RT rt;
-    Compiler compiler(rt);
-    Emitter em(compiler);
-    llvm::Module *module = new llvm::Module("main", compiler.getContext());
-    RTScope scope;
-
-    SECTION("ExprDecLit") {
-        vector<Stmt *> stmts = parseStmts("1");
-        auto &mod = *em.createModule("");
-        llvm::Value *v = em.emit(mod, stmts);
-        // auto *mod = em.emitModuleNaked(stmts);
-        // Value *v = em.emitValue(*stmt, *module, scope);
-        mod.getModule().print(llvm::errs(), nullptr);
-    }
-
-    SECTION("Assign statement") {
-        vector<Stmt *> stmts = parseStmts("x = 1");
-        auto &mod = *em.createModule("");
-        llvm::Value *v = em.emit(mod, stmts);
-        mod.getModule().print(llvm::errs(), nullptr);
-    }
+    test("IntLiterals", 1, "Integer literal");
+    test("AssignStmt", 1, "Assign statement");
 }
