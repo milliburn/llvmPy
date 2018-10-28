@@ -14,4 +14,10 @@ TEST_CASE("Instr", "[Instr]") {
         REQUIRE(rv->isType(PyObjType::Int));
         CHECK(cast<PyInt>(rv)->getValue() == 3);
     }
+
+    SECTION("llvmPy_int will generate an integer") {
+        PyObj *rv = llvmPy_int(5);
+        REQUIRE(rv->isType(PyObjType::Int));
+        CHECK(cast<PyInt>(rv)->getValue() == 5);
+    }
 }
