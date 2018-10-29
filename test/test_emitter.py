@@ -26,12 +26,46 @@ class EmitterTest(ut.TestCase):
                 elif self.INPUT_RE.match(line):
                     line = self.INPUT_RE.match(line)
                     command = line.groups(0)[0]
-                    print('TEST CASE: ' + command)
-                    self.assertTrue(False)
+                    print(command)
                 elif not command:
                     self.fail(input_file + ' did not specify a test command')
                 else:
-                    pass
+                    actual = check_output(command, shell=True)
+
+        with open(input_file, 'r') as fp:
+            expect = fp.readlines()
+
+        actual = actual.decode('utf8')
+        actual = actual.split('\n')
+
+        i = 0  # expect
+        j = 0  # actual
+
+        while i < len(expect) and j < len(actual):
+            expect_line = expect[i].strip()
+            actual_line = actual[j].strip()
+
+            if not expect_line or expect_line.startswith(';'):
+                i += 1
+                continue
+
+            if not actual_line or actual_line.startswith(';'):
+                j += 1
+                continue
+
+            expect_line = re.split(r'(\/\/.*?\/\/)', expect_line)
+
+            for k in range(len(expect_line)):
+                if expect_line[k].startswith('//'):
+                    expect_line[k] = expect_line[k].strip('/')
+                else:
+                    expect_line[k] = re.escape(expect_line[k])
+
+            self.assertTrue(
+                re.match(''.join(expect_line), actual_line),
+                '{} line {}'.format(input_file, i + 1))
+            i += 1
+            j += 1
 
 
 if __name__ == '__main__':
