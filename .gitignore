@@ -4,3 +4,6 @@
 .idea/usage.statistics.xml
 .idea/tasks.xml
 .build
+__pycache__
+*.pyo
+*.pyc

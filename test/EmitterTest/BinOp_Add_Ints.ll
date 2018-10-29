@@ -1,3 +1,4 @@
+; INPUT: llvmPy.ir --naked -c '1 + 2'
 
 %PyObj = type opaque
 
@@ -8,5 +9,4 @@ define void @__body__() {
 }
 
 declare %PyObj* @llvmPy_int(i64)
-
 declare %PyObj* @llvmPy_add(%PyObj*, %PyObj*)

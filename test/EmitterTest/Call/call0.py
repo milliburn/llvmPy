@@ -1,2 +1,0 @@
-foo = None
-foo()
