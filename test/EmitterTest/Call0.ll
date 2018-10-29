@@ -1,3 +1,4 @@
+; INPUT: llvmPy.ir --naked -c "foo = None; foo()"
 
 %PyObj = type opaque
 
