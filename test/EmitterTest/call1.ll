@@ -7,10 +7,10 @@ define void @__body__() {
   store %PyObj** null, %PyObj** %1
   %2 = call %PyObj* @llvmPy_none()
   store %PyObj* %2, %PyObj** %1
-  %3 = load %PyObj*, %PyObj** %1
-  %4 = call %PyObj* @llvmPy_int(i64 1)
-  %5 = call %PyObj* ()* @llvmPy_fchk(%PyObj* %3, i64 1)
-  %6 = call %PyObj* %5(%PyObj* %4)
+  %fo = load %PyObj*, %PyObj** %1
+  %a = call %PyObj* @llvmPy_int(i64 1)
+  %fp = call %PyObj* ()* @llvmPy_fchk(%PyObj* %fo, i64 1)
+  %rv = call %PyObj* %fp(%PyObj* %a)
 }
 
 declare %PyObj* @llvmPy_none()

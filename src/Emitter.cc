@@ -18,6 +18,14 @@ using std::vector;
 using std::cerr;
 using std::endl;
 
+static struct {
+    string FuncObj = "fo";
+    string PosArgCount = "np";
+    string FuncPtr = "fp";
+    string RetVal = "rv";
+    string Arg = "a";
+} tags;
+
 Emitter::Emitter(Compiler &c) noexcept
 : rt(c.getRT()),
   dl(c.getDataLayout()),
@@ -115,19 +123,27 @@ llvm::Value *
 Emitter::emit(RTModule &mod, CallExpr const &call)
 {
     llvm::Value *lhs = emit(mod, call.lhs);
+    lhs->setName(tags.FuncObj);
     vector<llvm::Value *> args;
 
     for (auto *arg : call.args) {
-        args.push_back(emit(mod, *arg));
+        llvm::Value *value = emit(mod, *arg);
+        value->setName(tags.Arg);
+        args.push_back(value);
     }
 
+    // Count of positional arguments.
     llvm::Value *np = llvm::ConstantInt::get(types.PyIntValue, args.size());
-    llvm::CallInst *inst = ir.CreateCall(mod.llvmPy_fchk(), {lhs, np});
+
+    llvm::CallInst *inst = ir.CreateCall(
+            mod.llvmPy_fchk(),
+            {lhs, np},
+            tags.FuncPtr);
 
     if (args.size() == 0) {
-        return ir.CreateCall(inst, {});
+        return ir.CreateCall(inst, {}, tags.RetVal);
     } else if (args.size() == 1) {
-        return ir.CreateCall(inst, {args[0]});
+        return ir.CreateCall(inst, {args[0]}, tags.RetVal);
     } else {
         cerr << "Cannot call function with more than 1 arguments ("
              << args.size() << " provided)" << endl;
