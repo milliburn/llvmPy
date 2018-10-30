@@ -6,6 +6,8 @@
 #include <llvm/IR/Verifier.h>
 #include <llvm/Support/Casting.h>
 #include <llvm/Support/raw_ostream.h>
+#include <iostream>
+#include <stdlib.h>
 using namespace llvmPy;
 using llvm::cast;
 using llvm::isa;
@@ -13,6 +15,8 @@ using std::make_pair;
 using std::string;
 using std::to_string;
 using std::vector;
+using std::cerr;
+using std::endl;
 
 Emitter::Emitter(Compiler &c) noexcept
 : rt(c.getRT()),
@@ -101,9 +105,13 @@ Emitter::emit(RTModule &mod, AST const &ast)
         }
 
         if (args.size() == 0) {
-            return ir.CreateCall(mod.llvmPy_callN(0), { lhs });
+            return ir.CreateCall(mod.llvmPy_callN(0), {lhs});
+        } else if (args.size() == 1) {
+            return ir.CreateCall(mod.llvmPy_callN(1), {lhs, args[0]});
         } else {
-            throw "error";
+            cerr << "Cannot call function with more than 1 arguments ("
+                 << args.size() << " provided)" << endl;
+            exit(1);
         }
     }
 
