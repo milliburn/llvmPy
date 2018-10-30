@@ -30,7 +30,7 @@ public:
     llvm::Value *emit(RTScope &scope, IntLitExpr const &expr);
     llvm::Value *emit(RTScope &scope, CallExpr const &call);
 
-    RTFunc *emitFunc(
+    RTFunc *createFunction(
             std::string const &name,
             RTScope &scope,
             std::vector<Stmt *> const &stmts);

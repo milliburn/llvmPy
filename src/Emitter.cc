@@ -109,10 +109,10 @@ Emitter::emit(RTScope &scope, AST const &ast)
 
     case ASTType::ExprLambda: {
         auto &lambda = cast<LambdaExpr>(ast);
-        auto *func = emitFunc(
+        auto *func = createFunction(
                 "lambda",
                 scope,
-                { new ReturnStmt(lambda.expr) });
+                {new ReturnStmt(lambda.expr)});
         return ir.CreateCall(mod.llvmPy_func(), { &func->getFunction() });
     }
 
@@ -209,7 +209,7 @@ Emitter::emit(RTScope &scope, std::vector<Stmt *> const &stmts)
 }
 
 RTFunc *
-Emitter::emitFunc(
+Emitter::createFunction(
         std::string const &name,
         RTScope &outerScope,
         std::vector<Stmt *> const &stmts)
