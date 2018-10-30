@@ -8,6 +8,7 @@ import unittest as ut
 
 class EmitterTest(ut.TestCase):
     IS_WHITESPACE_RE = re.compile('^\s*$')
+    IGNORE_RE = re.compile('^\s*;\s*IGNORE\s*$')
     INPUT_RE = re.compile('^\s*;\s*INPUT\s*:\s*(.+?)\s*$')
 
     def test_emitter(self):
@@ -24,6 +25,8 @@ class EmitterTest(ut.TestCase):
             for line in fp.readlines():
                 if self.IS_WHITESPACE_RE.match(line):
                     continue
+                elif not command and self.IGNORE_RE.match(line):
+                    return
                 elif self.INPUT_RE.match(line):
                     line = self.INPUT_RE.match(line)
                     command = line.groups(0)[0]
