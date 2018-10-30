@@ -1,4 +1,4 @@
-; INPUT: llvmPy.ir --naked -c '1 + 2'
+; INPUT: llvmPy.ir -c '1 + 2'
 
 %PyObj = type opaque
 

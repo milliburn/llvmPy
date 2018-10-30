@@ -10,7 +10,6 @@ using namespace llvm::cl;
 using std::cout;
 using std::string;
 
-opt<bool> IsNaked("naked", desc("Output IR without module decorations"));
 opt<string> Cmd("c", desc("Program passed as input"), value_desc("cmd"));
 
 int
@@ -36,10 +35,8 @@ main(int argc, char **argv)
     Compiler compiler(rt);
     Emitter em(compiler);
 
-    if (IsNaked) {
-        RTModule &mod = *em.createModule("", stmts);
-        mod.getModule().print(llvm::outs(), nullptr);
-    }
+    RTModule &mod = *em.createModule("", stmts);
+    mod.getModule().print(llvm::outs(), nullptr);
 
     return 0;
 }

@@ -1,4 +1,4 @@
-; INPUT: llvmPy.ir --naked -c 'f = lambda: 1'
+; INPUT: llvmPy.ir -c 'f = lambda: 1'
 
 %PyObj = type opaque
 
