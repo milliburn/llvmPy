@@ -14,6 +14,9 @@ enum class PyObjType : long {
     Func = 2,
 };
 
+/**
+ * The base class for all objects accessible on the heap at runtime.
+ */
 class PyObj : public Typed<PyObjType> {
 public:
     PyObj(PyObjType type) : Typed(type) {}

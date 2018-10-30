@@ -16,11 +16,8 @@ class Value;
 namespace llvmPy {
 
 class RT;
-class RTAtom;
 class RTScope;
-class RTFuncObj;
 class RTModule;
-class RTModuleObj;
 
 class Emitter {
 public:
@@ -30,6 +27,7 @@ public:
 
     llvm::Value *emit(RTModule &mod, AST const &ast);
     llvm::Value *emit(RTModule &mod, std::vector<Stmt *> const &stmts);
+    llvm::Value *emit(RTModule &mod, IntLitExpr const &expr);
 
     RTFunc *emitFunc(
             std::string const &name,

@@ -49,13 +49,7 @@ llvm::Value *
 Emitter::emit(RTModule &mod, AST const &ast)
 {
     switch (ast.getType()) {
-    case ASTType::ExprIntLit: {
-        auto &expr = cast<IntLitExpr>(ast);
-        auto *value = llvm::ConstantInt::get(
-                types.PyIntValue,
-                static_cast<uint64_t>(expr.value));
-        return ir.CreateCall(mod.llvmPy_int(), { value });
-    }
+    case ASTType::ExprIntLit: return emit(mod, cast<IntLitExpr>(ast));
 
     case ASTType::ExprIdent: {
         auto &expr = cast<IdentExpr>(ast);
@@ -125,6 +119,17 @@ Emitter::emit(RTModule &mod, AST const &ast)
     default:
         return nullptr;
     }
+}
+
+llvm::Value *
+Emitter::emit(RTModule &mod, IntLitExpr const &expr)
+{
+    llvm::ConstantInt *value =
+            llvm::ConstantInt::get(
+                    types.PyIntValue,
+                    static_cast<uint64_t>(expr.value));
+
+    return ir.CreateCall(mod.llvmPy_int(), {value});
 }
 
 llvm::Value *
