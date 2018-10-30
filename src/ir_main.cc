@@ -38,7 +38,7 @@ main(int argc, char **argv)
 
     if (IsNaked) {
         RTModule &mod = *em.createModule("");
-        em.emit(mod, stmts);
+        em.emit(mod.getScope(), stmts);
         mod.getModule().print(llvm::outs(), nullptr);
     }
 

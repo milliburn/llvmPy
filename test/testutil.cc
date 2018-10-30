@@ -51,7 +51,7 @@ string llvmPy::emitFile(string const &path)
     Emitter em(compiler);
 
     RTModule &mod = *em.createModule("");
-    em.emit(mod, parseFile(path));
+    em.emit(mod.getScope(), parseFile(path));
 
     string out;
     llvm::raw_string_ostream sstr(out);

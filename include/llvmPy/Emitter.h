@@ -25,14 +25,14 @@ public:
 
     RTModule *createModule(std::string const &name);
 
-    llvm::Value *emit(RTModule &mod, AST const &ast);
-    llvm::Value *emit(RTModule &mod, std::vector<Stmt *> const &stmts);
-    llvm::Value *emit(RTModule &mod, IntLitExpr const &expr);
-    llvm::Value *emit(RTModule &mod, CallExpr const &call);
+    llvm::Value *emit(RTScope &scope, AST const &ast);
+    llvm::Value *emit(RTScope &scope, std::vector<Stmt *> const &stmts);
+    llvm::Value *emit(RTScope &scope, IntLitExpr const &expr);
+    llvm::Value *emit(RTScope &scope, CallExpr const &call);
 
     RTFunc *emitFunc(
             std::string const &name,
-            RTModule &mod,
+            RTScope &scope,
             std::vector<Stmt *> const &stmts);
 
 private:

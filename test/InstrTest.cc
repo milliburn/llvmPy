@@ -29,18 +29,21 @@ TEST_CASE("Instr", "[Instr]") {
     }
 
     SECTION("llvmPy_fchk: will return the LLVM function pointer") {
-        llvm::LLVMContext ctx;
+        RT rt;
+        Compiler compiler(rt);
+        Emitter em(compiler);
+
+        RTModule *mod = em.createModule("");
 
         llvm::Function *function =
                 llvm::Function::Create(
                         llvm::FunctionType::get(
-                                llvm::Type::getVoidTy(ctx),
+                                llvm::Type::getVoidTy(compiler.getContext()),
                                 {},
                                 false),
                         llvm::Function::ExternalLinkage);
 
-        RTScope scope;
-        RTFunc rtf(function, &scope);
+        RTFunc rtf(*function, mod->getScope());
         PyFunc f(rtf);
         llvm::Function *rv = llvmPy_fchk(f, 0);
         CHECK(rv == function);

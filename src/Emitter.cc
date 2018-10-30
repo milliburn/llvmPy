@@ -58,10 +58,12 @@ Emitter::createModule(std::string const &name)
 }
 
 llvm::Value *
-Emitter::emit(RTModule &mod, AST const &ast)
+Emitter::emit(RTScope &scope, AST const &ast)
 {
+    RTModule &mod = scope.getModule();
+
     switch (ast.getType()) {
-    case ASTType::ExprIntLit: return emit(mod, cast<IntLitExpr>(ast));
+    case ASTType::ExprIntLit: return emit(scope, cast<IntLitExpr>(ast));
 
     case ASTType::ExprIdent: {
         auto &expr = cast<IdentExpr>(ast);
@@ -70,7 +72,7 @@ Emitter::emit(RTModule &mod, AST const &ast)
             return ir.CreateCall(mod.llvmPy_none(), {});
         }
 
-        auto *slot = mod.getScope().slots[expr.name];
+        auto *slot = scope.slots[expr.name];
 
         if (slot == nullptr) {
             throw "Not Implemented";
@@ -82,20 +84,20 @@ Emitter::emit(RTModule &mod, AST const &ast)
     case ASTType::StmtAssign: {
         auto &stmt = cast<AssignStmt>(ast);
         auto &ident = stmt.lhs;
-        auto *slot = mod.getScope().slots[ident];
-        auto *rhs = emit(mod, stmt.rhs);
+        auto *slot = scope.slots[ident];
+        auto *rhs = emit(scope, stmt.rhs);
         return ir.CreateStore(rhs, slot);
     }
 
     case ASTType::StmtExpr: {
         auto &expr = cast<ExprStmt>(ast);
-        return emit(mod, expr.expr);
+        return emit(scope, expr.expr);
     }
 
     case ASTType::ExprBinary: {
         auto &expr = cast<BinaryExpr>(ast);
-        auto *lhs = emit(mod, expr.lhs);
-        auto *rhs = emit(mod, expr.rhs);
+        auto *lhs = emit(scope, expr.lhs);
+        auto *rhs = emit(scope, expr.rhs);
 
         switch (expr.op) {
         case tok_add: return ir.CreateCall(mod.llvmPy_add(), { lhs, rhs });
@@ -103,13 +105,13 @@ Emitter::emit(RTModule &mod, AST const &ast)
         }
     }
 
-    case ASTType::ExprCall: return emit(mod, cast<CallExpr>(ast));
+    case ASTType::ExprCall: return emit(scope, cast<CallExpr>(ast));
 
     case ASTType::ExprLambda: {
         auto &lambda = cast<LambdaExpr>(ast);
         auto *func = emitFunc(
                 "lambda",
-                mod,
+                scope,
                 { new ReturnStmt(lambda.expr) });
         return ir.CreateCall(mod.llvmPy_func(), { &func->getFunction() });
     }
@@ -120,14 +122,16 @@ Emitter::emit(RTModule &mod, AST const &ast)
 }
 
 llvm::Value *
-Emitter::emit(RTModule &mod, CallExpr const &call)
+Emitter::emit(RTScope &scope, CallExpr const &call)
 {
-    llvm::Value *lhs = emit(mod, call.lhs);
+    RTModule &mod = scope.getModule();
+
+    llvm::Value *lhs = emit(scope, call.lhs);
     lhs->setName(tags.FuncObj);
     vector<llvm::Value *> args;
 
     for (auto *arg : call.args) {
-        llvm::Value *value = emit(mod, *arg);
+        llvm::Value *value = emit(scope, *arg);
         value->setName(tags.Arg);
         args.push_back(value);
     }
@@ -152,8 +156,10 @@ Emitter::emit(RTModule &mod, CallExpr const &call)
 }
 
 llvm::Value *
-Emitter::emit(RTModule &mod, IntLitExpr const &expr)
+Emitter::emit(RTScope &scope, IntLitExpr const &expr)
 {
+    RTModule &mod = scope.getModule();
+
     llvm::ConstantInt *value =
             llvm::ConstantInt::get(
                     types.PyIntValue,
@@ -163,8 +169,10 @@ Emitter::emit(RTModule &mod, IntLitExpr const &expr)
 }
 
 llvm::Value *
-Emitter::emit(RTModule &mod, std::vector<Stmt *> const &stmts)
+Emitter::emit(RTScope &scope, std::vector<Stmt *> const &stmts)
 {
+    RTModule &mod = scope.getModule();
+
     llvm::Value *lastValue = nullptr;
 
     // Store original insert point.
@@ -191,7 +199,7 @@ Emitter::emit(RTModule &mod, std::vector<Stmt *> const &stmts)
 
     for (auto *stmt : stmts) {
         ir.SetInsertPoint(prog);
-        lastValue = emit(mod, *stmt);
+        lastValue = emit(scope, *stmt);
     }
 
     // Restore original insert point.
@@ -203,10 +211,12 @@ Emitter::emit(RTModule &mod, std::vector<Stmt *> const &stmts)
 RTFunc *
 Emitter::emitFunc(
         std::string const &name,
-        RTModule &mod,
+        RTScope &outerScope,
         std::vector<Stmt *> const &stmts)
 {
-    RTScope *scope = new RTScope(mod.getScope());
+    RTModule &mod = outerScope.getModule();
+
+    RTScope *innerScope = outerScope.createDerived();
     llvm::BasicBlock *insertPoint = ir.GetInsertBlock();
     vector<llvm::Type *> argTypes;
 
@@ -228,11 +238,11 @@ Emitter::emitFunc(
 
         if (isa<ReturnStmt>(stmt)) {
             auto &ret = *cast<ReturnStmt>(stmt);
-            llvm::Value *value = emit(mod, ret.expr);
+            llvm::Value *value = emit(*innerScope, ret.expr);
             ir.CreateRet(value);
             lastIsRet = true;
         } else {
-            emit(mod, *stmt);
+            emit(*innerScope, *stmt);
             lastIsRet = false;
         }
     }
@@ -245,7 +255,7 @@ Emitter::emitFunc(
     llvm::verifyFunction(*func);
     ir.SetInsertPoint(insertPoint);
 
-    RTFunc *rtFunc = new RTFunc(func, scope);
+    RTFunc *rtFunc = new RTFunc(*func, *innerScope);
 
     func->setPrefixData(
             llvm::ConstantInt::get(

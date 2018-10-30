@@ -5,12 +5,28 @@
 
 using namespace llvmPy;
 
+RTScope *
+RTScope::createDerived()
+{
+    return new RTScope(module, *this);
+}
+
+RTScope &
+RTScope::getParent() const
+{
+    if (!hasParent()) {
+        throw "Cannot return parent of top-level RTScope.";
+    }
+
+    return *parent;
+}
+
 RTModule::RTModule(
         std::string const &name,
         llvm::Module *module,
         Types const &types,
         llvm::Function *func)
-: ir(*module), types(types), func(*func)
+: ir(*module), types(types), func(*func), scope(*this)
 {
 
 }

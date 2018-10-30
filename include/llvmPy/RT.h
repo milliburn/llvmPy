@@ -20,13 +20,28 @@ class RTFunc;
 
 class RTScope {
 public:
-    RTScope() : RTScope(nullptr) {}
+    RTScope(RTModule &module, RTScope &parent)
+        : module(module), parent(&parent)
+    {}
 
-    explicit inline
-    RTScope(RTScope *parent) : parent(parent) {}
+    explicit
+    RTScope(RTModule &module)
+        : module(module), parent(nullptr)
+    {}
 
-    RTScope * const parent;
+public:
+    RTScope *createDerived();
+
     std::unordered_map<std::string, llvm::Value *> slots;
+
+public:
+    RTModule &getModule() const { return module; }
+    bool hasParent() const { return parent != nullptr; }
+    RTScope &getParent() const;
+
+private:
+    RTModule &module;
+    RTScope * const parent;
 };
 
 class RTModule {
@@ -59,7 +74,7 @@ private:
 
 class RTFunc {
 public:
-    RTFunc(llvm::Function *func, RTScope *scope) : func(*func), scope(*scope) {}
+    RTFunc(llvm::Function &func, RTScope &scope) : func(func), scope(scope) {}
 
 public:
     llvm::Function &getFunction() const { return func; }
