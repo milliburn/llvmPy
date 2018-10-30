@@ -85,3 +85,14 @@ llvmPy_func(llvm::Function *function)
     uint64_t raw = *value->getValue().getRawData();
     return reinterpret_cast<PyFunc *>(raw);
 }
+
+/**
+ * @brief Check a function call against the function's signature.
+ * @param np Count of positional arguments passed by the caller.
+ * @return Pointer to the function's IR.
+ */
+extern "C" llvm::Function *
+llvmPy_fchk(llvmPy::PyFunc &func, int np)
+{
+    return &func.getFunc().getFunction();
+}

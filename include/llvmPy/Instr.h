@@ -9,6 +9,7 @@ namespace llvm {
 class DataLayout;
 class IntegerType;
 class LLVMContext;
+class Function;
 class FunctionType;
 class PointerType;
 class StructType;
@@ -45,6 +46,7 @@ llvmPy::PyNone *llvmPy_none();
 llvmPy::PyObj *llvmPy_call0(llvmPy::PyFunc &func);
 llvmPy::PyObj *llvmPy_call1(llvmPy::PyFunc &func, llvmPy::PyObj &arg0);
 llvmPy::PyFunc *llvmPy_func(llvm::Function *function);
+llvm::Function *llvmPy_fchk(llvmPy::PyFunc &func, int np);
 
 } // extern "C"
 

@@ -27,4 +27,22 @@ TEST_CASE("Instr", "[Instr]") {
         CHECK(rv1->isType(PyObjType::None));
         CHECK(rv1 == rv2);
     }
+
+    SECTION("llvmPy_fchk: will return the LLVM function pointer") {
+        llvm::LLVMContext ctx;
+
+        llvm::Function *function =
+                llvm::Function::Create(
+                        llvm::FunctionType::get(
+                                llvm::Type::getVoidTy(ctx),
+                                {},
+                                false),
+                        llvm::Function::ExternalLinkage);
+
+        RTScope scope;
+        RTFunc rtf(function, &scope);
+        PyFunc f(rtf);
+        llvm::Function *rv = llvmPy_fchk(f, 0);
+        CHECK(rv == function);
+    }
 }

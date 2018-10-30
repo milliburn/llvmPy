@@ -80,7 +80,6 @@ add_executable(
         test/main.cc
         test/LexerTest.cc
         test/ParserTest.cc
-        test/EmitterTest.cc
         test/testutil.h
         test/testutil.cc
         test/InstrTest.cc)
