@@ -16,6 +16,8 @@ Types::Types(
 {
     PyObj = llvm::StructType::create(ctx, "PyObj");
     Ptr = llvm::PointerType::getUnqual(PyObj);
+    Func = llvm::FunctionType::get(Ptr, {}, false);
+    FuncPtr = llvm::PointerType::getUnqual(Func);
 
     PyIntValue = llvm::IntegerType::get(ctx, 64);
 
@@ -23,6 +25,7 @@ Types::Types(
     llvmPy_int = llvm::FunctionType::get(Ptr, { PyIntValue }, false);
     llvmPy_none = llvm::FunctionType::get(Ptr, {}, false);
     llvmPy_func = llvm::FunctionType::get(Ptr, { PyIntValue }, false);
+    llvmPy_fchk = llvm::FunctionType::get(FuncPtr, { Ptr, PyIntValue }, false);
 
     for (int i = 0; i < CALL_N_COUNT; ++i) {
         // The first argument is always the PyFunc*.

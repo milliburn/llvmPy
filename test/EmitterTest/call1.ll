@@ -9,9 +9,10 @@ define void @__body__() {
   store %PyObj* %2, %PyObj** %1
   %3 = load %PyObj*, %PyObj** %1
   %4 = call %PyObj* @llvmPy_int(i64 1)
-  %5 = call %PyObj* @llvmPy_call1(%PyObj* %3, %PyObj* %4)
+  %5 = call %PyObj* ()* @llvmPy_fchk(%PyObj* %3, i64 1)
+  %6 = call %PyObj* %5(%PyObj* %4)
 }
 
 declare %PyObj* @llvmPy_none()
 declare %PyObj* @llvmPy_int(i64)
-declare %PyObj* @llvmPy_call1(%PyObj*, %PyObj*)
+declare %PyObj* ()* @llvmPy_fchk(%PyObj*, i64)

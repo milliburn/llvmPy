@@ -95,25 +95,7 @@ Emitter::emit(RTModule &mod, AST const &ast)
         }
     }
 
-    case ASTType::ExprCall: {
-        auto &call = cast<CallExpr>(ast);
-        auto *lhs = emit(mod, call.lhs);
-        vector<llvm::Value *> args;
-
-        for (auto *arg : call.args) {
-            args.push_back(emit(mod, *arg));
-        }
-
-        if (args.size() == 0) {
-            return ir.CreateCall(mod.llvmPy_callN(0), {lhs});
-        } else if (args.size() == 1) {
-            return ir.CreateCall(mod.llvmPy_callN(1), {lhs, args[0]});
-        } else {
-            cerr << "Cannot call function with more than 1 arguments ("
-                 << args.size() << " provided)" << endl;
-            exit(1);
-        }
-    }
+    case ASTType::ExprCall: return emit(mod, cast<CallExpr>(ast));
 
     case ASTType::ExprLambda: {
         auto &lambda = cast<LambdaExpr>(ast);
@@ -126,6 +108,30 @@ Emitter::emit(RTModule &mod, AST const &ast)
 
     default:
         return nullptr;
+    }
+}
+
+llvm::Value *
+Emitter::emit(RTModule &mod, CallExpr const &call)
+{
+    llvm::Value *lhs = emit(mod, call.lhs);
+    vector<llvm::Value *> args;
+
+    for (auto *arg : call.args) {
+        args.push_back(emit(mod, *arg));
+    }
+
+    llvm::Value *np = llvm::ConstantInt::get(types.PyIntValue, args.size());
+    llvm::CallInst *inst = ir.CreateCall(mod.llvmPy_fchk(), {lhs, np});
+
+    if (args.size() == 0) {
+        return ir.CreateCall(inst, {});
+    } else if (args.size() == 1) {
+        return ir.CreateCall(inst, {args[0]});
+    } else {
+        cerr << "Cannot call function with more than 1 arguments ("
+             << args.size() << " provided)" << endl;
+        exit(1);
     }
 }
 

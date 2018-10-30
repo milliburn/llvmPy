@@ -24,6 +24,8 @@ public:
 
     llvm::StructType *PyObj; ///< Opaque structure type.
     llvm::PointerType *Ptr; ///< Pointer to PyObj.
+    llvm::FunctionType *Func; ///< Opaque function.
+    llvm::PointerType *FuncPtr; ///< Pointer to opaque function.
 
     llvm::IntegerType *PyIntValue;
 
@@ -31,6 +33,7 @@ public:
     llvm::FunctionType *llvmPy_int;
     llvm::FunctionType *llvmPy_none;
     llvm::FunctionType *llvmPy_func;
+    llvm::FunctionType *llvmPy_fchk;
 
     static constexpr unsigned long CALL_N_COUNT = 2;
     llvm::FunctionType *llvmPy_callN[CALL_N_COUNT];

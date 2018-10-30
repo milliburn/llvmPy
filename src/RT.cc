@@ -46,3 +46,9 @@ RTModule::llvmPy_func() const
 {
     return ir.getOrInsertFunction("llvmPy_func", types.llvmPy_func);
 }
+
+llvm::Value *
+RTModule::llvmPy_fchk() const
+{
+    return ir.getOrInsertFunction("llvmPy_fchk", types.llvmPy_fchk);
+}

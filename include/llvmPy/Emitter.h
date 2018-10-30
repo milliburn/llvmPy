@@ -28,6 +28,7 @@ public:
     llvm::Value *emit(RTModule &mod, AST const &ast);
     llvm::Value *emit(RTModule &mod, std::vector<Stmt *> const &stmts);
     llvm::Value *emit(RTModule &mod, IntLitExpr const &expr);
+    llvm::Value *emit(RTModule &mod, CallExpr const &call);
 
     RTFunc *emitFunc(
             std::string const &name,
