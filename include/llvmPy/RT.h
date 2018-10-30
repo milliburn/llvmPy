@@ -49,11 +49,11 @@ public:
     RTModule(
             std::string const &name,
             llvm::Module *module,
-            Types const &types,
-            llvm::Function *func);
+            Types const &types);
 
 public:
-    llvm::Function &getFunction() const { return func; }
+    RTFunc &getBody() const { return *func; }
+    void setBody(RTFunc *func) { this->func = func; }
     llvm::Module &getModule() const { return ir; }
     RTScope &getScope() { return scope; }
 
@@ -68,7 +68,7 @@ public:
 private:
     llvm::Module &ir;
     Types const &types;
-    llvm::Function &func;
+    RTFunc *func;
     RTScope scope;
 };
 

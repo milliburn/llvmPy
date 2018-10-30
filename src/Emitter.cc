@@ -36,25 +36,15 @@ Emitter::Emitter(Compiler &c) noexcept
 }
 
 RTModule *
-Emitter::createModule(std::string const &name)
+Emitter::createModule(
+        std::string const &name,
+        std::vector<Stmt *> const &stmts)
 {
     auto *module = new llvm::Module(name, ctx);
-
-    vector<llvm::Type *> argTypes;
-
-    llvm::Function *func =
-            llvm::Function::Create(
-                    llvm::FunctionType::get(
-                            llvm::Type::getVoidTy(ctx),
-                            argTypes,
-                            false),
-                    llvm::Function::ExternalLinkage,
-                    "__body__",
-                    module);
-
-    llvm::BasicBlock::Create(ctx, "", func);
-
-    return new RTModule(name, module, types, func);
+    RTModule *rtModule = new RTModule(name, module, types);
+    RTFunc *body = createFunction("__body__", rtModule->getScope(), stmts);
+    rtModule->setBody(body);
+    return rtModule;
 }
 
 llvm::Value *
@@ -168,46 +158,6 @@ Emitter::emit(RTScope &scope, IntLitExpr const &expr)
     return ir.CreateCall(mod.llvmPy_int(), {value});
 }
 
-llvm::Value *
-Emitter::emit(RTScope &scope, std::vector<Stmt *> const &stmts)
-{
-    RTModule &mod = scope.getModule();
-
-    llvm::Value *lastValue = nullptr;
-
-    // Store original insert point.
-    llvm::BasicBlock *insertPoint = ir.GetInsertBlock();
-
-    // Begin inserting into module body.
-    llvm::BasicBlock *init = &mod.getFunction().getEntryBlock();
-    llvm::BasicBlock *prog = &mod.getFunction().back();
-
-    for (auto *stmt : stmts) {
-        if (stmt->getType() == ASTType::StmtAssign) {
-            ir.SetInsertPoint(init);
-            // Pre-register all assigned identifiers in the scope.
-            auto &assign = *cast<AssignStmt>(stmt);
-            auto &ident = assign.lhs;
-            auto *alloca = ir.CreateAlloca(types.Ptr);
-            mod.getScope().slots[ident] = alloca;
-
-            ir.CreateStore(
-                    llvm::ConstantPointerNull::get(alloca->getType()),
-                    alloca);
-        }
-    }
-
-    for (auto *stmt : stmts) {
-        ir.SetInsertPoint(prog);
-        lastValue = emit(scope, *stmt);
-    }
-
-    // Restore original insert point.
-    ir.SetInsertPoint(insertPoint);
-
-    return lastValue;
-}
-
 RTFunc *
 Emitter::createFunction(
         std::string const &name,
@@ -230,7 +180,25 @@ Emitter::createFunction(
                     name,
                     &mod.getModule());
 
-    llvm::BasicBlock *prog = llvm::BasicBlock::Create(ctx, "", func);
+    // Create module body.
+    llvm::BasicBlock::Create(ctx, "", func);
+    llvm::BasicBlock *init = &func->getEntryBlock();
+    llvm::BasicBlock *prog = &func->back();
+
+    for (auto *stmt : stmts) {
+        // Allocate all slots in the scope.
+        if (stmt->getType() == ASTType::StmtAssign) {
+            ir.SetInsertPoint(init);
+            auto &assign = *cast<AssignStmt>(stmt);
+            auto &ident = assign.lhs;
+            auto *alloca = ir.CreateAlloca(types.Ptr);
+            innerScope->slots[ident] = alloca;
+
+            // The null value will act as a sentinel to detect use before set.
+            ir.CreateStore(llvm::Constant::getNullValue(types.Ptr), alloca);
+        }
+    }
+
     bool lastIsRet = false;
 
     for (auto *stmt : stmts) {

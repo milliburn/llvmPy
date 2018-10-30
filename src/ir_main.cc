@@ -37,8 +37,7 @@ main(int argc, char **argv)
     Emitter em(compiler);
 
     if (IsNaked) {
-        RTModule &mod = *em.createModule("");
-        em.emit(mod.getScope(), stmts);
+        RTModule &mod = *em.createModule("", stmts);
         mod.getModule().print(llvm::outs(), nullptr);
     }
 

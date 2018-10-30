@@ -23,12 +23,13 @@ class Emitter {
 public:
     explicit Emitter(Compiler &c) noexcept;
 
-    RTModule *createModule(std::string const &name);
-
     llvm::Value *emit(RTScope &scope, AST const &ast);
-    llvm::Value *emit(RTScope &scope, std::vector<Stmt *> const &stmts);
     llvm::Value *emit(RTScope &scope, IntLitExpr const &expr);
     llvm::Value *emit(RTScope &scope, CallExpr const &call);
+
+    RTModule *createModule(
+            std::string const &name,
+            std::vector<Stmt *> const &stmts);
 
     RTFunc *createFunction(
             std::string const &name,

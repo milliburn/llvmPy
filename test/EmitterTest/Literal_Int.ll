@@ -2,8 +2,9 @@
 
 %PyObj = type opaque
 
-define void @__body__() {
+define %PyObj* @__body__() prefix i64 //[0-9]+// {
   %1 = call %PyObj* @llvmPy_int(i64 1)
+  ret %PyObj* null
 }
 
 declare %PyObj* @llvmPy_int(i64)

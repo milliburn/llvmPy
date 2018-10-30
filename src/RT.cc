@@ -24,11 +24,9 @@ RTScope::getParent() const
 RTModule::RTModule(
         std::string const &name,
         llvm::Module *module,
-        Types const &types,
-        llvm::Function *func)
-: ir(*module), types(types), func(*func), scope(*this)
+        Types const &types)
+: ir(*module), types(types), scope(*this)
 {
-
 }
 
 llvm::Value *

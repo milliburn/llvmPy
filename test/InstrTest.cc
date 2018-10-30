@@ -33,7 +33,7 @@ TEST_CASE("Instr", "[Instr]") {
         Compiler compiler(rt);
         Emitter em(compiler);
 
-        RTModule *mod = em.createModule("");
+        RTModule *mod = em.createModule("", {});
 
         llvm::Function *function =
                 llvm::Function::Create(
