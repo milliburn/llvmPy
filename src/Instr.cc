@@ -13,25 +13,43 @@ using llvm::cast;
 Types::Types(
         llvm::LLVMContext &ctx,
         llvm::DataLayout const &dl)
+        : ctx(ctx)
 {
     PyObj = llvm::StructType::create(ctx, "PyObj");
     Ptr = llvm::PointerType::getUnqual(PyObj);
     Func = llvm::FunctionType::get(Ptr, {}, false);
     FuncPtr = llvm::PointerType::getUnqual(Func);
+    FrameN = llvm::StructType::create(ctx, "FrameN");
+    FrameNPtr = llvm::PointerType::getUnqual(FrameN);
+    FrameNPtrPtr = llvm::PointerType::getUnqual(FrameNPtr);
 
-    PyIntValue = llvm::IntegerType::get(ctx, 64);
+    PyIntValue = llvm::IntegerType::get(ctx, dl.getPointerSizeInBits());
 
     llvmPy_add = llvm::FunctionType::get(Ptr, { Ptr, Ptr }, false);
     llvmPy_int = llvm::FunctionType::get(Ptr, { PyIntValue }, false);
     llvmPy_none = llvm::FunctionType::get(Ptr, {}, false);
-    llvmPy_func = llvm::FunctionType::get(Ptr, { PyIntValue }, false);
-    llvmPy_fchk = llvm::FunctionType::get(FuncPtr, { Ptr, PyIntValue }, false);
+    llvmPy_func = llvm::FunctionType::get(
+            Ptr, { FrameNPtr, PyIntValue }, false);
+    llvmPy_fchk = llvm::FunctionType::get(
+            FuncPtr, { FrameNPtrPtr, Ptr, PyIntValue }, false);
+}
 
-    for (int i = 0; i < CALL_N_COUNT; ++i) {
-        // The first argument is always the PyFunc*.
-        std::vector<llvm::Type *> args(i + 1, Ptr);
-        llvmPy_callN[i] = llvm::FunctionType::get(Ptr, args, false);
-    }
+llvm::StructType *
+Types::getFrameN() const
+{
+    return FrameN;
+}
+
+llvm::StructType *
+Types::getFrameN(int N) const
+{
+    llvm::StructType *st = llvm::StructType::create(
+            ctx, "Frame" + std::to_string(N));
+    st->setBody(
+            llvm::PointerType::getUnqual(st),
+            FrameNPtr,
+            llvm::ArrayType::get(Ptr, N));
+    return st;
 }
 
 extern "C" PyObj *
@@ -68,20 +86,8 @@ llvmPy_none()
     return PyNone::get();
 }
 
-extern "C" llvmPy::PyObj *
-llvmPy_call0(llvmPy::PyFunc &func)
-{
-    return nullptr;
-}
-
-extern "C" llvmPy::PyObj *
-llvmPy_call1(llvmPy::PyFunc &func, llvmPy::PyObj &arg0)
-{
-    return nullptr;
-}
-
 extern "C" PyFunc *
-llvmPy_func(llvm::Function *function)
+llvmPy_func(FrameN *frame, llvm::Function *function)
 {
     llvm::Constant *prefix = function->getPrefixData();
     llvm::ConstantInt *value = cast<llvm::ConstantInt>(prefix);
@@ -95,7 +101,7 @@ llvmPy_func(llvm::Function *function)
  * @return Pointer to the function's IR.
  */
 extern "C" llvm::Function *
-llvmPy_fchk(llvmPy::PyFunc &func, int np)
+llvmPy_fchk(FrameN **frame, llvmPy::PyFunc &func, int np)
 {
     return &func.getFunc().getFunction();
 }

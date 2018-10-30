@@ -26,6 +26,12 @@ public:
     llvm::PointerType *Ptr; ///< Pointer to PyObj.
     llvm::FunctionType *Func; ///< Opaque function.
     llvm::PointerType *FuncPtr; ///< Pointer to opaque function.
+    llvm::StructType *FrameN; ///< Frame of unknown size (opaque).
+    llvm::PointerType *FrameNPtr;
+    llvm::PointerType *FrameNPtrPtr;
+
+    llvm::StructType *getFrameN() const;
+    llvm::StructType *getFrameN(int N) const;
 
     llvm::IntegerType *PyIntValue;
 
@@ -35,9 +41,18 @@ public:
     llvm::FunctionType *llvmPy_func;
     llvm::FunctionType *llvmPy_fchk;
 
-    static constexpr unsigned long CALL_N_COUNT = 2;
-    llvm::FunctionType *llvmPy_callN[CALL_N_COUNT];
+private:
+    llvm::LLVMContext &ctx;
 };
+
+template<int N>
+struct Frame {
+    Frame<N> *self;
+    Frame<0> *outer;
+    PyObj *vars[N];
+};
+
+typedef Frame<0> FrameN;
 
 }
 
@@ -46,10 +61,8 @@ extern "C" {
 llvmPy::PyObj *llvmPy_add(llvmPy::PyObj &, llvmPy::PyObj &);
 llvmPy::PyInt *llvmPy_int(int64_t value);
 llvmPy::PyNone *llvmPy_none();
-llvmPy::PyObj *llvmPy_call0(llvmPy::PyFunc &func);
-llvmPy::PyObj *llvmPy_call1(llvmPy::PyFunc &func, llvmPy::PyObj &arg0);
-llvmPy::PyFunc *llvmPy_func(llvm::Function *function);
-llvm::Function *llvmPy_fchk(llvmPy::PyFunc &func, int np);
+llvmPy::PyFunc *llvmPy_func(llvmPy::FrameN *frame, llvm::Function *function);
+llvm::Function *llvmPy_fchk(llvmPy::FrameN **callframe, llvmPy::PyFunc &func, int np);
 
 } // extern "C"
 
