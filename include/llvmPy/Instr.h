@@ -8,6 +8,7 @@
 namespace llvm {
 class DataLayout;
 class IntegerType;
+class ConstantInt;
 class LLVMContext;
 class Function;
 class FunctionType;
@@ -31,7 +32,9 @@ public:
     llvm::PointerType *FrameNPtrPtr;
 
     llvm::StructType *getFrameN() const;
+    llvm::PointerType *getFrameNPtr() const;
     llvm::StructType *getFrameN(int N) const;
+    llvm::PointerType *getFrameNPtr(int N) const;
 
     llvm::IntegerType *PyIntValue;
 
@@ -40,6 +43,9 @@ public:
     llvm::FunctionType *llvmPy_none;
     llvm::FunctionType *llvmPy_func;
     llvm::FunctionType *llvmPy_fchk;
+
+    llvm::ConstantInt *getInt32(int32_t value) const;
+    llvm::ConstantInt *getInt64(int64_t value) const;
 
 private:
     llvm::LLVMContext &ctx;

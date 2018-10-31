@@ -24,6 +24,8 @@ static struct {
     string FuncPtr = "fp";
     string RetVal = "rv";
     string Arg = "a";
+    string OuterFrame = "outer";
+    string InnerFrame = "frame";
 } tags;
 
 Emitter::Emitter(Compiler &c) noexcept
@@ -169,6 +171,7 @@ Emitter::createFunction(
     RTScope *innerScope = outerScope.createDerived();
     llvm::BasicBlock *insertPoint = ir.GetInsertBlock();
     vector<llvm::Type *> argTypes;
+    argTypes.push_back(types.FrameNPtr);
 
     llvm::Function *func =
             llvm::Function::Create(
@@ -180,14 +183,31 @@ Emitter::createFunction(
                     name,
                     &mod.getModule());
 
+    // Name the arguments.
+    int iArg = 0;
+    llvm::Value *outerArg;
+    for (auto &arg : func->args()) {
+        if (iArg == 0) {
+            arg.setName(tags.OuterFrame);
+            outerArg = &arg;
+        }
+
+        ++iArg;
+    }
+
     // Create module body.
     llvm::BasicBlock::Create(ctx, "", func);
     llvm::BasicBlock *init = &func->getEntryBlock();
     llvm::BasicBlock *prog = &func->back();
 
+    int slotCount = 0;
+
+    // Find the number of slots to allocate in the frame.
     for (auto *stmt : stmts) {
         // Allocate all slots in the scope.
         if (stmt->getType() == ASTType::StmtAssign) {
+            slotCount++;
+            continue; // XXX
             ir.SetInsertPoint(init);
             auto &assign = *cast<AssignStmt>(stmt);
             auto &ident = assign.lhs;
@@ -196,6 +216,43 @@ Emitter::createFunction(
 
             // The null value will act as a sentinel to detect use before set.
             ir.CreateStore(llvm::Constant::getNullValue(types.Ptr), alloca);
+        }
+    }
+
+    ir.SetInsertPoint(init);
+
+    // Generate the frame.
+    llvm::StructType *frameType = types.getFrameN(slotCount);
+    llvm::AllocaInst *frameAlloca = ir.CreateAlloca(
+            frameType, 0, tags.InnerFrame);
+
+    // Store the frame's self-pointer.
+    llvm::Value *frameSelfPtrGEP = ir.CreateGEP(
+            frameType, frameAlloca, types.getInt32(0));
+    ir.CreateStore(frameAlloca, frameSelfPtrGEP);
+
+    // Store the frame's outer pointer.
+    llvm::Value *frameOuterPtrGEP = ir.CreateGEP(
+            frameType, frameAlloca, types.getInt32(1));
+    ir.CreateStore(outerArg, frameOuterPtrGEP);
+
+    // Zero-initialise the contents of assign statements. This will act
+    // as a sentinel to detect use before set.
+    int iSlot = 0;
+    for (auto *stmt : stmts) {
+        if (stmt->getType() == ASTType::StmtAssign) {
+            ir.SetInsertPoint(init);
+            auto &assign = *cast<AssignStmt>(stmt);
+            auto &ident = assign.lhs;
+            llvm::Value *assignGEP = ir.CreateGEP(
+                    frameType,
+                    frameAlloca,
+                    { types.getInt32(2), types.getInt64(iSlot) });
+            ir.CreateStore(llvm::Constant::getNullValue(types.Ptr), assignGEP);
+            iSlot++;
+
+            // TODO: This will be invalidated if the pointer changes.
+            innerScope->slots[ident] = assignGEP;
         }
     }
 

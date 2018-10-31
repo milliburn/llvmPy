@@ -46,10 +46,39 @@ Types::getFrameN(int N) const
     llvm::StructType *st = llvm::StructType::create(
             ctx, "Frame" + std::to_string(N));
     st->setBody(
-            llvm::PointerType::getUnqual(st),
-            FrameNPtr,
-            llvm::ArrayType::get(Ptr, N));
+            {
+                    llvm::PointerType::getUnqual(st),
+                    FrameNPtr,
+                    llvm::ArrayType::get(Ptr, N)
+            },
+            true);
     return st;
+}
+
+llvm::PointerType *
+Types::getFrameNPtr() const
+{
+    return FrameNPtr;
+}
+
+llvm::PointerType *
+Types::getFrameNPtr(int N) const
+{
+    return llvm::PointerType::getUnqual(getFrameN(N));
+}
+
+llvm::ConstantInt *
+Types::getInt32(int32_t value) const
+{
+    return llvm::ConstantInt::get(
+            llvm::Type::getInt32Ty(ctx), (uint64_t) value);
+}
+
+llvm::ConstantInt *
+Types::getInt64(int64_t value) const
+{
+    return llvm::ConstantInt::get(
+            llvm::Type::getInt64Ty(ctx), (uint64_t) value);
 }
 
 extern "C" PyObj *
