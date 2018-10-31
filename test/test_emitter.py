@@ -26,7 +26,7 @@ class EmitterTest(ut.TestCase):
                 if self.IS_WHITESPACE_RE.match(line):
                     continue
                 elif not command and self.IGNORE_RE.match(line):
-                    return
+                    self.skipTest('Test ignored with the IGNORE directive.')
                 elif self.INPUT_RE.match(line):
                     line = self.INPUT_RE.match(line)
                     command = line.groups(0)[0]
