@@ -6,21 +6,20 @@
 
 define %PyObj* @__body__(%FrameN* %outer) prefix i64 //[0-9]+// {
   %frame = alloca %Frame1
-  %1 = getelementptr %Frame1*, %Frame1* %frame, i32 0
+  %1 = getelementptr %Frame1, %Frame1* %frame, i64 0, i32 0
   store %Frame1* %frame, %Frame1** %1
-  %2 = getelementptr %FrameN*, %Frame1* %frame, i32 1
+  %2 = getelementptr %Frame1, %Frame1* %frame, i64 0, i32 1
   store %FrameN* %outer, %FrameN** %2
-  %3 = getelementptr %PyObj*, %Frame1* %frame, i32 2, i64 0
+  %3 = getelementptr %Frame1, %Frame1* %frame, i64 0, i32 2, i64 0
   store %PyObj* null, %PyObj** %3
 
-  %4 = call %PyObj*, @llvmPy_none()
+  %4 = call %PyObj* @llvmPy_none()
   store %PyObj* %4, %PyObj** %3
 
   %5 = load %PyObj*, %PyObj** %3
   %callframe = alloca %FrameN*
   %6 = call %PyObj* ()* @llvmPy_fchk(%FrameN** %callframe, %PyObj* %5, i64 0)
-  %7 = load %FrameN*, %FrameN** %callframe
-  %8 = call %PyObj* %6(%FrameN* %7)
+  %7 = call %PyObj* %6(%FrameN** %callframe)
 
   ret %PyObj* null
 }

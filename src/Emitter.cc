@@ -19,11 +19,11 @@ using std::cerr;
 using std::endl;
 
 static struct {
-    string FuncObj = "fo";
-    string PosArgCount = "np";
-    string FuncPtr = "fp";
-    string RetVal = "rv";
-    string Arg = "a";
+    string FuncObj = "";
+    string PosArgCount = "";
+    string FuncPtr = "";
+    string RetVal = "";
+    string Arg = "";
     string OuterFrame = "outer";
     string InnerFrame = "frame";
 } tags;
