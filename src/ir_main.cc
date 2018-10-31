@@ -6,27 +6,29 @@
 #include <string>
 #include <vector>
 using namespace llvmPy;
-using namespace llvm::cl;
+namespace cl = llvm::cl;
+using std::cerr;
 using std::cout;
+using std::endl;
 using std::string;
 
-opt<string> Cmd("c", desc("Program passed as input"), value_desc("cmd"));
+cl::opt<string> Cmd(
+        "c",
+        cl::desc("Program passed as input"),
+        cl::value_desc("cmd"),
+        cl::Required);
 
 int
 main(int argc, char **argv)
 {
-    ParseCommandLineOptions(argc, argv);
+    cl::ParseCommandLineOptions(argc, argv);
 
     std::vector<Token> tokens;
     std::vector<Stmt *> stmts;
 
-    if (!Cmd.empty()) {
-        std::stringstream ss(Cmd);
-        Lexer lexer(ss);
-        lexer.tokenize(tokens);
-    } else {
-        return 127;
-    }
+    std::stringstream ss(Cmd);
+    Lexer lexer(ss);
+    lexer.tokenize(tokens);
 
     Parser parser(tokens);
     parser.parse(stmts);
