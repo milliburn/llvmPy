@@ -228,12 +228,18 @@ Emitter::createFunction(
 
     // Store the frame's self-pointer.
     llvm::Value *frameSelfPtrGEP = ir.CreateGEP(
-            frameType, frameAlloca, types.getInt32(0));
+            frameType,
+            frameAlloca,
+            { types.getInt64(0),
+              types.getInt32(0) });
     ir.CreateStore(frameAlloca, frameSelfPtrGEP);
 
     // Store the frame's outer pointer.
     llvm::Value *frameOuterPtrGEP = ir.CreateGEP(
-            frameType, frameAlloca, types.getInt32(1));
+            frameType,
+            frameAlloca,
+            { types.getInt64(0),
+              types.getInt32(1) });
     ir.CreateStore(outerArg, frameOuterPtrGEP);
 
     // Zero-initialise the contents of assign statements. This will act
@@ -247,11 +253,15 @@ Emitter::createFunction(
             llvm::Value *assignGEP = ir.CreateGEP(
                     frameType,
                     frameAlloca,
-                    { types.getInt32(2), types.getInt64(iSlot) });
+                    { types.getInt64(0),
+                      types.getInt32(2),
+                      types.getInt64(iSlot) });
             ir.CreateStore(llvm::Constant::getNullValue(types.Ptr), assignGEP);
             iSlot++;
 
-            // TODO: This will be invalidated if the pointer changes.
+            // TODO: This would be invalidated if the pointer changes
+            // TODO: (i.e. if the callee's chain ends up lifting the frame
+            // TODO: to heap).
             innerScope->slots[ident] = assignGEP;
         }
     }
