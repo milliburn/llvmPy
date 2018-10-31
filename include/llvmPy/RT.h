@@ -75,15 +75,22 @@ private:
 
 class RTFunc {
 public:
-    RTFunc(llvm::Function &func, RTScope &scope) : func(func), scope(scope) {}
+    RTFunc(llvm::Function &func,
+           RTScope &scope,
+           llvm::Value *outerFramePtr,
+           llvm::Value *innerFramePtr);
 
 public:
     llvm::Function &getFunction() const { return func; }
     RTScope &getScope() const { return scope; }
+    llvm::Value *getOuterFramePtr() const { return outerFramePtr; }
+    llvm::Value *getInnerFramePtr() const { return innerFramePtr; }
 
 private:
     llvm::Function &func;
     RTScope &scope;
+    llvm::Value * const outerFramePtr;
+    llvm::Value * const innerFramePtr;
 };
 
 /** The frame of a function call. */

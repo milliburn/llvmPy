@@ -58,3 +58,16 @@ RTModule::llvmPy_fchk() const
 {
     return ir.getOrInsertFunction("llvmPy_fchk", types.llvmPy_fchk);
 }
+
+RTFunc::RTFunc(
+        llvm::Function &func,
+        RTScope &scope,
+        llvm::Value *outerFramePtr,
+        llvm::Value *innerFramePtr)
+: func(func),
+  scope(scope),
+  outerFramePtr(outerFramePtr),
+  innerFramePtr(innerFramePtr)
+{
+}
+
