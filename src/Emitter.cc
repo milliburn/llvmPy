@@ -26,6 +26,7 @@ static struct {
     string Arg = "";
     string OuterFrame = "outer";
     string InnerFrame = "frame";
+    string CallFrame = "callframe";
 } tags;
 
 Emitter::Emitter(Compiler &c) noexcept
@@ -124,30 +125,37 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
     llvm::Value *lhs = emit(scope, call.lhs);
     lhs->setName(tags.FuncObj);
     vector<llvm::Value *> args;
+    args.push_back(nullptr); // Placeholder for the callFrame.
+    int argCount = 0;
 
     for (auto *arg : call.args) {
         llvm::Value *value = emit(scope, *arg);
         value->setName(tags.Arg);
         args.push_back(value);
+        argCount++;
     }
 
+    // Call frame pointer.
+    llvm::AllocaInst *callFrame = ir.CreateAlloca(
+            types.FrameNPtr, 0, tags.CallFrame);
+
     // Count of positional arguments.
-    llvm::Value *np = llvm::ConstantInt::get(types.PyIntValue, args.size());
+    llvm::Value *np = llvm::ConstantInt::get(types.PyIntValue, argCount);
 
     llvm::CallInst *inst = ir.CreateCall(
             mod.llvmPy_fchk(),
-            {lhs, np},
+            { callFrame, lhs, np },
             tags.FuncPtr);
 
-    if (args.size() == 0) {
-        return ir.CreateCall(inst, {}, tags.RetVal);
-    } else if (args.size() == 1) {
-        return ir.CreateCall(inst, {args[0]}, tags.RetVal);
-    } else {
+    args[0] = callFrame;
+
+    if (argCount > 1) {
         cerr << "Cannot call function with more than 1 arguments ("
-             << args.size() << " provided)" << endl;
+             << argCount << " provided)" << endl;
         exit(1);
     }
+
+    return ir.CreateCall(inst, args, tags.RetVal);
 }
 
 llvm::Value *
