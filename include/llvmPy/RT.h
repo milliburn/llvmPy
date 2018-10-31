@@ -17,6 +17,8 @@ class Types;
 class RTModule;
 class RTScope;
 class RTFunc;
+class RTFrame;
+class PyObj;
 
 class RTScope {
 public:
@@ -61,7 +63,6 @@ public:
     llvm::Value *llvmPy_add() const;
     llvm::Value *llvmPy_int() const;
     llvm::Value *llvmPy_none() const;
-    llvm::Value *llvmPy_callN(int N) const;
     llvm::Value *llvmPy_func() const;
     llvm::Value *llvmPy_fchk() const;
 
@@ -83,6 +84,19 @@ public:
 private:
     llvm::Function &func;
     RTScope &scope;
+};
+
+/** The frame of a function call. */
+class RTFrame {
+public:
+    explicit RTFrame(RTFunc &func) : func(func) {};
+
+public:
+    RTFunc &getFunc() const { return func; }
+
+private:
+    RTFunc &func;
+    std::vector<PyObj *> values;
 };
 
 class RT {
