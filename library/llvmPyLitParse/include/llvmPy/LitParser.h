@@ -46,7 +46,7 @@ private:
 class LitParser {
 public:
     explicit LitParser(std::istream const &stream);
-    explicit LitParser(std::string const &string);
+    explicit LitParser(std::string const &input);
     LitTestResult *parseNext();
     void parse();
     std::vector<LitTestResult *> getResults() const;
