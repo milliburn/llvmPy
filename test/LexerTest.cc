@@ -80,17 +80,24 @@ TEST_CASE("Lexer", "[Lexer]") {
     }
 
     SECTION("Multiple statements") {
-        REQUIRE(tokenize("x = 1 \ny = x + 1 \ny \n") ==
-                ">0 x = 1n\n>0 y = x + 1n\n>0 y\n");
+        CHECK(tokenize("x = 1\nx = 2") == ">0 x = 1n\n>0 x = 2n");
+        CHECK(tokenize("x = 1 \ny = x + 1 \ny \n") ==
+              ">0 x = 1n\n>0 y = x + 1n\n>0 y");
     }
 
     SECTION("Function definitions") {
         REQUIRE(tokenize("def f():\n  x = y + 1\n") ==
-                ">0 def f ( ) :\n>2 x = y + 1n\n");
+                ">0 def f ( ) :\n>2 x = y + 1n");
     }
 
     SECTION("Comments") {
-        REQUIRE(tokenize("# Comment \n x = 1 \n # Comment \n x = 2") ==
-                ">0 x = 1 \n>0 x = 2");
+        CHECK(tokenize("# Comment\nx = 1 \n # Comment") ==
+              ">0 x = 1n");
+        CHECK(tokenize("# Comment \nx = 1 \n # Comment \n") ==
+              ">0 x = 1n");
+        CHECK(tokenize("# Comment \nx = 1 \n # Comment \nx = 2") ==
+              ">0 x = 1n\n>0 x = 2n");
+        CHECK(tokenize("x = 1 #Comment \n # Comment \nx = 2") ==
+              ">0 x = 1n\n>0 x = 2n");
     }
 }
