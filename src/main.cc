@@ -55,7 +55,7 @@ main(int argc, char **argv)
     Compiler compiler(rt);
     Emitter em(compiler);
 
-    RTModule &mod = *em.createModule("", stmts);
+    RTModule &mod = *em.createModule("__main__", stmts);
 
     if (IsIR) {
         mod.getModule().print(llvm::outs(), nullptr);
