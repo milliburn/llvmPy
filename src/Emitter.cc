@@ -156,6 +156,28 @@ Emitter::emit(RTScope &scope, IdentExpr const &ident)
 
     llvm::Value *slot = scope.slots[ident.name];
 
+    if (slot == nullptr) {
+        // May be in an upper scope.
+        slot = scope.getParent().slots[ident.name];
+
+        if (!slot) {
+            cerr << "Slot " << ident.name << " not found!" << endl;
+            exit(127);
+        }
+
+        // llvm::StructType *outerFrameType = nullptr;
+
+        llvm::Value *outerFrameSlotGEP = ir.CreateGEP(
+                scope.getOuterFramePtr(),
+                { types.getInt64(0),
+                  types.getInt32(2),
+                  types.getInt64(0) }); // TODO: True index of slot.
+
+        llvm::Value *outerSlot = ir.CreateLoad(outerFrameSlotGEP);
+
+        return outerSlot;
+    }
+
     return ir.CreateLoad(slot);
 }
 
@@ -185,7 +207,13 @@ Emitter::createFunction(
 
     llvm::BasicBlock *insertPoint = ir.GetInsertBlock();
     vector<llvm::Type *> argTypes;
-    argTypes.push_back(types.FrameNPtr);
+
+    if (outerScope.getInnerFramePtr()) {
+        llvm::Value *outerFramePtr = outerScope.getInnerFramePtr();
+        argTypes.push_back(outerFramePtr->getType());
+    } else {
+        argTypes.push_back(types.FrameNPtr);
+    }
 
     llvm::Function *func =
             llvm::Function::Create(
