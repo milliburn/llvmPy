@@ -59,10 +59,21 @@ LitTestResult::getMaxProgress() const
     return maxProgress;
 }
 
+LitParser::LitParser(std::istream &stream)
+: stream(stream)
+{
+}
+
 LitParser::LitParser(std::string const &input)
 : stream(*new std::istringstream(input)) // XXX
 {
     next();
+}
+
+std::vector<LitTestResult *>
+LitParser::getResults() const
+{
+    return results;
 }
 
 LitTestResult *
@@ -116,6 +127,17 @@ LitParser::parseNext()
     passEndOfLine();
 
     return nullptr;
+}
+
+void
+LitParser::parse()
+{
+    while (!isEof()) {
+        LitTestResult *result = parseNext();
+        if (result) {
+            results.push_back(result);
+        }
+    }
 }
 
 char

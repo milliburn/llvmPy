@@ -54,7 +54,7 @@ private:
  */
 class LitParser {
 public:
-    explicit LitParser(std::istream const &stream);
+    explicit LitParser(std::istream &stream);
     explicit LitParser(std::string const &input);
     LitTestResult *parseNext();
     void parse();
