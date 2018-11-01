@@ -3,6 +3,7 @@
 #include <llvm/Support/raw_ostream.h>
 #include <sstream>
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
 using namespace llvmPy;
@@ -15,12 +16,15 @@ using std::string;
 cl::opt<string> Cmd(
         "c",
         cl::desc("Program passed as input"),
-        cl::value_desc("cmd"),
-        cl::Required);
+        cl::value_desc("cmd"));
 
 cl::opt<bool> IsIR(
         "ir",
         cl::desc("Print resulting LLVM IR and exit"));
+
+cl::opt<string> Filename(
+        cl::Positional,
+        cl::desc("Program file"));
 
 int
 main(int argc, char **argv)
@@ -30,9 +34,19 @@ main(int argc, char **argv)
     std::vector<Token> tokens;
     std::vector<Stmt *> stmts;
 
-    std::stringstream ss(Cmd);
-    Lexer lexer(ss);
-    lexer.tokenize(tokens);
+    if (Cmd.getPosition() && Filename.getPosition()) {
+        cerr << "Only one of cmd or filename may be specified." << endl;
+        exit(1);
+    } else if (Cmd.getPosition()) {
+        std::stringstream ss(Cmd);
+        Lexer lexer(ss);
+        lexer.tokenize(tokens);
+    } else if (Filename.getPosition()) {
+        std::ifstream input;
+        input.open(Filename, std::ios::in);
+        Lexer lexer(input);
+        lexer.tokenize(tokens);
+    }
 
     Parser parser(tokens);
     parser.parse(stmts);
