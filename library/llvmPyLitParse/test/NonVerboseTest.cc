@@ -32,4 +32,16 @@ TEST_CASE("NonVerbose") {
         CHECK(result.getCurrentProgress() == 1);
         CHECK(result.getMaxProgress() == 10);
     }
+
+    SECTION("Ignore the first metadata line") {
+        LitParser parser("-- Testing: 10 tests, 10 threads --");
+        LitTestResult *result = parser.parseNext();
+        CHECK(result == nullptr);
+    }
+
+    SECTION("Ignore the testing time metadata line") {
+        LitParser parser("Testing Time: 0.12s");
+        LitTestResult *result = parser.parseNext();
+        CHECK(result == nullptr);
+    }
 }

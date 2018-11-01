@@ -107,9 +107,9 @@ LitParser::parseNext()
                 output,
                 currentProgress,
                 maxProgress);
-    } else {
-        throw std::runtime_error("Unexpected data!");
     }
+
+    return nullptr;
 }
 
 char
