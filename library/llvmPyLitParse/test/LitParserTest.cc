@@ -82,5 +82,9 @@ TEST_CASE("NonVerbose") {
         CHECK(results[1]->getResultCode() == LitResultCode::PASS);
         CHECK(results[9]->getResultCode() == LitResultCode::FAIL);
         CHECK(results[0]->getResultCode() == LitResultCode::UNRESOLVED);
+
+        for (int i = 0; i < results.size(); ++i) {
+            CHECK(results[i] != nullptr);
+        }
     }
 }
