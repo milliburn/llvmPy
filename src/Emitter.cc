@@ -57,22 +57,7 @@ Emitter::emit(RTScope &scope, AST const &ast)
 
     switch (ast.getType()) {
     case ASTType::ExprIntLit: return emit(scope, cast<IntLitExpr>(ast));
-
-    case ASTType::ExprIdent: {
-        auto &expr = cast<IdentExpr>(ast);
-
-        if (expr.name == "None") {
-            return ir.CreateCall(mod.llvmPy_none(), {});
-        }
-
-        auto *slot = scope.slots[expr.name];
-
-        if (slot == nullptr) {
-            throw "Not Implemented";
-        } else {
-            return ir.CreateLoad(slot);
-        }
-    }
+    case ASTType::ExprIdent: return emit(scope, cast<IdentExpr>(ast));
 
     case ASTType::StmtAssign: {
         auto &stmt = cast<AssignStmt>(ast);
@@ -169,6 +154,20 @@ Emitter::emit(RTScope &scope, IntLitExpr const &expr)
                     static_cast<uint64_t>(expr.value));
 
     return ir.CreateCall(mod.llvmPy_int(), {value});
+}
+
+llvm::Value *
+Emitter::emit(RTScope &scope, IdentExpr const &ident)
+{
+    RTModule &mod = scope.getModule();
+
+    if (ident.name == "None") {
+        return ir.CreateCall(mod.llvmPy_none(), {});
+    }
+
+    llvm::Value *slot = scope.slots[ident.name];
+
+    return ir.CreateLoad(slot);
 }
 
 RTFunc *
