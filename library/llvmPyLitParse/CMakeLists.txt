@@ -17,7 +17,7 @@ target_include_directories(
 add_executable(
         ${name}Test
         test/main.cc
-        test/NonVerboseTest.cc)
+        test/LitParserTest.cc)
 
 target_link_libraries(
         ${name}Test
