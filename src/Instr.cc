@@ -15,15 +15,15 @@ Types::Types(
         llvm::DataLayout const &dl)
         : ctx(ctx)
 {
+    i8Ptr = llvm::Type::getInt8PtrTy(ctx);
+
     PyObj = llvm::StructType::create(ctx, "PyObj");
     Ptr = llvm::PointerType::getUnqual(PyObj);
-    Func = llvm::FunctionType::get(Ptr, {}, false);
-    FuncPtr = llvm::PointerType::getUnqual(Func);
     FrameN = llvm::StructType::create(ctx, "FrameN");
     FrameNPtr = llvm::PointerType::getUnqual(FrameN);
     FrameNPtrPtr = llvm::PointerType::getUnqual(FrameNPtr);
-
-    i8Ptr = llvm::Type::getInt8PtrTy(ctx);
+    Func = llvm::FunctionType::get(Ptr, { FrameNPtrPtr }, false);
+    FuncPtr = llvm::PointerType::getUnqual(Func);
 
     PyIntValue = llvm::IntegerType::get(ctx, dl.getPointerSizeInBits());
 
@@ -33,7 +33,7 @@ Types::Types(
     llvmPy_func = llvm::FunctionType::get(
             Ptr, { FrameNPtr, i8Ptr }, false);
     llvmPy_fchk = llvm::FunctionType::get(
-            FuncPtr, { FrameNPtrPtr, Ptr, PyIntValue }, false);
+            i8Ptr, { FrameNPtrPtr, Ptr, PyIntValue }, false);
 }
 
 llvm::StructType *
@@ -81,6 +81,19 @@ Types::getInt64(int64_t value) const
 {
     return llvm::ConstantInt::get(
             llvm::Type::getInt64Ty(ctx), (uint64_t) value);
+}
+
+llvm::FunctionType *
+Types::getFuncN(int N) const
+{
+    std::vector<llvm::Type *> argTypes;
+    argTypes.push_back(FrameNPtrPtr);
+
+    for (int i = 0; i < N; ++i) {
+        argTypes.push_back(Ptr);
+    }
+
+    return llvm::FunctionType::get(Ptr, argTypes, false);
 }
 
 extern "C" PyObj *

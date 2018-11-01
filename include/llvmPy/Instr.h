@@ -50,6 +50,8 @@ public:
     llvm::ConstantInt *getInt32(int32_t value) const;
     llvm::ConstantInt *getInt64(int64_t value) const;
 
+    llvm::FunctionType *getFuncN(int N) const;
+
 private:
     llvm::LLVMContext &ctx;
 };

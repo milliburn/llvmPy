@@ -129,7 +129,11 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
         exit(1);
     }
 
-    return ir.CreateCall(inst, args, tags.RetVal);
+    llvm::Value *funcBitCast = ir.CreateBitCast(
+            inst,
+            llvm::PointerType::getUnqual(types.getFuncN(argCount)));
+
+    return ir.CreateCall(funcBitCast, args, tags.RetVal);
 }
 
 llvm::Value *
