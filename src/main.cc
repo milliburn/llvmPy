@@ -18,6 +18,10 @@ cl::opt<string> Cmd(
         cl::value_desc("cmd"),
         cl::Required);
 
+cl::opt<bool> IsIR(
+        "ir",
+        cl::desc("Print resulting LLVM IR and exit"));
+
 int
 main(int argc, char **argv)
 {
@@ -38,7 +42,13 @@ main(int argc, char **argv)
     Emitter em(compiler);
 
     RTModule &mod = *em.createModule("", stmts);
-    mod.getModule().print(llvm::outs(), nullptr);
+
+    if (IsIR) {
+        mod.getModule().print(llvm::outs(), nullptr);
+    } else {
+        cerr << "Only the --ir option is supported at this time." << endl;
+        exit(1);
+    }
 
     return 0;
 }
