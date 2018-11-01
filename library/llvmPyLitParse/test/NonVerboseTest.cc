@@ -9,13 +9,17 @@ TEST_CASE("NonVerbose") {
         CHECK(result.getResultCode() == LitResultCode::PASS);
         CHECK(result.getSuiteName() == "llvmPy");
         CHECK(result.getTestName() == "Emitter/call1.py");
+        CHECK(result.getCurrentProgress() == 2);
+        CHECK(result.getMaxProgress() == 10);
     }
 
     SECTION("Parse failing result line") {
-        LitParser parser("FAIL: llvmPy :: Emitter/Scope_Hierarchy.py (9 of 10)");
+        LitParser parser("FAIL: llvmPy :: Emitter/Scope_Hierarchy.py (9 of 11)");
         LitTestResult &result = *parser.parseNext();
         CHECK(result.getResultCode() == LitResultCode::FAIL);
         CHECK(result.getSuiteName() == "llvmPy");
         CHECK(result.getTestName() == "Emitter/Scope_Hierarchy.py");
+        CHECK(result.getCurrentProgress() == 9);
+        CHECK(result.getMaxProgress() == 11);
     }
 }

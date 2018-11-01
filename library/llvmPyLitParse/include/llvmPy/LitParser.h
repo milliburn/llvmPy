@@ -28,18 +28,24 @@ public:
             LitResultCode resultCode,
             std::string const &suiteName,
             std::string const &testName,
-            std::string const &output);
+            std::string const &output,
+            int currentProgress,
+            int maxProgress);
 
     LitResultCode getResultCode() const;
     std::string getSuiteName() const;
     std::string getTestName() const;
     std::string getOutput() const;
+    int getCurrentProgress() const;
+    int getMaxProgress() const;
 
 private:
     LitResultCode resultCode;
     std::string suiteName;
     std::string testName;
     std::string output;
+    int const currentProgress;
+    int const maxProgress;
 };
 
 /**
@@ -59,12 +65,15 @@ private:
     std::vector<LitTestResult *> results;
     char ch;
 
+    char get();
     void next();
-    bool is(char const *any, std::stringstream *ss = nullptr);
+    bool is(char const *any);
+    void expect(std::string const &str);
     bool isLogDelineator();
     bool isTrailingDelineator();
     bool isResultCode(LitResultCode *resultCode = nullptr);
     bool isTestName(std::string *testName = nullptr);
+    bool isNumber(int *number);
 };
 
 } // namespace

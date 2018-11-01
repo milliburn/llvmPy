@@ -9,11 +9,15 @@ LitTestResult::LitTestResult(
         LitResultCode resultCode,
         std::string const &suiteName,
         std::string const &testName,
-        std::string const &output)
+        std::string const &output,
+        int currentProgress,
+        int maxProgress)
 : resultCode(resultCode),
   suiteName(suiteName),
   testName(testName),
-  output(output)
+  output(output),
+  currentProgress(currentProgress),
+  maxProgress(maxProgress)
 {
 }
 
@@ -41,6 +45,18 @@ LitTestResult::getOutput() const
     return output;
 }
 
+int
+LitTestResult::getCurrentProgress() const
+{
+    return currentProgress;
+}
+
+int
+LitTestResult::getMaxProgress() const
+{
+    return maxProgress;
+}
+
 LitParser::LitParser(std::string const &input)
 : stream(*new std::istringstream(input)) // XXX
 {
@@ -54,34 +70,52 @@ LitParser::parseNext()
     std::string suiteName;
     std::string testName;
     std::string output;
+    int currentProgress = 0;
+    int maxProgress = 0;
 
     if (isResultCode(&resultCode)) {
-        if (!is(":")) {
-            throw std::runtime_error("Expected ':");
-        }
-
-        next();
+        expect(": ");
 
         if (!isTestName(&suiteName)) {
-            throw std::runtime_error("Expected suite name");
+            throw std::runtime_error("Expected suite name.");
         }
 
-        for (int i = 0; i < 3; ++i) {
-            if (!is(": ")) {
-                throw std::runtime_error("Expected test name");
-            }
-
-            next();
-        }
+        expect(" :: ");
 
         if (!isTestName(&testName)) {
-            throw std::runtime_error("Expected test name");
+            throw std::runtime_error("Expected test name.");
         }
 
-        return new LitTestResult(resultCode, suiteName, testName, output);
+        expect(" (");
+
+        if (!isNumber(&currentProgress)) {
+            throw std::runtime_error("Expected current progress.");
+        }
+
+        expect(" of ");
+
+        if (!isNumber(&maxProgress)) {
+            throw std::runtime_error("Expected max progress.");
+        }
+
+        expect(")");
+
+        return new LitTestResult(
+                resultCode,
+                suiteName,
+                testName,
+                output,
+                currentProgress,
+                maxProgress);
     } else {
         throw std::runtime_error("Unexpected data!");
     }
+}
+
+char
+LitParser::get()
+{
+    return ch;
 }
 
 void
@@ -91,17 +125,20 @@ LitParser::next()
 }
 
 bool
-LitParser::is(char const *any, std::stringstream *ss)
+LitParser::is(char const *any)
 {
-    char const *ptr = std::strchr(any, ch);
-    if (ptr) {
-        return true;
-    } else {
-        if (ss) {
-            (*ss) << ch;
+    return !!std::strchr(any, get());
+}
+
+void
+LitParser::expect(std::string const &str)
+{
+    for (int i = 0; i < str.size(); ++i) {
+        if (str[i] != get()) {
+            throw std::runtime_error("Expected: " + str);
         }
 
-        return false;
+        next();
     }
 }
 
@@ -110,7 +147,8 @@ LitParser::isResultCode(LitResultCode *resultCode)
 {
     std::stringstream ss;
 
-    while (!is(":", &ss)) {
+    while (!is(":")) {
+        ss << get();
         next();
     }
 
@@ -136,11 +174,32 @@ LitParser::isTestName(std::string *testName)
 
     std::stringstream ss;
 
-    while (!is(" (", &ss)) {
+    while (!is(" (")) {
+        ss << get();
         next();
     }
 
     *testName = ss.str();
 
     return !testName->empty();
+}
+
+bool
+LitParser::isNumber(int *number)
+{
+    std::stringstream ss;
+
+    while (is("0123456789")) {
+        ss << get();
+        next();
+    }
+
+    std::string str = ss.str();
+
+    if (str.empty()) {
+        return false;
+    }
+
+    *number = std::stoi(str);
+    return true;
 }
