@@ -88,4 +88,9 @@ TEST_CASE("Lexer", "[Lexer]") {
         REQUIRE(tokenize("def f():\n  x = y + 1\n") ==
                 ">0 def f ( ) :\n>2 x = y + 1n\n");
     }
+
+    SECTION("Comments") {
+        REQUIRE(tokenize("# Comment \n x = 1 \n # Comment \n x = 2") ==
+                ">0 x = 1 \n>0 x = 2");
+    }
 }
