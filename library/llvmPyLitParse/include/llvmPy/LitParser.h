@@ -63,6 +63,7 @@ public:
 private:
     std::istream &stream;
     std::vector<LitTestResult *> results;
+    char line[1024];
     char ch;
 
     char get();
@@ -70,11 +71,12 @@ private:
     bool is(char const *any);
     bool isEol();
     bool isEof();
-    void expect(std::string const &str);
+    bool expect(std::string const &str, bool fail = true);
     bool isLogDelineator();
-    bool isTrailingDelineator();
+    bool isLogDelineator(char *line);
     bool isResultCode(LitResultCode *resultCode = nullptr);
     bool isTestName(std::string *testName = nullptr);
+    bool isOutput(std::string *output);
     bool isNumber(int *number);
     void passEndOfLine();
 };

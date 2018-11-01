@@ -87,4 +87,43 @@ TEST_CASE("NonVerbose") {
             CHECK(results[i] != nullptr);
         }
     }
+
+    SECTION("Parse test output") {
+        std::string testOutput =
+              "Script:\n"
+              "--\n"
+              ": 'RUN: at line 1';   llvmPy --ir /Users/roberth/tetratom/llvmPy/test/Emitter/Scope_Hierarchy.py > /private/var/folder\n"
+              "s/f3/gjd1d_b53_gf6cd9l5zqv4c00000gp/T/tmpeu7i1u7kllvmPy-lit-/Emitter/Output/Scope_Hierarchy.py.tmp1\n"
+              ": 'RUN: at line 2';   cat -n /private/var/folders/f3/gjd1d_b53_gf6cd9l5zqv4c00000gp/T/tmpeu7i1u7kllvmPy-lit-/Emitter/O\n"
+              "utput/Scope_Hierarchy.py.tmp1 >&2\n"
+              ": 'RUN: at line 3';   llvm-as < /private/var/folders/f3/gjd1d_b53_gf6cd9l5zqv4c00000gp/T/tmpeu7i1u7kllvmPy-lit-/Emitte\n"
+              "r/Output/Scope_Hierarchy.py.tmp1 | llvm-dis | FileCheck /Users/roberth/tetratom/llvmPy/test/Emitter/Scope_Hierarchy.py\n"
+              "--\n"
+              "Exit Code: 1\n"
+              "\n"
+              "Command Output (stderr):\n"
+              // ...snip...
+              "<stdin>:40:2: note: with variable \"RV\" equal to \"%7\"\n"
+              " ret %PyObj* %7\n"
+              " ^\n"
+              "\n"
+              "--\n"
+              "\n";
+
+        std::stringstream ss;
+        ss << "FAIL: llvmPy :: Emitter/Scope_Hierarchy.py (5 of 10)\n"
+              "******************** TEST 'llvmPy :: Emitter/Scope_Hierarchy.py' FAILED ********************\n";
+        ss << testOutput;
+        ss << "********************\n";
+
+        ss.seekp(std::ios_base::seekdir::beg);
+        LitParser parser(ss);
+        LitTestResult *result = parser.parseNext();
+        CHECK(result->getResultCode() == LitResultCode::FAIL);
+        CHECK(result->getSuiteName() == "llvmPy");
+        CHECK(result->getTestName() == "Emitter/Scope_Hierarchy.py");
+        CHECK(result->getCurrentProgress() == 5);
+        CHECK(result->getMaxProgress() == 10);
+        CHECK(result->getOutput() == testOutput);
+    }
 }

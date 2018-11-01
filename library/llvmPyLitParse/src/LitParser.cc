@@ -62,6 +62,7 @@ LitTestResult::getMaxProgress() const
 LitParser::LitParser(std::istream &stream)
 : stream(stream)
 {
+    next();
 }
 
 LitParser::LitParser(std::string const &input)
@@ -114,6 +115,8 @@ LitParser::parseNext()
         expect(")");
 
         passEndOfLine();
+
+        isOutput(&output);
 
         return new LitTestResult(
                 resultCode,
@@ -170,16 +173,19 @@ LitParser::isEof()
     return ch == (char) eof;
 }
 
-void
-LitParser::expect(std::string const &str)
+bool
+LitParser::expect(std::string const &str, bool fail)
 {
     for (int i = 0; i < str.size(); ++i) {
         if (str[i] != get()) {
+            if (!fail) return false;
             throw std::runtime_error("Expected: " + str);
         }
 
         next();
     }
+
+    return true;
 }
 
 bool
@@ -255,4 +261,61 @@ LitParser::passEndOfLine()
     while (isEol()) {
         next();
     }
+}
+
+bool
+LitParser::isOutput(std::string *output)
+{
+    if (!isLogDelineator()) {
+        return false;
+    }
+
+    bool isOutput = expect(" TEST ", false);
+    passEndOfLine();
+
+    if (!isOutput) {
+        return false;
+    }
+
+    std::stringstream ss;
+
+    // Bit of a hack; this "ungets" the character of the original stream.
+    ss << get();
+
+    while (true) {
+        stream.getline(line, sizeof(line));
+        if (isLogDelineator(line)) {
+            break;
+        } else {
+            ss << line << "\n";
+        }
+    }
+
+    *output = ss.str();
+    return true;
+}
+
+bool
+LitParser::isLogDelineator()
+{
+    int i = 0;
+
+    while (is("*")) {
+        next();
+        i += 1;
+    }
+
+    return i >= 4;
+}
+
+bool
+LitParser::isLogDelineator(char *line)
+{
+    int i = 0;
+
+    while (line[i] == '*') {
+        i += 1;
+    }
+
+    return i >= 4;
 }
