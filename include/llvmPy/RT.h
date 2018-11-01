@@ -22,17 +22,17 @@ class PyObj;
 
 class RTScope {
 public:
-    RTScope(RTModule &module, RTScope &parent)
-        : module(module), parent(&parent)
-    {}
+    RTScope(RTModule &module,
+            RTScope &parent,
+            llvm::Value *innerFramePtr,
+            llvm::Value *outerFramePtr);
 
-    explicit
-    RTScope(RTModule &module)
-        : module(module), parent(nullptr)
-    {}
+    explicit RTScope(RTModule &module);
 
 public:
-    RTScope *createDerived();
+    RTScope *createDerived(
+            llvm::Value *innerFramePtr,
+            llvm::Value *outerFramePtr);
 
     std::unordered_map<std::string, llvm::Value *> slots;
 
@@ -40,10 +40,14 @@ public:
     RTModule &getModule() const { return module; }
     bool hasParent() const { return parent != nullptr; }
     RTScope &getParent() const;
+    llvm::Value *getOuterFramePtr() const { return outerFramePtr; }
+    llvm::Value *getInnerFramePtr() const { return innerFramePtr; }
 
 private:
     RTModule &module;
     RTScope * const parent;
+    llvm::Value * const outerFramePtr;
+    llvm::Value * const innerFramePtr;
 };
 
 class RTModule {
@@ -75,22 +79,15 @@ private:
 
 class RTFunc {
 public:
-    RTFunc(llvm::Function &func,
-           RTScope &scope,
-           llvm::Value *outerFramePtr,
-           llvm::Value *innerFramePtr);
+    RTFunc(llvm::Function &func, RTScope &scope);
 
 public:
     llvm::Function &getFunction() const { return func; }
     RTScope &getScope() const { return scope; }
-    llvm::Value *getOuterFramePtr() const { return outerFramePtr; }
-    llvm::Value *getInnerFramePtr() const { return innerFramePtr; }
 
 private:
     llvm::Function &func;
     RTScope &scope;
-    llvm::Value * const outerFramePtr;
-    llvm::Value * const innerFramePtr;
 };
 
 /** The frame of a function call. */

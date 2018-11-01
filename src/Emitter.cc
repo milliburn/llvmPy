@@ -93,7 +93,7 @@ Emitter::emit(RTScope &scope, AST const &ast)
                 { new ReturnStmt(lambda.expr) });
         return ir.CreateCall(
                 mod.llvmPy_func(),
-                { func->getInnerFramePtr(),
+                { func->getScope().getInnerFramePtr(),
                   &func->getFunction() });
     }
 
@@ -178,7 +178,6 @@ Emitter::createFunction(
 {
     RTModule &mod = outerScope.getModule();
 
-    RTScope *innerScope = outerScope.createDerived();
     llvm::BasicBlock *insertPoint = ir.GetInsertBlock();
     vector<llvm::Type *> argTypes;
     argTypes.push_back(types.FrameNPtr);
@@ -209,7 +208,7 @@ Emitter::createFunction(
         throw "Missing outerFrameArg!";
     }
 
-    // Create module body.
+    // Create function body.
     llvm::BasicBlock::Create(ctx, "", func);
     llvm::BasicBlock *init = &func->getEntryBlock();
     llvm::BasicBlock *prog = &func->back();
@@ -245,6 +244,9 @@ Emitter::createFunction(
             { types.getInt64(0),
               types.getInt32(1) });
     ir.CreateStore(outerFrameArg, frameOuterPtrGEP);
+
+    RTScope *innerScope = outerScope.createDerived(
+            innerFrameAlloca, outerFrameArg);
 
     // Zero-initialise the contents of assign statements. This will act
     // as a sentinel to detect use before set.
@@ -294,11 +296,7 @@ Emitter::createFunction(
     llvm::verifyFunction(*func);
     ir.SetInsertPoint(insertPoint);
 
-    RTFunc *rtFunc = new RTFunc(
-            *func,
-            *innerScope,
-            outerFrameArg,
-            innerFrameAlloca);
+    RTFunc *rtFunc = new RTFunc(*func, *innerScope);
 
     func->setPrefixData(
             llvm::ConstantInt::get(

@@ -2,13 +2,35 @@
 #include <llvm/IR/Module.h>
 #include <llvmPy/Instr.h>
 #include <string>
-
 using namespace llvmPy;
 
-RTScope *
-RTScope::createDerived()
+RTScope::RTScope(
+        RTModule &module,
+        RTScope &parent,
+        llvm::Value *innerFramePtr,
+        llvm::Value *outerFramePtr)
+: module(module),
+  parent(&parent),
+  innerFramePtr(innerFramePtr),
+  outerFramePtr(outerFramePtr)
 {
-    return new RTScope(module, *this);
+
+}
+
+RTScope::RTScope(RTModule &module)
+: module(module),
+  parent(nullptr),
+  innerFramePtr(nullptr),
+  outerFramePtr(nullptr)
+{
+}
+
+RTScope *
+RTScope::createDerived(
+        llvm::Value *innerFramePtr,
+        llvm::Value *outerFramePtr)
+{
+    return new RTScope(module, *this, innerFramePtr, outerFramePtr);
 }
 
 RTScope &
@@ -61,13 +83,9 @@ RTModule::llvmPy_fchk() const
 
 RTFunc::RTFunc(
         llvm::Function &func,
-        RTScope &scope,
-        llvm::Value *outerFramePtr,
-        llvm::Value *innerFramePtr)
+        RTScope &scope)
 : func(func),
-  scope(scope),
-  outerFramePtr(outerFramePtr),
-  innerFramePtr(innerFramePtr)
+  scope(scope)
 {
 }
 

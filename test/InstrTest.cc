@@ -45,7 +45,7 @@ TEST_CASE("Instr", "[Instr]") {
 
         RTFunc rtf(*function, mod->getScope());
         PyFunc f(rtf);
-        llvm::Function *rv = llvmPy_fchk(f, 0);
+        llvm::Function *rv = llvmPy_fchk(nullptr, f, 0);
         CHECK(rv == function);
     }
 }
