@@ -68,12 +68,15 @@ private:
     char get();
     void next();
     bool is(char const *any);
+    bool isEol();
+    bool isEof();
     void expect(std::string const &str);
     bool isLogDelineator();
     bool isTrailingDelineator();
     bool isResultCode(LitResultCode *resultCode = nullptr);
     bool isTestName(std::string *testName = nullptr);
     bool isNumber(int *number);
+    void passEndOfLine();
 };
 
 } // namespace

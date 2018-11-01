@@ -5,6 +5,8 @@
 #include <exception>
 using namespace llvmPy;
 
+static constexpr int eof = std::istream::traits_type::eof();
+
 LitTestResult::LitTestResult(
         LitResultCode resultCode,
         std::string const &suiteName,
@@ -100,6 +102,8 @@ LitParser::parseNext()
 
         expect(")");
 
+        passEndOfLine();
+
         return new LitTestResult(
                 resultCode,
                 suiteName,
@@ -108,6 +112,8 @@ LitParser::parseNext()
                 currentProgress,
                 maxProgress);
     }
+
+    passEndOfLine();
 
     return nullptr;
 }
@@ -128,6 +134,18 @@ bool
 LitParser::is(char const *any)
 {
     return !!std::strchr(any, get());
+}
+
+bool
+LitParser::isEol()
+{
+    return is("\n\r");
+}
+
+bool
+LitParser::isEof()
+{
+    return ch == (char) eof;
 }
 
 void
@@ -202,4 +220,17 @@ LitParser::isNumber(int *number)
 
     *number = std::stoi(str);
     return true;
+}
+
+void
+LitParser::passEndOfLine()
+{
+    while (!isEol() && !isEof()) {
+        next();
+    }
+
+    // Pass duplicate EOLs.
+    while (isEol()) {
+        next();
+    }
 }
