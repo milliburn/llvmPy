@@ -119,9 +119,9 @@ extern "C" PyFunc *
 llvmPy_func(FrameN *frame, llvm::Function *function)
 {
     llvm::Constant *prefix = function->getPrefixData();
-    llvm::ConstantInt *value = cast<llvm::ConstantInt>(prefix);
-    uint64_t raw = *value->getValue().getRawData();
-    return reinterpret_cast<PyFunc *>(raw);
+    auto value = cast<llvm::ConstantInt>(prefix);
+    auto rtFunc = reinterpret_cast<RTFunc *>(*value->getValue().getRawData());
+    return new PyFunc(rtFunc, frame);
 }
 
 /**
@@ -130,7 +130,9 @@ llvmPy_func(FrameN *frame, llvm::Function *function)
  * @return Pointer to the function's IR.
  */
 extern "C" llvm::Function *
-llvmPy_fchk(FrameN **frame, llvmPy::PyFunc &func, int np)
+llvmPy_fchk(FrameN **callframe, llvmPy::PyFunc &pyfunc, int np)
 {
-    return &func.getFunc().getFunction();
+    RTFunc &rtfunc = pyfunc.getFunc();
+    *callframe = &pyfunc.getFrame();
+    return &rtfunc.getFunction();
 }

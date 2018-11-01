@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <llvmPy/PyObj.h>
+#include <llvmPy/RT/Frame.h>
 
 #ifdef __cplusplus
 
@@ -51,15 +52,6 @@ private:
     llvm::LLVMContext &ctx;
 };
 
-template<int N>
-struct Frame {
-    Frame<N> *self;
-    Frame<0> *outer;
-    PyObj *vars[N];
-};
-
-typedef Frame<0> FrameN;
-
 }
 
 extern "C" {
@@ -68,7 +60,7 @@ llvmPy::PyObj *llvmPy_add(llvmPy::PyObj &, llvmPy::PyObj &);
 llvmPy::PyInt *llvmPy_int(int64_t value);
 llvmPy::PyNone *llvmPy_none();
 llvmPy::PyFunc *llvmPy_func(llvmPy::FrameN *frame, llvm::Function *function);
-llvm::Function *llvmPy_fchk(llvmPy::FrameN **callframe, llvmPy::PyFunc &func, int np);
+llvm::Function *llvmPy_fchk(llvmPy::FrameN **callframe, llvmPy::PyFunc &pyfunc, int np);
 
 } // extern "C"
 

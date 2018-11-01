@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include <string>
 #include <vector>
+#include <llvmPy/RT/Frame.h>
 
 #ifdef __cplusplus
 namespace llvm {
@@ -17,7 +18,6 @@ class Types;
 class RTModule;
 class RTScope;
 class RTFunc;
-class RTFrame;
 class PyObj;
 
 class RTScope {
@@ -88,19 +88,6 @@ public:
 private:
     llvm::Function &func;
     RTScope &scope;
-};
-
-/** The frame of a function call. */
-class RTFrame {
-public:
-    explicit RTFrame(RTFunc &func) : func(func) {};
-
-public:
-    RTFunc &getFunc() const { return func; }
-
-private:
-    RTFunc &func;
-    std::vector<PyObj *> values;
 };
 
 class RT {

@@ -40,7 +40,8 @@ add_library(
         src/Token.cc
         include/llvmPy/PyObj.h
         src/PyObj.cc
-        include/llvmPy.h)
+        include/llvmPy.h
+        include/llvmPy/RT/Frame.h)
 
 target_include_directories(
         ${name}
