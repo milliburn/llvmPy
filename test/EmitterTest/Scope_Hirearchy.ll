@@ -1,43 +1,45 @@
-; IGNORE
-; INPUT: llvmPy.ir --naked -c 'y = 1; f = lambda x: x + y'
+; INPUT: llvmPy.ir -c 'x = 1; f = lambda: x + 1'
 
 %PyObj = type opaque
+%FrameN = type opaque
+%Frame1 = type <{ %Frame1*, %FrameN*, [1 x %PyObj*] }>
+%Frame0 = type <{ %Frame0*, %FrameN*, [0 x %PyObj*] }>
 
-define void @__body__() {
-    ;; Allocate and initialise scoped variable "y".
+define %PyObj* @__body__(%FrameN* %outer) prefix i64 //[0-9]+// {
+  %frame = alloca %Frame1
+  %1 = getelementptr %Frame1, %Frame1* %frame, i64 0, i32 0
+  store %Frame1* %frame, %Frame1** %1
+  %2 = getelementptr %Frame1, %Frame1* %frame, i64 0, i32 1
+  store %FrameN* %outer, %FrameN** %2
+  %3 = getelementptr %Frame1, %Frame1* %frame, i64 0, i32 2, i64 0
+  store %PyObj* null, %PyObj** %3
 
-    %v_y = alloca %PyObj*
-    store %PyObj** null, %PyObj** %v_y
-    %1 = call %PyObj* @llvmPy_int(i64 1)
-    store %PyObj* %1, %PyObj** %v_y
+  %4 = call %PyObj* @llvmPy_int(i64 1)
+  store %PyObj* %4, %PyObj** %3
 
-    ;; Allocate and initialise scoped variable "f".
+  %5 = call %PyObj* @llvmPy_func(%Frame1* %frame, %PyObj* (%FrameN*)* @lambda)
+  store %PyObj* %5, %PyObj** %3
 
-    %v_f = alloca %PyObj*
-    store %PyObj** null, %PyObj** %v_f
-    %2 = call %PyObj* @llvmPy_func(%PyObj* (%PyObj*)* @lambda)
-    store %PyObj* %2, %PyObj** %v_f
+  ret %PyObj* null
 }
 
-;; Define a function that takes one argument.
+define %PyObj* @lambda(%FrameN* %outer) prefix i64 //[0-9]+// {
+  %frame = alloca %Frame0
+  %1 = getelementptr %Frame0, %Frame0* %frame, i64 0, i32 0
+  store %Frame0* %frame, %Frame0** %1
+  %2 = getelementptr %Frame0, %Frame0* %frame, i64 0, i32 1
+  store %FrameN* %outer, %FrameN** %2
 
-define %PyObj* @lambda(%PyObj* %p_x) prefix i64 //[0-9]+// {
+  %3 = getelementptr %Frame1, %FrameN* %outer, i64 0, i32 2, i64 0
+  %4 = load %PyObj*, %PyObj** %3
 
-    ;; Acquire value of slot "y" from an outer scope.
+  %5 = call %PyObj* @llvmPy_int(i64 1)
+  %6 = call %PyObj* @llvmPy_add(%PyObj* %4, %PyObj* %5)
 
-    %v_y = call %PyObj* @llvmPy_get()  ; TODO: Pass pointer to string "y".
-
-    ;; Call addition operator.
-
-    %1 = call %PyObj* @llvmPy_add(%PyObj* %p_x, %PyObj* %v_y)
-
-    ;; Return with result of addition.
-
-    ret %PyObj* %1
-
+  ret %PyObj* %6
 }
 
 declare %PyObj* @llvmPy_int(i64)
-declare %PyObj* @llvmPy_func(i64)
+declare %PyObj* @llvmPy_func(%FrameN*, i64)
 declare %PyObj* @llvmPy_add(%PyObj*, %PyObj*)
-declare %PyObj* @llvmPy_get(i8*)
+
