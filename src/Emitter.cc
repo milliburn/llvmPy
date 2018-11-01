@@ -274,7 +274,9 @@ Emitter::createFunction(
             innerFrameAlloca,
             { types.getInt64(0),
               types.getInt32(1) });
-    ir.CreateStore(outerFrameArg, frameOuterPtrGEP);
+    llvm::Value *frameOuterPtrGEPBitCast = ir.CreateBitCast(
+            frameOuterPtrGEP, types.FrameNPtrPtr);
+    ir.CreateStore(outerFrameArg, frameOuterPtrGEPBitCast);
 
     RTScope *innerScope = outerScope.createDerived(
             innerFrameAlloca, outerFrameArg);
