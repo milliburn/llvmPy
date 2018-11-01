@@ -17,6 +17,10 @@ llvm_map_components_to_libnames(
         irreader
         native)
 
+# Libraries
+
+add_subdirectory(library)
+
 # llvmPy static library
 
 add_library(
@@ -74,8 +78,6 @@ target_link_libraries(
         PRIVATE lib${name})
 
 # llvmPyTest
-
-add_subdirectory(library/Catch2)
 
 add_executable(
         ${name}Test
