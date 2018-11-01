@@ -22,4 +22,14 @@ TEST_CASE("NonVerbose") {
         CHECK(result.getCurrentProgress() == 9);
         CHECK(result.getMaxProgress() == 11);
     }
+
+    SECTION("Parse unresolved result line") {
+        LitParser parser("UNRESOLVED: llvmPy :: Emitter/Weird.ll (1 of 10)");
+        LitTestResult &result = *parser.parseNext();
+        CHECK(result.getResultCode() == LitResultCode::UNRESOLVED);
+        CHECK(result.getSuiteName() == "llvmPy");
+        CHECK(result.getTestName() == "Emitter/Weird.ll");
+        CHECK(result.getCurrentProgress() == 1);
+        CHECK(result.getMaxProgress() == 10);
+    }
 }
