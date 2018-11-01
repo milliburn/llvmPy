@@ -52,11 +52,12 @@ public:
     std::vector<LitTestResult *> getResults() const;
 
 private:
-    std::istream const &stream;
+    std::istream &stream;
     std::vector<LitTestResult *> results;
+    char ch;
 
     void next();
-    bool is(char const *any);
+    bool is(char const *any, std::stringstream *ss = nullptr);
     bool isLogDelineator();
     bool isTrailingDelineator();
     bool isResultCode(LitResultCode *resultCode = nullptr);
