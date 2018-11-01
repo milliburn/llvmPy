@@ -26,9 +26,11 @@ add_library(
         include/llvmPy/Lexer.h
         include/llvmPy/Parser.h
         include/llvmPy/RT.h
+        include/llvmPy/RT/Frame.h
         include/llvmPy/SyntaxError.h
         include/llvmPy/Token.h
         include/llvmPy/Typed.h
+        include/llvmPy.h
         src/AST.cc
         src/Compiler.cc
         src/Emitter.cc
@@ -39,9 +41,7 @@ add_library(
         src/SyntaxError.cc
         src/Token.cc
         include/llvmPy/PyObj.h
-        src/PyObj.cc
-        include/llvmPy.h
-        include/llvmPy/RT/Frame.h)
+        src/PyObj.cc)
 
 target_include_directories(
         ${name}
