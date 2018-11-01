@@ -21,6 +21,7 @@ Lexer::tokenize(std::vector<Token> & out)
     tokens.clear();
 
     bool newline = true;
+    bool comment = false;
     int indent = 0;
 
     while (true) {
@@ -33,18 +34,23 @@ Lexer::tokenize(std::vector<Token> & out)
 
         if (is('#')) {
             // Comments span until the end of line.
-            while (!(is((char) eof) || oneof("\r\n")));
+            comment = true;
         }
 
         if (is((char) eof)) {
             add(Token(tok_eof));
+            comment = false;
             break;
         } else if (oneof("\r\n")) {
             while (oneof("\r\n")); // Contract newlines.
             add(Token(tok_eol));
             newline = true;
+            comment = false;
             indent = 0;
             continue; // Tokens can't span lines.
+        } else if (comment) {
+            next();
+            continue;
         }
 
         if (newline) {
@@ -95,6 +101,19 @@ Lexer::isEof()
 void
 Lexer::add(Token token)
 {
+    if (token.type == tok_eol) {
+        // Ignore empty lines at start of file.
+        if (tokens.empty()) return;
+
+        // Ignore empty lines in the middle of the file.
+        if (tokens.back().type == tok_eol) return;
+    } else if (token.type == tok_eof) {
+        // Ignore empty lines at end of file.
+        if (!tokens.empty() && tokens.back().type == tok_eol) {
+            tokens.pop_back();
+        }
+    }
+
     tokens.emplace_back(move(token));
 }
 

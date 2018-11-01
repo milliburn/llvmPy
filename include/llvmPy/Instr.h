@@ -32,6 +32,8 @@ public:
     llvm::PointerType *FrameNPtr;
     llvm::PointerType *FrameNPtrPtr;
 
+    llvm::PointerType *i8Ptr; ///< Equivalent to void*.
+
     llvm::StructType *getFrameN() const;
     llvm::PointerType *getFrameNPtr() const;
     llvm::StructType *getFrameN(int N) const;
@@ -47,6 +49,8 @@ public:
 
     llvm::ConstantInt *getInt32(int32_t value) const;
     llvm::ConstantInt *getInt64(int64_t value) const;
+
+    llvm::FunctionType *getFuncN(int N) const;
 
 private:
     llvm::LLVMContext &ctx;

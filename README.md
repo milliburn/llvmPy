@@ -1,6 +1,15 @@
 llvmPy
 ===
 
+# Requirements
+
+- LLVM (tested with 7.0.0)
+- Python with packages from [requirements.txt](./requirements.txt) installed.
+
+Run tests with `lit -v test`, ensuring that LLVM and the build directory are in the PATH (the tests will call the `llvmPy` executable directly).
+
+# Configuration
+
 Add the following to CMake options (replacing paths in accordance with your system):
 
 ```

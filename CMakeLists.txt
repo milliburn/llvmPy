@@ -4,7 +4,7 @@ project(${name})
 
 set(CMAKE_CXX_STANDARD 14)
 
-# llvmPy
+# LLVM
 
 find_package(LLVM REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
@@ -17,8 +17,10 @@ llvm_map_components_to_libnames(
         irreader
         native)
 
+# llvmPy static library
+
 add_library(
-        ${name}
+        lib${name}
         include/llvmPy/AST.h
         include/llvmPy/Compiler.h
         include/llvmPy/Emitter.h
@@ -43,34 +45,33 @@ add_library(
         include/llvmPy/PyObj.h
         src/PyObj.cc)
 
+set_target_properties(
+        lib${name}
+        PROPERTIES OUTPUT_NAME ${name})
+
 target_include_directories(
-        ${name}
-        PUBLIC
-            include
-            ${LLVM_INCLUDE_DIRS}
-        PRIVATE
-            src)
+        lib${name}
+        PUBLIC include
+        PUBLIC ${LLVM_INCLUDE_DIRS}
+        PRIVATE src)
 
 target_compile_definitions(
-        ${name}
-        PUBLIC
-            ${LLVM_DEFINITIONS})
+        lib${name}
+        PUBLIC ${LLVM_DEFINITIONS})
 
 target_link_libraries(
-        ${name}
-        PUBLIC
-            ${llvm_libs})
+        lib${name}
+        PUBLIC ${llvm_libs})
 
-# llvmPyRunner
+# llvmPy executable
 
 add_executable(
-        ${name}Runner
-        runner/main.cc)
+        ${name}
+        src/main.cc)
 
 target_link_libraries(
-        ${name}Runner
-        PRIVATE
-            ${name})
+        ${name}
+        PRIVATE lib${name})
 
 # llvmPyTest
 
@@ -87,17 +88,5 @@ add_executable(
 
 target_link_libraries(
         ${name}Test
-        PRIVATE
-            ${name}
-            Catch2)
-
-# llvmPy.ir
-
-add_executable(
-        ${name}.ir
-        src/ir_main.cc)
-
-target_link_libraries(
-        ${name}.ir
-        PRIVATE ${name})
-
+        PRIVATE lib${name}
+        PRIVATE Catch2)

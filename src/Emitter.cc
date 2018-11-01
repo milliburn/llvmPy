@@ -129,7 +129,11 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
         exit(1);
     }
 
-    return ir.CreateCall(inst, args, tags.RetVal);
+    llvm::Value *funcBitCast = ir.CreateBitCast(
+            inst,
+            llvm::PointerType::getUnqual(types.getFuncN(argCount)));
+
+    return ir.CreateCall(funcBitCast, args, tags.RetVal);
 }
 
 llvm::Value *
@@ -189,10 +193,18 @@ Emitter::emit(RTScope &scope, LambdaExpr const &lambda)
             scope,
             { new ReturnStmt(lambda.expr) });
 
+    llvm::Value *innerFramePtrBitCast = ir.CreateBitCast(
+            scope.getInnerFramePtr(),
+            types.FrameNPtr);
+
+    llvm::Value *functionPtrBitCast = ir.CreateBitCast(
+            &func->getFunction(),
+            types.i8Ptr);
+
     return ir.CreateCall(
             mod.llvmPy_func(),
-            { scope.getInnerFramePtr(),
-              &func->getFunction() });
+            { innerFramePtrBitCast,
+              functionPtrBitCast });
 }
 
 RTFunc *
@@ -274,7 +286,10 @@ Emitter::createFunction(
             innerFrameAlloca,
             { types.getInt64(0),
               types.getInt32(1) });
-    ir.CreateStore(outerFrameArg, frameOuterPtrGEP);
+    llvm::Value *frameOuterPtrGEPBitCast = ir.CreateBitCast(
+            frameOuterPtrGEP,
+            llvm::PointerType::getUnqual(outerFrameArg->getType()));
+    ir.CreateStore(outerFrameArg, frameOuterPtrGEPBitCast);
 
     RTScope *innerScope = outerScope.createDerived(
             innerFrameAlloca, outerFrameArg);
