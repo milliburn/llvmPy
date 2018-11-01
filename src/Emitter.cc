@@ -58,6 +58,8 @@ Emitter::emit(RTScope &scope, AST const &ast)
     switch (ast.getType()) {
     case ASTType::ExprIntLit: return emit(scope, cast<IntLitExpr>(ast));
     case ASTType::ExprIdent: return emit(scope, cast<IdentExpr>(ast));
+    case ASTType::ExprCall: return emit(scope, cast<CallExpr>(ast));
+    case ASTType::ExprLambda: return emit(scope, cast<LambdaExpr>(ast));
 
     case ASTType::StmtAssign: {
         auto &stmt = cast<AssignStmt>(ast);
@@ -82,21 +84,7 @@ Emitter::emit(RTScope &scope, AST const &ast)
         default: return nullptr;
         }
     }
-
-    case ASTType::ExprCall: return emit(scope, cast<CallExpr>(ast));
-
-    case ASTType::ExprLambda: {
-        auto &lambda = cast<LambdaExpr>(ast);
-        auto *func = createFunction(
-                "lambda",
-                scope,
-                { new ReturnStmt(lambda.expr) });
-        return ir.CreateCall(
-                mod.llvmPy_func(),
-                { func->getScope().getInnerFramePtr(),
-                  &func->getFunction() });
-    }
-
+    
     default:
         return nullptr;
     }
