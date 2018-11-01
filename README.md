@@ -1,6 +1,13 @@
 llvmPy
 ===
 
+# Requirements
+
+- LLVM (tested with 7.0.0)
+- Python with packages from [requirements.txt](./requirements.txt) installed.
+
+# Configuration
+
 Add the following to CMake options (replacing paths in accordance with your system):
 
 ```
