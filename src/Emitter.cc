@@ -27,6 +27,7 @@ static struct {
     string OuterFrame = "outer";
     string InnerFrame = "frame";
     string CallFrame = "callframe";
+    string Lambda = "lambda";
 } tags;
 
 Emitter::Emitter(Compiler &c) noexcept
@@ -84,7 +85,7 @@ Emitter::emit(RTScope &scope, AST const &ast)
         default: return nullptr;
         }
     }
-    
+
     default:
         return nullptr;
     }
@@ -156,6 +157,22 @@ Emitter::emit(RTScope &scope, IdentExpr const &ident)
     llvm::Value *slot = scope.slots[ident.name];
 
     return ir.CreateLoad(slot);
+}
+
+llvm::Value *
+Emitter::emit(RTScope &scope, LambdaExpr const &lambda)
+{
+    RTModule &mod = scope.getModule();
+
+    RTFunc *func = createFunction(
+            tags.Lambda,
+            scope,
+            { new ReturnStmt(lambda.expr) });
+
+    return ir.CreateCall(
+            mod.llvmPy_func(),
+            { scope.getInnerFramePtr(),
+              &func->getFunction() });
 }
 
 RTFunc *
