@@ -26,15 +26,18 @@ class LitTestResult {
 public:
     LitTestResult(
             LitResultCode resultCode,
+            std::string const &suiteName,
             std::string const &testName,
             std::string const &output);
 
     LitResultCode getResultCode() const;
+    std::string getSuiteName() const;
     std::string getTestName() const;
     std::string getOutput() const;
 
 private:
     LitResultCode resultCode;
+    std::string suiteName;
     std::string testName;
     std::string output;
 };

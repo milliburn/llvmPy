@@ -7,9 +7,11 @@ using namespace llvmPy;
 
 LitTestResult::LitTestResult(
         LitResultCode resultCode,
+        std::string const &suiteName,
         std::string const &testName,
         std::string const &output)
 : resultCode(resultCode),
+  suiteName(suiteName),
   testName(testName),
   output(output)
 {
@@ -19,6 +21,12 @@ LitResultCode
 LitTestResult::getResultCode() const
 {
     return resultCode;
+}
+
+std::string
+LitTestResult::getSuiteName() const
+{
+    return suiteName;
 }
 
 std::string
@@ -43,16 +51,34 @@ LitTestResult *
 LitParser::parseNext()
 {
     LitResultCode resultCode;
+    std::string suiteName;
     std::string testName;
     std::string output;
 
     if (isResultCode(&resultCode)) {
-        // if (!isTestName(&testName)) {
-        //     cerr << "Expected test name." << endl;
-        //     std::exit(2);
-        // }
+        if (!is(":")) {
+            throw std::runtime_error("Expected ':");
+        }
 
-        return new LitTestResult(resultCode, testName, output);
+        next();
+
+        if (!isTestName(&suiteName)) {
+            throw std::runtime_error("Expected suite name");
+        }
+
+        for (int i = 0; i < 3; ++i) {
+            if (!is(": ")) {
+                throw std::runtime_error("Expected test name");
+            }
+
+            next();
+        }
+
+        if (!isTestName(&testName)) {
+            throw std::runtime_error("Expected test name");
+        }
+
+        return new LitTestResult(resultCode, suiteName, testName, output);
     } else {
         throw std::runtime_error("Unexpected data!");
     }
@@ -95,4 +121,22 @@ LitParser::isResultCode(LitResultCode *resultCode)
     else return false;
 
     return true;
+}
+
+bool
+LitParser::isTestName(std::string *testName)
+{
+    while (is(" ")) {
+        next();
+    }
+
+    std::stringstream ss;
+
+    while (!is(" (", &ss)) {
+        next();
+    }
+
+    *testName = ss.str();
+
+    return !testName->empty();
 }
