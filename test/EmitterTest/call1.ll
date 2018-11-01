@@ -1,4 +1,4 @@
-; INPUT: llvmPy.ir -c 'x = 1'
+; INPUT: llvmPy.ir -c "foo = None; foo(1)"
 
 %PyObj = type opaque
 %FrameN = type opaque
@@ -13,10 +13,19 @@ define %PyObj* @__body__(%FrameN* %outer) prefix i64 //[0-9]+// {
   %3 = getelementptr %Frame1, %Frame1* %frame, i64 0, i32 2, i64 0
   store %PyObj* null, %PyObj** %3
 
-  %4 = call %PyObj* @llvmPy_int(i64 1)
+  %4 = call %PyObj* @llvmPy_none()
   store %PyObj* %4, %PyObj** %3
+
+  %5 = load %PyObj*, %PyObj** %3
+
+  %6 = call %PyObj* @llvmPy_int(i64 1)
+  %callframe = alloca %FrameN*
+  %7 = call %PyObj* ()* @llvmPy_fchk(%FrameN** %callframe, %PyObj* %5, i64 1)
+  %8 = call %PyObj* %7(%FrameN** %callframe, %PyObj* %6)
 
   ret %PyObj* null
 }
 
+declare %PyObj* @llvmPy_none()
 declare %PyObj* @llvmPy_int(i64)
+declare %PyObj* ()* @llvmPy_fchk(%FrameN**, %PyObj*, i64)

@@ -1,4 +1,5 @@
 from glob import glob
+from io import StringIO
 from os.path import abspath, dirname, join, basename
 import re
 from subprocess import check_output
@@ -7,6 +8,7 @@ import unittest as ut
 
 class EmitterTest(ut.TestCase):
     IS_WHITESPACE_RE = re.compile('^\s*$')
+    IGNORE_RE = re.compile('^\s*;\s*IGNORE\s*$')
     INPUT_RE = re.compile('^\s*;\s*INPUT\s*:\s*(.+?)\s*$')
 
     def test_emitter(self):
@@ -23,6 +25,8 @@ class EmitterTest(ut.TestCase):
             for line in fp.readlines():
                 if self.IS_WHITESPACE_RE.match(line):
                     continue
+                elif not command and self.IGNORE_RE.match(line):
+                    self.skipTest('Test ignored with the IGNORE directive.')
                 elif self.INPUT_RE.match(line):
                     line = self.INPUT_RE.match(line)
                     command = line.groups(0)[0]
@@ -63,9 +67,25 @@ class EmitterTest(ut.TestCase):
 
             self.assertTrue(
                 re.match(''.join(expect_line), actual_line),
-                '{} line {}'.format(input_file, i + 1))
+                '{}:{}\nExpected:\n{}\nActual:\n{}'.format(
+                    input_file,
+                    i + 1,
+                    self.format_indicator(expect, i),
+                    self.format_indicator(actual, j)))
             i += 1
             j += 1
+
+    def format_indicator(self, lines, line_index):
+        with StringIO() as output:
+            for i in range(len(lines)):
+                if i == line_index:
+                    output.write('> ')
+                else:
+                    output.write('  ')
+
+                output.write(lines[i].rstrip())
+                output.write('\n')
+            return output.getvalue()
 
 
 if __name__ == '__main__':

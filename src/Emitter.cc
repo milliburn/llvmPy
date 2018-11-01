@@ -6,6 +6,8 @@
 #include <llvm/IR/Verifier.h>
 #include <llvm/Support/Casting.h>
 #include <llvm/Support/raw_ostream.h>
+#include <iostream>
+#include <stdlib.h>
 using namespace llvmPy;
 using llvm::cast;
 using llvm::isa;
@@ -13,6 +15,20 @@ using std::make_pair;
 using std::string;
 using std::to_string;
 using std::vector;
+using std::cerr;
+using std::endl;
+
+static struct {
+    string FuncObj = "";
+    string PosArgCount = "";
+    string FuncPtr = "";
+    string RetVal = "";
+    string Arg = "";
+    string OuterFrame = "outer";
+    string InnerFrame = "frame";
+    string CallFrame = "callframe";
+    string Lambda = "lambda";
+} tags;
 
 Emitter::Emitter(Compiler &c) noexcept
 : rt(c.getRT()),
@@ -24,102 +40,50 @@ Emitter::Emitter(Compiler &c) noexcept
 }
 
 RTModule *
-Emitter::createModule(std::string const &name)
+Emitter::createModule(
+        std::string const &name,
+        std::vector<Stmt *> const &stmts)
 {
     auto *module = new llvm::Module(name, ctx);
-
-    vector<llvm::Type *> argTypes;
-
-    llvm::Function *func =
-            llvm::Function::Create(
-                    llvm::FunctionType::get(
-                            llvm::Type::getVoidTy(ctx),
-                            argTypes,
-                            false),
-                    llvm::Function::ExternalLinkage,
-                    "__body__",
-                    module);
-
-    llvm::BasicBlock::Create(ctx, "", func);
-
-    return new RTModule(name, module, types, func);
+    RTModule *rtModule = new RTModule(name, module, types);
+    RTFunc *body = createFunction("__body__", rtModule->getScope(), stmts);
+    rtModule->setBody(body);
+    return rtModule;
 }
 
 llvm::Value *
-Emitter::emit(RTModule &mod, AST const &ast)
+Emitter::emit(RTScope &scope, AST const &ast)
 {
+    RTModule &mod = scope.getModule();
+
     switch (ast.getType()) {
-    case ASTType::ExprIntLit: {
-        auto &expr = cast<IntLitExpr>(ast);
-        auto *value = llvm::ConstantInt::get(
-                types.PyIntValue,
-                static_cast<uint64_t>(expr.value));
-        return ir.CreateCall(mod.llvmPy_int(), { value });
-    }
-
-    case ASTType::ExprIdent: {
-        auto &expr = cast<IdentExpr>(ast);
-
-        if (expr.name == "None") {
-            return ir.CreateCall(mod.llvmPy_none(), {});
-        }
-
-        auto *slot = mod.getScope().slots[expr.name];
-
-        if (slot == nullptr) {
-            throw "Not Implemented";
-        } else {
-            return ir.CreateLoad(slot);
-        }
-    }
+    case ASTType::ExprIntLit: return emit(scope, cast<IntLitExpr>(ast));
+    case ASTType::ExprIdent: return emit(scope, cast<IdentExpr>(ast));
+    case ASTType::ExprCall: return emit(scope, cast<CallExpr>(ast));
+    case ASTType::ExprLambda: return emit(scope, cast<LambdaExpr>(ast));
 
     case ASTType::StmtAssign: {
         auto &stmt = cast<AssignStmt>(ast);
         auto &ident = stmt.lhs;
-        auto *slot = mod.getScope().slots[ident];
-        auto *rhs = emit(mod, stmt.rhs);
+        auto *slot = scope.slots[ident];
+        auto *rhs = emit(scope, stmt.rhs);
         return ir.CreateStore(rhs, slot);
     }
 
     case ASTType::StmtExpr: {
         auto &expr = cast<ExprStmt>(ast);
-        return emit(mod, expr.expr);
+        return emit(scope, expr.expr);
     }
 
     case ASTType::ExprBinary: {
         auto &expr = cast<BinaryExpr>(ast);
-        auto *lhs = emit(mod, expr.lhs);
-        auto *rhs = emit(mod, expr.rhs);
+        auto *lhs = emit(scope, expr.lhs);
+        auto *rhs = emit(scope, expr.rhs);
 
         switch (expr.op) {
         case tok_add: return ir.CreateCall(mod.llvmPy_add(), { lhs, rhs });
         default: return nullptr;
         }
-    }
-
-    case ASTType::ExprCall: {
-        auto &call = cast<CallExpr>(ast);
-        auto *lhs = emit(mod, call.lhs);
-        vector<llvm::Value *> args;
-
-        for (auto *arg : call.args) {
-            args.push_back(emit(mod, *arg));
-        }
-
-        if (args.size() == 0) {
-            return ir.CreateCall(mod.llvmPy_callN(0), { lhs });
-        } else {
-            throw "error";
-        }
-    }
-
-    case ASTType::ExprLambda: {
-        auto &lambda = cast<LambdaExpr>(ast);
-        auto *func = emitFunc(
-                "lambda",
-                mod,
-                { new ReturnStmt(lambda.expr) });
-        return ir.CreateCall(mod.llvmPy_func(), { &func->getFunction() });
     }
 
     default:
@@ -128,52 +92,126 @@ Emitter::emit(RTModule &mod, AST const &ast)
 }
 
 llvm::Value *
-Emitter::emit(RTModule &mod, std::vector<Stmt *> const &stmts)
+Emitter::emit(RTScope &scope, CallExpr const &call)
 {
-    llvm::Value *lastValue = nullptr;
+    RTModule &mod = scope.getModule();
 
-    // Store original insert point.
-    llvm::BasicBlock *insertPoint = ir.GetInsertBlock();
+    llvm::Value *lhs = emit(scope, call.lhs);
+    lhs->setName(tags.FuncObj);
+    vector<llvm::Value *> args;
+    args.push_back(nullptr); // Placeholder for the callFrame.
+    int argCount = 0;
 
-    // Begin inserting into module body.
-    llvm::BasicBlock *init = &mod.getFunction().getEntryBlock();
-    llvm::BasicBlock *prog = &mod.getFunction().back();
+    for (auto *arg : call.args) {
+        llvm::Value *value = emit(scope, *arg);
+        value->setName(tags.Arg);
+        args.push_back(value);
+        argCount++;
+    }
 
-    for (auto *stmt : stmts) {
-        if (stmt->getType() == ASTType::StmtAssign) {
-            ir.SetInsertPoint(init);
-            // Pre-register all assigned identifiers in the scope.
-            auto &assign = *cast<AssignStmt>(stmt);
-            auto &ident = assign.lhs;
-            auto *alloca = ir.CreateAlloca(types.Ptr);
-            mod.getScope().slots[ident] = alloca;
+    // Call frame pointer.
+    llvm::AllocaInst *callFrame = ir.CreateAlloca(
+            types.FrameNPtr, 0, tags.CallFrame);
 
-            ir.CreateStore(
-                    llvm::ConstantPointerNull::get(alloca->getType()),
-                    alloca);
+    // Count of positional arguments.
+    llvm::Value *np = llvm::ConstantInt::get(types.PyIntValue, argCount);
+
+    llvm::CallInst *inst = ir.CreateCall(
+            mod.llvmPy_fchk(),
+            { callFrame, lhs, np },
+            tags.FuncPtr);
+
+    args[0] = callFrame;
+
+    if (argCount > 1) {
+        cerr << "Cannot call function with more than 1 arguments ("
+             << argCount << " provided)" << endl;
+        exit(1);
+    }
+
+    return ir.CreateCall(inst, args, tags.RetVal);
+}
+
+llvm::Value *
+Emitter::emit(RTScope &scope, IntLitExpr const &expr)
+{
+    RTModule &mod = scope.getModule();
+
+    llvm::ConstantInt *value =
+            llvm::ConstantInt::get(
+                    types.PyIntValue,
+                    static_cast<uint64_t>(expr.value));
+
+    return ir.CreateCall(mod.llvmPy_int(), {value});
+}
+
+llvm::Value *
+Emitter::emit(RTScope &scope, IdentExpr const &ident)
+{
+    RTModule &mod = scope.getModule();
+
+    if (ident.name == "None") {
+        return ir.CreateCall(mod.llvmPy_none(), {});
+    }
+
+    llvm::Value *slot = scope.slots[ident.name];
+
+    if (slot == nullptr) {
+        // May be in an upper scope.
+        slot = scope.getParent().slots[ident.name];
+
+        if (!slot) {
+            cerr << "Slot " << ident.name << " not found!" << endl;
+            exit(127);
         }
+
+        llvm::Value *outerFrameSlotGEP = ir.CreateGEP(
+                scope.getOuterFramePtr(),
+                { types.getInt64(0),
+                  types.getInt32(2),
+                  types.getInt64(0) }); // TODO: True index of slot.
+
+        llvm::Value *outerSlot = ir.CreateLoad(outerFrameSlotGEP);
+
+        return outerSlot;
     }
 
-    for (auto *stmt : stmts) {
-        ir.SetInsertPoint(prog);
-        lastValue = emit(mod, *stmt);
-    }
+    return ir.CreateLoad(slot);
+}
 
-    // Restore original insert point.
-    ir.SetInsertPoint(insertPoint);
+llvm::Value *
+Emitter::emit(RTScope &scope, LambdaExpr const &lambda)
+{
+    RTModule &mod = scope.getModule();
 
-    return lastValue;
+    RTFunc *func = createFunction(
+            tags.Lambda,
+            scope,
+            { new ReturnStmt(lambda.expr) });
+
+    return ir.CreateCall(
+            mod.llvmPy_func(),
+            { scope.getInnerFramePtr(),
+              &func->getFunction() });
 }
 
 RTFunc *
-Emitter::emitFunc(
+Emitter::createFunction(
         std::string const &name,
-        RTModule &mod,
+        RTScope &outerScope,
         std::vector<Stmt *> const &stmts)
 {
-    RTScope *scope = new RTScope(mod.getScope());
+    RTModule &mod = outerScope.getModule();
+
     llvm::BasicBlock *insertPoint = ir.GetInsertBlock();
     vector<llvm::Type *> argTypes;
+
+    if (outerScope.getInnerFramePtr()) {
+        llvm::Value *outerFramePtr = outerScope.getInnerFramePtr();
+        argTypes.push_back(outerFramePtr->getType());
+    } else {
+        argTypes.push_back(types.FrameNPtr);
+    }
 
     llvm::Function *func =
             llvm::Function::Create(
@@ -185,7 +223,86 @@ Emitter::emitFunc(
                     name,
                     &mod.getModule());
 
-    llvm::BasicBlock *prog = llvm::BasicBlock::Create(ctx, "", func);
+    // Name the arguments.
+    int iArg = 0;
+    llvm::Value *outerFrameArg = nullptr;
+    for (auto &arg : func->args()) {
+        if (iArg == 0) {
+            arg.setName(tags.OuterFrame);
+            outerFrameArg = &arg;
+        }
+
+        ++iArg;
+    }
+
+    if (!outerFrameArg) {
+        throw "Missing outerFrameArg!";
+    }
+
+    // Create function body.
+    llvm::BasicBlock::Create(ctx, "", func);
+    llvm::BasicBlock *init = &func->getEntryBlock();
+    llvm::BasicBlock *prog = &func->back();
+
+    int slotCount = 0;
+
+    // Find the number of slots to allocate in the frame.
+    for (auto *stmt : stmts) {
+        if (stmt->getType() == ASTType::StmtAssign) {
+            slotCount++;
+        }
+    }
+
+    ir.SetInsertPoint(init);
+
+    // Generate the frame.
+    llvm::StructType *innerFrameType = types.getFrameN(slotCount);
+    llvm::AllocaInst *innerFrameAlloca = ir.CreateAlloca(
+            innerFrameType, 0, tags.InnerFrame);
+
+    // Store the frame's self-pointer.
+    llvm::Value *frameSelfPtrGEP = ir.CreateGEP(
+            innerFrameType,
+            innerFrameAlloca,
+            { types.getInt64(0),
+              types.getInt32(0) });
+    ir.CreateStore(innerFrameAlloca, frameSelfPtrGEP);
+
+    // Store the frame's outer pointer.
+    llvm::Value *frameOuterPtrGEP = ir.CreateGEP(
+            innerFrameType,
+            innerFrameAlloca,
+            { types.getInt64(0),
+              types.getInt32(1) });
+    ir.CreateStore(outerFrameArg, frameOuterPtrGEP);
+
+    RTScope *innerScope = outerScope.createDerived(
+            innerFrameAlloca, outerFrameArg);
+
+    // Zero-initialise the contents of assign statements. This will act
+    // as a sentinel to detect use before set.
+    int iSlot = 0;
+    for (auto *stmt : stmts) {
+        if (stmt->getType() == ASTType::StmtAssign) {
+            ir.SetInsertPoint(init);
+            auto &assign = *cast<AssignStmt>(stmt);
+            auto &ident = assign.lhs;
+            llvm::Value *assignGEP = ir.CreateGEP(
+                    innerFrameType,
+                    innerFrameAlloca,
+                    { types.getInt64(0),
+                      types.getInt32(2),
+                      types.getInt64(iSlot) });
+            ir.CreateStore(llvm::Constant::getNullValue(types.Ptr), assignGEP);
+            iSlot++;
+
+            // TODO: This would be invalidated if the pointer changes
+            // TODO: (i.e. if the callee's chain ends up lifting the frame
+            // TODO: to heap).
+            innerScope->slots[ident] = assignGEP;
+        }
+    }
+
     bool lastIsRet = false;
 
     for (auto *stmt : stmts) {
@@ -193,11 +310,11 @@ Emitter::emitFunc(
 
         if (isa<ReturnStmt>(stmt)) {
             auto &ret = *cast<ReturnStmt>(stmt);
-            llvm::Value *value = emit(mod, ret.expr);
+            llvm::Value *value = emit(*innerScope, ret.expr);
             ir.CreateRet(value);
             lastIsRet = true;
         } else {
-            emit(mod, *stmt);
+            emit(*innerScope, *stmt);
             lastIsRet = false;
         }
     }
@@ -210,7 +327,7 @@ Emitter::emitFunc(
     llvm::verifyFunction(*func);
     ir.SetInsertPoint(insertPoint);
 
-    RTFunc *rtFunc = new RTFunc(func, scope);
+    RTFunc *rtFunc = new RTFunc(*func, *innerScope);
 
     func->setPrefixData(
             llvm::ConstantInt::get(

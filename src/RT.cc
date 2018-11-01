@@ -2,17 +2,53 @@
 #include <llvm/IR/Module.h>
 #include <llvmPy/Instr.h>
 #include <string>
-
 using namespace llvmPy;
+
+RTScope::RTScope(
+        RTModule &module,
+        RTScope &parent,
+        llvm::Value *innerFramePtr,
+        llvm::Value *outerFramePtr)
+: module(module),
+  parent(&parent),
+  innerFramePtr(innerFramePtr),
+  outerFramePtr(outerFramePtr)
+{
+
+}
+
+RTScope::RTScope(RTModule &module)
+: module(module),
+  parent(nullptr),
+  innerFramePtr(nullptr),
+  outerFramePtr(nullptr)
+{
+}
+
+RTScope *
+RTScope::createDerived(
+        llvm::Value *innerFramePtr,
+        llvm::Value *outerFramePtr)
+{
+    return new RTScope(module, *this, innerFramePtr, outerFramePtr);
+}
+
+RTScope &
+RTScope::getParent() const
+{
+    if (!hasParent()) {
+        throw "Cannot return parent of top-level RTScope.";
+    }
+
+    return *parent;
+}
 
 RTModule::RTModule(
         std::string const &name,
         llvm::Module *module,
-        Types const &types,
-        llvm::Function *func)
-: ir(*module), types(types), func(*func)
+        Types const &types)
+: ir(*module), types(types), scope(*this)
 {
-
 }
 
 llvm::Value *
@@ -34,15 +70,22 @@ RTModule::llvmPy_none() const
 }
 
 llvm::Value *
-RTModule::llvmPy_callN(int N) const
-{
-    return ir.getOrInsertFunction(
-            "llvmPy_call" + std::to_string(N),
-            types.llvmPy_callN[N]);
-}
-
-llvm::Value *
 RTModule::llvmPy_func() const
 {
     return ir.getOrInsertFunction("llvmPy_func", types.llvmPy_func);
 }
+
+llvm::Value *
+RTModule::llvmPy_fchk() const
+{
+    return ir.getOrInsertFunction("llvmPy_fchk", types.llvmPy_fchk);
+}
+
+RTFunc::RTFunc(
+        llvm::Function &func,
+        RTScope &scope)
+: func(func),
+  scope(scope)
+{
+}
+

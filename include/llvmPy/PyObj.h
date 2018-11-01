@@ -2,6 +2,7 @@
 
 #include <llvmPy/Typed.h>
 #include <string>
+#include <llvmPy/RT/Frame.h>
 
 #ifdef __cplusplus
 namespace llvmPy {
@@ -14,6 +15,9 @@ enum class PyObjType : long {
     Func = 2,
 };
 
+/**
+ * The base class for all objects accessible on the heap at runtime.
+ */
 class PyObj : public Typed<PyObjType> {
 public:
     PyObj(PyObjType type) : Typed(type) {}
@@ -49,13 +53,16 @@ public:
         return x->isType(PyObjType::Func);
     }
 
-    PyFunc(RTFunc &func) : PyObj(PyObjType::Func), func(func) {}
+    PyFunc(RTFunc *func, FrameN *frame)
+    : PyObj(PyObjType::Func), func(*func), frame(frame) {}
 
 public:
     RTFunc &getFunc() const { return func; }
+    FrameN &getFrame() const { return *frame; }
 
 private:
     RTFunc &func;
+    FrameN *frame;
 };
 
 } // namespace llvmPy

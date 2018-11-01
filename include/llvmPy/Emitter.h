@@ -16,24 +16,26 @@ class Value;
 namespace llvmPy {
 
 class RT;
-class RTAtom;
 class RTScope;
-class RTFuncObj;
 class RTModule;
-class RTModuleObj;
 
 class Emitter {
 public:
     explicit Emitter(Compiler &c) noexcept;
 
-    RTModule *createModule(std::string const &name);
+    llvm::Value *emit(RTScope &scope, AST const &ast);
+    llvm::Value *emit(RTScope &scope, IntLitExpr const &expr);
+    llvm::Value *emit(RTScope &scope, IdentExpr const &ident);
+    llvm::Value *emit(RTScope &scope, CallExpr const &call);
+    llvm::Value *emit(RTScope &scope, LambdaExpr const &lambda);
 
-    llvm::Value *emit(RTModule &mod, AST const &ast);
-    llvm::Value *emit(RTModule &mod, std::vector<Stmt *> const &stmts);
-
-    RTFunc *emitFunc(
+    RTModule *createModule(
             std::string const &name,
-            RTModule &mod,
+            std::vector<Stmt *> const &stmts);
+
+    RTFunc *createFunction(
+            std::string const &name,
+            RTScope &scope,
             std::vector<Stmt *> const &stmts);
 
 private:
