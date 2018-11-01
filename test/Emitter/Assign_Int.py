@@ -1,4 +1,6 @@
-# RUN: llvmPy --ir %s | llvm-as | llvm-dis | FileCheck %s
+# RUN: llvmPy --ir %s > %t1
+# RUN: cat -n %t1 >&2
+# RUN: llvm-as < %t1 | llvm-dis | FileCheck %s
 
 x = 1
 

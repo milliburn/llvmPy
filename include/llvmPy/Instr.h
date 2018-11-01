@@ -32,6 +32,8 @@ public:
     llvm::PointerType *FrameNPtr;
     llvm::PointerType *FrameNPtrPtr;
 
+    llvm::PointerType *i8Ptr; ///< Equivalent to void*.
+
     llvm::StructType *getFrameN() const;
     llvm::PointerType *getFrameNPtr() const;
     llvm::StructType *getFrameN(int N) const;

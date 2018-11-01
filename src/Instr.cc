@@ -23,13 +23,15 @@ Types::Types(
     FrameNPtr = llvm::PointerType::getUnqual(FrameN);
     FrameNPtrPtr = llvm::PointerType::getUnqual(FrameNPtr);
 
+    i8Ptr = llvm::Type::getInt8PtrTy(ctx);
+
     PyIntValue = llvm::IntegerType::get(ctx, dl.getPointerSizeInBits());
 
     llvmPy_add = llvm::FunctionType::get(Ptr, { Ptr, Ptr }, false);
     llvmPy_int = llvm::FunctionType::get(Ptr, { PyIntValue }, false);
     llvmPy_none = llvm::FunctionType::get(Ptr, {}, false);
     llvmPy_func = llvm::FunctionType::get(
-            Ptr, { FrameNPtr, PyIntValue }, false);
+            Ptr, { FrameNPtr, i8Ptr }, false);
     llvmPy_fchk = llvm::FunctionType::get(
             FuncPtr, { FrameNPtrPtr, Ptr, PyIntValue }, false);
 }

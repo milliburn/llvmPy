@@ -1,6 +1,6 @@
 # RUN: llvmPy --ir %s > %t1
 # RUN: cat -n %t1 >&2
-# RUN: llvm-as %t1 | llvm-dis | FileCheck %s
+# RUN: llvm-as < %t1 | llvm-dis | FileCheck %s
 
 f = lambda: 1
 
@@ -11,15 +11,16 @@ f = lambda: 1
 # CHECK-SAME: @__body__
 # CHECK-NEXT: %frame = alloca %Frame1
 
-# CHECK: %4 = call %PyObj* @llvmPy_func(%Frame1* %frame, %PyObj* (%Frame1*)* @lambda)
-# CHECK-NEXT: store %PyObj* %4, %PyObj** %3
+# CHECK: [[frame:%[0-9]]] = bitcast %Frame1* %frame to %FrameN*
+# CHECK-NEXT: [[rv:%[0-9]]] = call %PyObj* @llvmPy_func(%FrameN* [[frame]], i8* bitcast (%PyObj* (%Frame1*)* @lambda to i8*))
+# CHECK-NEXT: store %PyObj* [[rv]], %PyObj** %{{[0-9]}}
 
 # CHECK: define
-# CHECK-SAME: @lambda (%Frame1* %outer)
+# CHECK-SAME: @lambda(%Frame1* %outer)
 # CHECK-NEXT: %frame = alloca %Frame0
 
-# CHECK: [[rv:%[0-9]]] = calls %PyObj* @llvmPy_int(i64 1)
+# CHECK: [[rv:%[0-9]]] = call %PyObj* @llvmPy_int(i64 1)
 # CHECK-NEXT: ret %PyObj* [[rv]]
 
 # CHECK-DAG: declare %PyObj* @llvmPy_int(i64)
-# CHECK-DAG: declare %PyObj* @llvmPy_func(%FrameN*, i64)
+# CHECK-DAG: declare %PyObj* @llvmPy_func(%FrameN*, i8*)
