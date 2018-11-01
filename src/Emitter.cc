@@ -165,8 +165,6 @@ Emitter::emit(RTScope &scope, IdentExpr const &ident)
             exit(127);
         }
 
-        // llvm::StructType *outerFrameType = nullptr;
-
         llvm::Value *outerFrameSlotGEP = ir.CreateGEP(
                 scope.getOuterFramePtr(),
                 { types.getInt64(0),
