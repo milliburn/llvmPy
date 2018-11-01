@@ -117,7 +117,11 @@ LitParser::isResultCode(LitResultCode *resultCode)
     std::string str = ss.str();
 
     if (str == "PASS") *resultCode = LitResultCode::PASS;
+    else if (str == "XFAIL") *resultCode = LitResultCode::XFAIL;
     else if (str == "FAIL") *resultCode = LitResultCode::FAIL;
+    else if (str == "XPASS") *resultCode = LitResultCode::XPASS;
+    else if (str == "UNRESOLVED") *resultCode = LitResultCode::UNRESOLVED;
+    else if (str == "UNSUPPORTED") *resultCode = LitResultCode::UNSUPPORTED;
     else return false;
 
     return true;
