@@ -13,7 +13,7 @@ class EmitterTest(ut.TestCase):
 
     def test_emitter(self):
         testdir = abspath(dirname(__file__))
-        for input_file in glob(join(testdir, 'EmitterTest/*.ll')):
+        for input_file in glob(join(testdir, 'Emitter/*.ll')):
             test_name = basename(input_file).rsplit('.', 1)[0]
             with self.subTest(test_name):
                 self.emitter_test_file(input_file)
