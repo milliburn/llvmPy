@@ -3,7 +3,7 @@
 #include <sstream>
 using namespace llvmPy;
 
-TEST_CASE("NonVerbose") {
+TEST_CASE("Unit tests") {
     SECTION("Parse passing result line") {
         LitParser parser("PASS: llvmPy :: Emitter/call1.py (2 of 10)");
         LitTestResult &result = *parser.parseNext();

@@ -135,10 +135,14 @@ LitParser::parseNext()
 void
 LitParser::parse()
 {
-    while (!isEof()) {
+    while (true) {
         LitTestResult *result = parseNext();
         if (result) {
             results.push_back(result);
+        }
+
+        if (isEof()) {
+            break;
         }
     }
 }
