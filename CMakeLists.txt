@@ -3,6 +3,7 @@ set(name llvmPy)
 project(${name})
 
 set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
 
 # LLVM
 
@@ -16,6 +17,10 @@ llvm_map_components_to_libnames(
         executionengine
         irreader
         native)
+
+# Libraries
+
+add_subdirectory(library)
 
 # llvmPy static library
 
@@ -75,8 +80,6 @@ target_link_libraries(
 
 # llvmPyTest
 
-add_subdirectory(library/Catch2)
-
 add_executable(
         ${name}Test
         test/main.cc
@@ -84,9 +87,23 @@ add_executable(
         test/ParserTest.cc
         test/testutil.h
         test/testutil.cc
-        test/InstrTest.cc)
+        test/InstrTest.cc
+        test/TestSuite.cc)
+
+# The test suites depend on an up-to-date llvmPy binary.
+add_dependencies(
+        ${name}Test ${name})
+
+configure_file(
+        test/llvmPyTest.h.in
+        ${CMAKE_CURRENT_BINARY_DIR}/src/llvmPyTest.h)
+
+target_include_directories(
+        ${name}Test
+        PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/src)
 
 target_link_libraries(
         ${name}Test
         PRIVATE lib${name}
+        PRIVATE llvmPyLitParse
         PRIVATE Catch2)

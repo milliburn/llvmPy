@@ -11,8 +11,8 @@ RTScope::RTScope(
         llvm::Value *outerFramePtr)
 : module(module),
   parent(&parent),
-  innerFramePtr(innerFramePtr),
-  outerFramePtr(outerFramePtr)
+  outerFramePtr(outerFramePtr),
+  innerFramePtr(innerFramePtr)
 {
 
 }
@@ -20,8 +20,8 @@ RTScope::RTScope(
 RTScope::RTScope(RTModule &module)
 : module(module),
   parent(nullptr),
-  innerFramePtr(nullptr),
-  outerFramePtr(nullptr)
+  outerFramePtr(nullptr),
+  innerFramePtr(nullptr)
 {
 }
 

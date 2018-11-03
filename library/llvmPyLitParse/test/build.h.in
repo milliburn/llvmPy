@@ -1,0 +1,9 @@
+#pragma once
+
+#ifdef __cplusplus
+namespace llvmPy {
+
+static constexpr char const * TEST_PATH = "@CMAKE_CURRENT_SOURCE_DIR@/test";
+
+} // namespace llvmPy
+#endif // __cplusplus
