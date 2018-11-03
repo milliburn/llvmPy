@@ -90,6 +90,10 @@ add_executable(
         test/InstrTest.cc
         test/TestSuite.cc)
 
+# The test suites depend on an up-to-date llvmPy binary.
+add_dependencies(
+        ${name}Test ${name})
+
 configure_file(
         test/llvmPyTest.h.in
         ${CMAKE_CURRENT_BINARY_DIR}/src/llvmPyTest.h)
