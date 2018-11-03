@@ -87,9 +87,19 @@ add_executable(
         test/ParserTest.cc
         test/testutil.h
         test/testutil.cc
-        test/InstrTest.cc)
+        test/InstrTest.cc
+        test/TestSuite.cc)
+
+configure_file(
+        test/llvmPyTest.h.in
+        ${CMAKE_CURRENT_BINARY_DIR}/src/llvmPyTest.h)
+
+target_include_directories(
+        ${name}Test
+        PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/src)
 
 target_link_libraries(
         ${name}Test
         PRIVATE lib${name}
+        PRIVATE llvmPyLitParse
         PRIVATE Catch2)

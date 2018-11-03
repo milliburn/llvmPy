@@ -324,3 +324,18 @@ LitParser::isLogDelineator(char *line)
 
     return i >= 4;
 }
+
+std::ostream &
+llvmPy::operator<<(std::ostream &s, llvmPy::LitResultCode const &code)
+{
+    switch (code) {
+    case LitResultCode::PASS: s << "PASS"; break;
+    case LitResultCode::XFAIL: s << "XFAIL"; break;
+    case LitResultCode::XPASS: s << "XPASS"; break;
+    case LitResultCode::FAIL: s << "FAIL"; break;
+    case LitResultCode::UNRESOLVED: s << "UNRESOLVED"; break;
+    case LitResultCode::UNSUPPORTED: s << "UNSUPPORTED"; break;
+    }
+
+    return s;
+}

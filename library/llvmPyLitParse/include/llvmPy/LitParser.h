@@ -22,6 +22,8 @@ enum class LitResultCode {
     UNSUPPORTED,
 };
 
+std::ostream & operator<< (std::ostream &, llvmPy::LitResultCode const &);
+
 class LitTestResult {
 public:
     LitTestResult(
@@ -81,5 +83,6 @@ private:
     void passEndOfLine();
 };
 
-} // namespace
+} // namespace llvmPy
+
 #endif // __cplusplus

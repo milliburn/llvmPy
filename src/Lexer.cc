@@ -268,7 +268,7 @@ Lexer::numlit()
         while (oneof(isnumber, ss));
     }
 
-    add(Token(tok_number, new string(move(ss.str()))));
+    add(Token(tok_number, new string(ss.str())));
     return true;
 }
 
@@ -298,7 +298,7 @@ Lexer::strlit()
         }
     } while (true);
 
-    add(Token(tok_string, new string(move(ss.str()))));
+    add(Token(tok_string, new string(ss.str())));
     return true;
 }
 
