@@ -296,6 +296,7 @@ LitParser::isOutput(std::string *output)
     }
 
     *output = ss.str();
+    next();
     return true;
 }
 
