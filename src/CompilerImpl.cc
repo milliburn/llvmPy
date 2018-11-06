@@ -41,14 +41,20 @@ CompilerImpl::findSymbol(std::string const &name)
 {
     std::string const mangledName = mangleSymbol(name);
 
-    // Search keys in reverse order.
+    // Search keys in reverse order among the modules that have been added.
     for (auto i = moduleKeys.size() - 1; i >= 0; i--){
         auto moduleKey = moduleKeys[i];
-        auto symbol = compileLayer.findSymbolIn(moduleKey, mangledName, true);
-
-        if (symbol) {
+        if (auto symbol =
+                compileLayer.findSymbolIn(moduleKey, mangledName, true)) {
             return symbol;
         }
+    }
+
+    // Search through the host process.
+    if (auto addr =
+            llvm::RTDyldMemoryManager::getSymbolAddressInProcess(
+                    mangledName)) {
+        return llvm::JITSymbol(addr, llvm::JITSymbolFlags::Exported);
     }
 
     return nullptr;
