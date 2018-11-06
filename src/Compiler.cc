@@ -34,6 +34,6 @@ Compiler::addAndRunModule(std::unique_ptr<llvm::Module> module)
     }
 
     llvm::JITTargetAddress targetAddress = expectedTargetAddress.get();
-    auto moduleBodyPtr = reinterpret_cast<PyObj*(*)(void *)>(targetAddress);
+    auto moduleBodyPtr = reinterpret_cast<void(*)(void *)>(targetAddress);
     moduleBodyPtr(nullptr);
 }

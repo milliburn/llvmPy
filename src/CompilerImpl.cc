@@ -65,13 +65,27 @@ CompilerImpl::findSymbol(std::string const &name, bool mangle)
 
     return nullptr;
 }
-
+#include <llvmPy/Instr.h>
 std::shared_ptr<llvm::orc::SymbolResolver>
 CompilerImpl::createSymbolResolver()
 {
     return llvm::orc::createLegacyLookupResolver(
             executionSession,
             [this](std::string const &name) {
+                if (name == "_llvmPy_int") {
+                    return llvm::JITSymbol(
+                            llvm::JITTargetAddress(&llvmPy_int),
+                            llvm::JITSymbolFlags::Exported);
+                } else if (name == "_llvmPy_print") {
+                    return llvm::JITSymbol(
+                            llvm::JITTargetAddress(&llvmPy_print),
+                            llvm::JITSymbolFlags::Exported);
+                } else if (name == "_llvmPy_add") {
+                    return llvm::JITSymbol(
+                            llvm::JITTargetAddress(&llvmPy_add),
+                            llvm::JITSymbolFlags::Exported);
+                }
+
                 return objectLayer.findSymbol(name, true);
             },
             [](llvm::Error err) {
