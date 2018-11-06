@@ -82,6 +82,12 @@ RTModule::llvmPy_fchk() const
     return ir.getOrInsertFunction("llvmPy_fchk", types.llvmPy_fchk);
 }
 
+llvm::Value *
+RTModule::llvmPy_print() const
+{
+    return ir.getOrInsertFunction("llvmPy_print", types.llvmPy_print);
+}
+
 RTFunc::RTFunc(
         llvm::Function &func,
         RTScope &scope)

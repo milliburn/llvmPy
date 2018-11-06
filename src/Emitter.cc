@@ -95,6 +95,14 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
 {
     RTModule &mod = scope.getModule();
 
+    if (isa<IdentExpr>(call.lhs)) {
+        auto lhsIdent = cast<IdentExpr>(call.lhs);
+        if (lhsIdent.name == "print") {
+            llvm::Value *arg = emit(scope, *call.args[0]);
+            return ir.CreateCall(mod.llvmPy_print(), { arg });
+        }
+    }
+
     llvm::Value *lhs = emit(scope, call.lhs);
     lhs->setName(tags.FuncObj);
     vector<llvm::Value *> args;

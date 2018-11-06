@@ -21,6 +21,7 @@ enum class PyObjType : long {
 class PyObj : public Typed<PyObjType> {
 public:
     PyObj(PyObjType type) : Typed(type) {}
+    virtual std::string py__str__();
 };
 
 class PyNone : public PyObj {
@@ -42,6 +43,7 @@ public:
 
     PyInt(int64_t value) : PyObj(PyObjType::Int), value(value) {}
     int64_t getValue() const { return value; }
+    virtual std::string py__str__() override;
 
 private:
     int64_t value;

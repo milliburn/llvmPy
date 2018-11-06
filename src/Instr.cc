@@ -6,7 +6,7 @@
 #include <llvmPy/PyObj.h>
 #include <llvmPy/RT.h>
 #include <llvm/IR/Constants.h>
-
+#include <iostream>
 using namespace llvmPy;
 using llvm::cast;
 
@@ -34,6 +34,7 @@ Types::Types(
             Ptr, { FrameNPtr, i8Ptr }, false);
     llvmPy_fchk = llvm::FunctionType::get(
             i8Ptr, { FrameNPtrPtr, Ptr, PyIntValue }, false);
+    llvmPy_print = llvm::FunctionType::get(Ptr, { Ptr }, false);
 }
 
 llvm::StructType *
@@ -150,4 +151,17 @@ llvmPy_fchk(FrameN **callframe, llvmPy::PyFunc &pyfunc, int np)
     RTFunc &rtfunc = pyfunc.getFunc();
     *callframe = &pyfunc.getFrame();
     return &rtfunc.getFunction();
+}
+
+/**
+ * @brief Print the str() of `obj` to stdout. The current implementation is a
+ * divergence from Python's print() behaviour.
+ * @param obj The object to print.
+ */
+extern "C" llvmPy::PyObj *
+llvmPy_print(llvmPy::PyObj &obj)
+{
+    std::string str = obj.py__str__();
+    std::cout << str << std::endl;
+    return PyNone::get();
 }

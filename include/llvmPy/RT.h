@@ -70,6 +70,7 @@ public:
     llvm::Value *llvmPy_none() const;
     llvm::Value *llvmPy_func() const;
     llvm::Value *llvmPy_fchk() const;
+    llvm::Value *llvmPy_print() const;
 
 private:
     llvm::Module &ir;
