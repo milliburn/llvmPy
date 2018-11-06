@@ -26,3 +26,15 @@ Compiler::run(
 {
     return nullptr;
 }
+
+void
+Compiler::addModule(std::unique_ptr<llvm::Module> module)
+{
+    impl->addModule(std::move(module));
+}
+
+llvm::JITSymbol
+Compiler::findSymbol(std::string const &name)
+{
+    return impl->findSymbol(name);
+}

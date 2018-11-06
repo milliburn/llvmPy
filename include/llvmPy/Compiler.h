@@ -4,6 +4,7 @@
 #include <llvm/IR/LLVMContext.h>
 #include <vector>
 #include <memory>
+#include <llvm/ExecutionEngine/JITSymbol.h>
 
 #ifdef __cplusplus
 namespace llvmPy {
@@ -18,7 +19,8 @@ public:
             llvm::Function *function,
             std::vector<llvm::Value *> const &args);
 
-    void *addModule(llvm::Module *module);
+    void addModule(std::unique_ptr<llvm::Module> module);
+    llvm::JITSymbol findSymbol(std::string const &name);
 
 public:
     llvm::LLVMContext &getContext() { return ctx; }

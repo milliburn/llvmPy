@@ -5,6 +5,7 @@
 #include <llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h>
 #include <llvm/ExecutionEngine/Orc/IRCompileLayer.h>
 #include <llvm/ExecutionEngine/Orc/CompileUtils.h>
+#include <vector>
 
 #ifdef __cplusplus
 namespace llvmPy {
@@ -20,8 +21,8 @@ public:
 public:
     llvm::DataLayout const &getDataLayout() const { return dataLayout; }
     llvm::TargetMachine &getTargetMachine() const { return *targetMachine; }
-
     llvm::orc::VModuleKey addModule(std::unique_ptr<llvm::Module> module);
+    llvm::JITSymbol findSymbol(std::string const &name);
 
 private:
     std::unique_ptr<llvm::TargetMachine> targetMachine;
@@ -29,6 +30,7 @@ private:
     llvm::orc::ExecutionSession executionSession;
     TObjectLayer objectLayer;
     TCompileLayer compileLayer;
+    std::vector<llvm::orc::VModuleKey> moduleKeys;
 };
 
 } // namespace llvmPy
