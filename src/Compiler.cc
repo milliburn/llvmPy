@@ -10,6 +10,10 @@
 #include <llvm/ExecutionEngine/Orc/CompileUtils.h>
 using namespace llvmPy;
 
+using TObjectLayer = llvm::orc::RTDyldObjectLinkingLayer;
+using TCompileLayer = llvm::orc::IRCompileLayer<
+        TObjectLayer, llvm::orc::SimpleCompiler>;
+
 static std::unique_ptr<llvm::TargetMachine>
 initTargetMachine() {
     llvm::InitializeNativeTarget();
@@ -19,10 +23,12 @@ initTargetMachine() {
             llvm::EngineBuilder().selectTarget());
 }
 
-static std::unique_ptr<llvm::RuntimeDyld::MemoryManager>
+static TObjectLayer::Resources
 createMemoryManager(llvm::orc::VModuleKey moduleKey)
 {
-    return std::make_unique<llvm::SectionMemoryManager>();
+    return TObjectLayer::Resources {
+        std::make_shared<llvm::SectionMemoryManager>(),
+    };
 }
 
 namespace llvmPy {
@@ -35,12 +41,14 @@ public:
     llvm::DataLayout const &getDataLayout() const { return dataLayout; }
     llvm::TargetMachine &getTargetMachine() const { return *targetMachine; }
 
+    llvm::orc::VModuleKey addModule(std::unique_ptr<llvm::Module> module);
+
 private:
     std::unique_ptr<llvm::TargetMachine> targetMachine;
     llvm::DataLayout const dataLayout;
     llvm::orc::ExecutionSession executionSession;
-    llvm::orc::RTDyldObjectLinkingLayer2 objectLayer;
-    llvm::orc::IRCompileLayer2 compileLayer;
+    TObjectLayer objectLayer;
+    TCompileLayer compileLayer;
 };
 
 } // namespace llvmPy
@@ -49,11 +57,16 @@ CompilerImpl::CompilerImpl()
 : targetMachine(initTargetMachine()),
   dataLayout(targetMachine->createDataLayout()),
   objectLayer(executionSession, createMemoryManager),
-  compileLayer(
-          executionSession,
-          objectLayer,
-          llvm::orc::SimpleCompiler(*targetMachine))
+  compileLayer(objectLayer, llvm::orc::SimpleCompiler(*targetMachine))
 {
+}
+
+llvm::orc::VModuleKey
+CompilerImpl::addModule(std::unique_ptr<llvm::Module> module)
+{
+    llvm::orc::VModuleKey moduleKey = executionSession.allocateVModule();
+    llvm::cantFail(compileLayer.addModule(moduleKey, std::move(module)));
+    return moduleKey;
 }
 
 Compiler::Compiler() noexcept
