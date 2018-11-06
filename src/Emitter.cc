@@ -44,9 +44,11 @@ Emitter::createModule(
         std::vector<Stmt *> const &stmts)
 {
     auto *module = new llvm::Module(name, ctx);
+    module->setDataLayout(dl);
     RTModule *rtModule = new RTModule(name, module, types);
     RTFunc *body = createFunction("__body__", rtModule->getScope(), stmts);
     rtModule->setBody(body);
+    llvm::verifyModule(*module);
     return rtModule;
 }
 
@@ -232,7 +234,7 @@ Emitter::createFunction(
         argTypes.push_back(types.FrameNPtr);
     }
 
-    llvm::Function *func =
+    llvm::Function *function =
             llvm::Function::Create(
                     llvm::FunctionType::get(
                             types.Ptr,
@@ -245,7 +247,7 @@ Emitter::createFunction(
     // Name the arguments.
     int iArg = 0;
     llvm::Value *outerFrameArg = nullptr;
-    for (auto &arg : func->args()) {
+    for (auto &arg : function->args()) {
         if (iArg == 0) {
             arg.setName(tags.OuterFrame);
             outerFrameArg = &arg;
@@ -259,9 +261,9 @@ Emitter::createFunction(
     }
 
     // Create function body.
-    llvm::BasicBlock::Create(ctx, "", func);
-    llvm::BasicBlock *init = &func->getEntryBlock();
-    llvm::BasicBlock *prog = &func->back();
+    llvm::BasicBlock::Create(ctx, "", function);
+    llvm::BasicBlock *init = &function->getEntryBlock();
+    llvm::BasicBlock *prog = &function->back();
 
     int slotCount = 0;
 
@@ -346,12 +348,12 @@ Emitter::createFunction(
         ir.CreateRet(llvm::ConstantPointerNull::get(types.Ptr));
     }
 
-    llvm::verifyFunction(*func);
+    llvm::verifyFunction(*function);
     ir.SetInsertPoint(insertPoint);
 
-    RTFunc *rtFunc = new RTFunc(*func, *innerScope);
+    RTFunc *rtFunc = new RTFunc(*function, *innerScope);
 
-    func->setPrefixData(
+    function->setPrefixData(
             llvm::ConstantInt::get(
                     types.PyIntValue,
                     (uint64_t) rtFunc));

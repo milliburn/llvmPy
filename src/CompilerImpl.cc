@@ -30,7 +30,6 @@ CompilerImpl::CompilerImpl()
 llvm::orc::VModuleKey
 CompilerImpl::addModule(std::unique_ptr<llvm::Module> module)
 {
-    module->setDataLayout(dataLayout);
     llvm::orc::VModuleKey moduleKey = executionSession.allocateVModule();
     llvm::cantFail(compileLayer.addModule(moduleKey, std::move(module)));
     moduleKeys.push_back(moduleKey);
