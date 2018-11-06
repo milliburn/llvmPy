@@ -19,8 +19,6 @@ Compiler::getDataLayout() const
 void
 Compiler::addAndRunModule(std::unique_ptr<llvm::Module> module)
 {
-    llvm::Module &mod = *module;
-    llvm::Function *bodyFunction = mod.getFunction("__body__");
     impl->addModule(std::move(module));
     llvm::JITSymbol moduleBody = impl->findSymbol("__body__");
     auto expectedTargetAddress = moduleBody.getAddress();

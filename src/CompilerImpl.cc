@@ -40,15 +40,7 @@ CompilerImpl::addModule(std::unique_ptr<llvm::Module> module)
 llvm::JITSymbol
 CompilerImpl::findSymbol(std::string const &name)
 {
-    if (auto symbol = findSymbol(name, false)) {
-        return symbol;
-    }
-
-    if (auto symbol = findSymbol(name, true)) {
-        return symbol;
-    }
-
-    return nullptr;
+    return findSymbol(name, true);
 }
 
 llvm::JITSymbol
