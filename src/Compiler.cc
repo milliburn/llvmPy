@@ -15,6 +15,7 @@ initTargetMachine() {
 Compiler::Compiler(RT &rt) noexcept
 : tm(initTargetMachine()),
   dl(tm.createDataLayout()),
+  ee(*llvm::EngineBuilder().create(&tm)),
   rt(rt)
 {
 }
