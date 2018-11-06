@@ -14,13 +14,8 @@ class CompilerImpl;
 class Compiler {
 public:
     explicit Compiler() noexcept;
-
-    void run(
-            llvm::Function *function,
-            std::vector<llvm::Value *> const &args);
-
-    void addModule(std::unique_ptr<llvm::Module> module);
-    llvm::JITSymbol findSymbol(std::string const &name);
+    ~Compiler();
+    void addAndRunModule(std::unique_ptr<llvm::Module> module);
 
 public:
     llvm::LLVMContext &getContext() { return ctx; }

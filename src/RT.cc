@@ -48,7 +48,9 @@ RTModule::RTModule(
         std::string const &name,
         llvm::Module *module,
         Types const &types)
-: ir(*module), types(types), scope(*this)
+: ir(*module),
+  types(types),
+  scope(*this)
 {
 }
 
@@ -96,11 +98,8 @@ RTFunc::RTFunc(
 {
 }
 
-PyObj *
-RT::run(RTModule &mod)
+void
+RT::import(RTModule &mod)
 {
-    RTFunc &body = mod.getBody();
-    llvm::Function *function = &body.getFunction();
-    PyObj *rv = compiler.run(function, {});
-    return rv;
+    compiler.addAndRunModule(std::unique_ptr<llvm::Module>(&mod.getModule()));
 }

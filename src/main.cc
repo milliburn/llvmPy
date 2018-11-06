@@ -60,7 +60,7 @@ main(int argc, char **argv)
     if (IsIR) {
         mod.getModule().print(llvm::outs(), nullptr);
     } else {
-        rt.run(mod);
+        rt.import(mod);
     }
 
     return 0;

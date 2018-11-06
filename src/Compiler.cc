@@ -1,4 +1,5 @@
 #include <llvmPy/Compiler.h>
+#include <llvmPy/PyObj.h>
 #include "CompilerImpl.h"
 using namespace llvmPy;
 
@@ -6,6 +7,8 @@ Compiler::Compiler() noexcept
 : impl(std::make_unique<CompilerImpl>())
 {
 }
+
+Compiler::~Compiler() = default;
 
 llvm::DataLayout const &
 Compiler::getDataLayout() const
@@ -20,21 +23,11 @@ Compiler::getTargetMachine() const
 }
 
 void
-Compiler::run(
-        llvm::Function *function,
-        std::vector<llvm::Value *> const &args)
-{
-    return nullptr;
-}
-
-void
-Compiler::addModule(std::unique_ptr<llvm::Module> module)
+Compiler::addAndRunModule(std::unique_ptr<llvm::Module> module)
 {
     impl->addModule(std::move(module));
-}
-
-llvm::JITSymbol
-Compiler::findSymbol(std::string const &name)
-{
-    return impl->findSymbol(name);
+    llvm::JITSymbol moduleBody = impl->findSymbol("__body__");
+    auto moduleBodyPtr = reinterpret_cast<PyObj*(*)(void *)>(
+            llvm::cantFail(moduleBody.getAddress()));
+    moduleBodyPtr(nullptr);
 }

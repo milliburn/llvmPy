@@ -12,7 +12,7 @@ initTargetMachine() {
     llvm::InitializeNativeTarget();
     llvm::InitializeNativeTargetAsmParser();
     llvm::InitializeNativeTargetAsmPrinter();
-    return std::make_unique<llvm::TargetMachine>(
+    return std::unique_ptr<llvm::TargetMachine>(
             llvm::EngineBuilder().selectTarget());
 }
 

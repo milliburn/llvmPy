@@ -95,7 +95,7 @@ private:
 class RT {
 public:
     explicit RT(Compiler &compiler) : compiler(compiler) {}
-    PyObj *run(RTModule &mod);
+    void import(RTModule &mod);
 
 private:
     Compiler &compiler;
