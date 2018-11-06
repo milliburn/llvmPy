@@ -12,10 +12,9 @@ initTargetMachine() {
     return *llvm::EngineBuilder().selectTarget();
 }
 
-Compiler::Compiler(RT &rt) noexcept
+Compiler::Compiler() noexcept
 : tm(initTargetMachine()),
   dl(tm.createDataLayout()),
-  ee(*llvm::EngineBuilder().create(&tm)),
-  rt(rt)
+  ee(*llvm::EngineBuilder().create(&tm))
 {
 }

@@ -39,7 +39,6 @@ public:
             std::vector<Stmt *> const &stmts);
 
 private:
-    RT &rt;
     llvm::DataLayout const &dl;
     llvm::LLVMContext &ctx;
     llvm::IRBuilder<> ir;

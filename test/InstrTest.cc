@@ -7,8 +7,7 @@ using namespace llvmPy;
 using llvm::cast;
 
 TEST_CASE("Instr", "[Instr]") {
-    RT rt;
-    Compiler compiler(rt);
+    Compiler compiler;
     Emitter em(compiler);
     RTModule *mod = em.createModule("", {});
 

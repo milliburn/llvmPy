@@ -85,8 +85,6 @@ add_executable(
         test/main.cc
         test/LexerTest.cc
         test/ParserTest.cc
-        test/testutil.h
-        test/testutil.cc
         test/InstrTest.cc
         test/TestSuite.cc)
 

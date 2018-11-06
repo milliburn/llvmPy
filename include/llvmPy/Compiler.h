@@ -11,9 +11,8 @@ class RT;
 
 class Compiler {
 public:
-    explicit Compiler(RT &rt) noexcept;
+    explicit Compiler() noexcept;
 
-    RT &getRT() const { return rt; }
     llvm::LLVMContext &getContext() { return ctx; }
     llvm::DataLayout const &getDataLayout() const { return dl; }
     llvm::TargetMachine &getTargetMachine() const { return tm; }
@@ -24,7 +23,6 @@ private:
     llvm::TargetMachine &tm;
     llvm::DataLayout const dl;
     llvm::ExecutionEngine &ee;
-    RT &rt;
 };
 
 } // namespace llvmPy

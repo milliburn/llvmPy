@@ -31,8 +31,7 @@ static struct {
 } tags;
 
 Emitter::Emitter(Compiler &c) noexcept
-: rt(c.getRT()),
-  dl(c.getDataLayout()),
+: dl(c.getDataLayout()),
   ctx(c.getContext()),
   ir(ctx),
   types(ctx, dl)
