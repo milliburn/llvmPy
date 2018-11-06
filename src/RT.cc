@@ -98,9 +98,15 @@ RTFunc::RTFunc(
 {
 }
 
+RT::RT(Compiler &compiler)
+: compiler(compiler)
+{
+}
+
 void
 RT::import(RTModule &mod)
 {
     std::unique_ptr<llvm::Module> ptr(&mod.getModule());
     compiler.addAndRunModule(std::move(ptr));
 }
+

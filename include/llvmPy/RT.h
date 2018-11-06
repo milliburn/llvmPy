@@ -94,7 +94,7 @@ private:
 
 class RT {
 public:
-    explicit RT(Compiler &compiler) : compiler(compiler) {}
+    explicit RT(Compiler &compiler);
     void import(RTModule &mod);
 
 private:
