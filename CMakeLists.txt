@@ -16,7 +16,10 @@ llvm_map_components_to_libnames(
         core
         executionengine
         irreader
-        native)
+        native
+        OrcJIT
+        RuntimeDyld
+)
 
 # Libraries
 

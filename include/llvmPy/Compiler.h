@@ -1,13 +1,14 @@
 #pragma once
-#include "llvm/Target/TargetMachine.h"
+#include <llvm/Target/TargetMachine.h>
 #include <llvm/IR/DataLayout.h>
 #include <llvm/IR/LLVMContext.h>
-#include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <vector>
+#include <memory>
 
 #ifdef __cplusplus
 namespace llvmPy {
 
+class CompilerImpl;
 class RT;
 class PyObj;
 
@@ -21,15 +22,12 @@ public:
 
 public:
     llvm::LLVMContext &getContext() { return ctx; }
-    llvm::DataLayout const &getDataLayout() const { return dl; }
-    llvm::TargetMachine &getTargetMachine() const { return tm; }
-    llvm::ExecutionEngine &getExecutionEngine() const { return ee; }
+    llvm::DataLayout const &getDataLayout() const;
+    llvm::TargetMachine &getTargetMachine() const;
 
 private:
     llvm::LLVMContext ctx;
-    llvm::TargetMachine &tm;
-    llvm::DataLayout const dl;
-    llvm::ExecutionEngine &ee;
+    std::unique_ptr<CompilerImpl> impl;
 };
 
 } // namespace llvmPy
