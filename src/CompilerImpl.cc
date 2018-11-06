@@ -30,6 +30,7 @@ CompilerImpl::CompilerImpl()
 llvm::orc::VModuleKey
 CompilerImpl::addModule(std::unique_ptr<llvm::Module> module)
 {
+    module->setDataLayout(dataLayout);
     llvm::orc::VModuleKey moduleKey = executionSession.allocateVModule();
     llvm::cantFail(compileLayer.addModule(moduleKey, std::move(module)));
     moduleKeys.push_back(moduleKey);
@@ -39,10 +40,24 @@ CompilerImpl::addModule(std::unique_ptr<llvm::Module> module)
 llvm::JITSymbol
 CompilerImpl::findSymbol(std::string const &name)
 {
-    std::string const mangledName = mangleSymbol(name);
+    if (auto symbol = findSymbol(name, false)) {
+        return symbol;
+    }
+
+    if (auto symbol = findSymbol(name, true)) {
+        return symbol;
+    }
+
+    return nullptr;
+}
+
+llvm::JITSymbol
+CompilerImpl::findSymbol(std::string const &name, bool mangle)
+{
+    std::string const mangledName = mangle ? mangleSymbol(name) : name;
 
     // Search keys in reverse order among the modules that have been added.
-    for (auto i = moduleKeys.size() - 1; i >= 0; i--){
+    for (auto i = moduleKeys.size(); i--;){
         auto moduleKey = moduleKeys[i];
         if (auto symbol =
                 compileLayer.findSymbolIn(moduleKey, mangledName, true)) {

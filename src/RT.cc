@@ -101,5 +101,6 @@ RTFunc::RTFunc(
 void
 RT::import(RTModule &mod)
 {
-    compiler.addAndRunModule(std::unique_ptr<llvm::Module>(&mod.getModule()));
+    std::unique_ptr<llvm::Module> ptr(&mod.getModule());
+    compiler.addAndRunModule(std::move(ptr));
 }

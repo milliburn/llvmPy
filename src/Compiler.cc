@@ -16,18 +16,15 @@ Compiler::getDataLayout() const
     return impl->getDataLayout();
 }
 
-llvm::TargetMachine &
-Compiler::getTargetMachine() const
-{
-    return impl->getTargetMachine();
-}
-
 void
 Compiler::addAndRunModule(std::unique_ptr<llvm::Module> module)
 {
+    llvm::Module &mod = *module;
+    llvm::Function *bodyFunction = mod.getFunction("__body__");
     impl->addModule(std::move(module));
     llvm::JITSymbol moduleBody = impl->findSymbol("__body__");
-    auto moduleBodyPtr = reinterpret_cast<PyObj*(*)(void *)>(
-            llvm::cantFail(moduleBody.getAddress()));
+    auto expectedTargetAddress = moduleBody.getAddress();
+    llvm::JITTargetAddress targetAddress = expectedTargetAddress.get();
+    auto moduleBodyPtr = reinterpret_cast<PyObj*(*)(void *)>(targetAddress);
     moduleBodyPtr(nullptr);
 }

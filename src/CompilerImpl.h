@@ -24,6 +24,7 @@ public:
     llvm::TargetMachine &getTargetMachine() const { return *targetMachine; }
     llvm::orc::VModuleKey addModule(std::unique_ptr<llvm::Module> module);
     llvm::JITSymbol findSymbol(std::string const &name);
+    llvm::JITSymbol findSymbol(std::string const &name, bool mangle);
 
 private:
     std::unique_ptr<llvm::TargetMachine> targetMachine;
