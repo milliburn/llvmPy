@@ -14,6 +14,7 @@ class Value;
 
 namespace llvmPy {
 
+class Compiler;
 class Types;
 class RTModule;
 class RTScope;
@@ -92,6 +93,11 @@ private:
 
 class RT {
 public:
+    explicit RT(Compiler &compiler) : compiler(compiler) {}
+    PyObj *run(RTModule &mod);
+
+private:
+    Compiler &compiler;
 };
 
 } // namespace llvmPy

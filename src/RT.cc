@@ -1,6 +1,7 @@
 #include <llvmPy/RT.h>
 #include <llvm/IR/Module.h>
 #include <llvmPy/Instr.h>
+#include <llvmPy/Compiler.h>
 #include <string>
 using namespace llvmPy;
 
@@ -89,3 +90,11 @@ RTFunc::RTFunc(
 {
 }
 
+PyObj *
+RT::run(RTModule &mod)
+{
+    RTFunc &body = mod.getBody();
+    llvm::Function *function = &body.getFunction();
+    PyObj *rv = compiler.run(function, {});
+    return rv;
+}
