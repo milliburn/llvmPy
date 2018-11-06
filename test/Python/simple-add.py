@@ -1,6 +1,6 @@
-# RUN: llvmPy --ret %s > %t1
+# RUN: llvmPy %s > %t1
 # RUN: cat -n %t1 >&2
 # RUN: cat %t1 | FileCheck %s
 
-1 + 1
+print(1 + 1)
 # CHECK: 2

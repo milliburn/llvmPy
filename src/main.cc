@@ -24,7 +24,7 @@ cl::opt<bool> IsIR(
 
 cl::opt<string> Filename(
         cl::Positional,
-        cl::desc("Program file"));
+        cl::desc("file"));
 
 int
 main(int argc, char **argv)
@@ -51,17 +51,16 @@ main(int argc, char **argv)
     Parser parser(tokens);
     parser.parse(stmts);
 
-    RT rt;
-    Compiler compiler(rt);
+    Compiler compiler;
     Emitter em(compiler);
+    RT rt(compiler);
 
     RTModule &mod = *em.createModule("__main__", stmts);
 
     if (IsIR) {
         mod.getModule().print(llvm::outs(), nullptr);
     } else {
-        cerr << "Only the --ir option is supported at this time." << endl;
-        exit(1);
+        rt.run(mod);
     }
 
     return 0;
