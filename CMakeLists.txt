@@ -18,8 +18,7 @@ llvm_map_components_to_libnames(
         irreader
         native
         OrcJIT
-        RuntimeDyld
-)
+        RuntimeDyld)
 
 # Libraries
 
@@ -51,7 +50,9 @@ add_library(
         src/SyntaxError.cc
         src/Token.cc
         include/llvmPy/PyObj.h
-        src/PyObj.cc)
+        src/PyObj.cc
+        src/CompilerImpl.h
+        src/CompilerImpl.cc)
 
 set_target_properties(
         lib${name}

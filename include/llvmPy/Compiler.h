@@ -9,14 +9,12 @@
 namespace llvmPy {
 
 class CompilerImpl;
-class RT;
-class PyObj;
 
 class Compiler {
 public:
     explicit Compiler() noexcept;
 
-    PyObj *run(
+    void run(
             llvm::Function *function,
             std::vector<llvm::Value *> const &args);
 
