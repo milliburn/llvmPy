@@ -5,6 +5,7 @@
 #include <llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h>
 #include <llvm/ExecutionEngine/Orc/IRCompileLayer.h>
 #include <llvm/ExecutionEngine/Orc/CompileUtils.h>
+#include "llvm/ExecutionEngine/Orc/LambdaResolver.h"
 #include <vector>
 
 #ifdef __cplusplus
@@ -28,9 +29,14 @@ private:
     std::unique_ptr<llvm::TargetMachine> targetMachine;
     llvm::DataLayout const dataLayout;
     llvm::orc::ExecutionSession executionSession;
+    std::shared_ptr<llvm::orc::SymbolResolver> symbolResolver;
     TObjectLayer objectLayer;
     TCompileLayer compileLayer;
     std::vector<llvm::orc::VModuleKey> moduleKeys;
+
+    std::shared_ptr<llvm::orc::SymbolResolver> createSymbolResolver();
+    TObjectLayer::ResourcesGetter createResourcesGetter() const;
+    std::string mangleSymbol(std::string const &symbol) const;
 };
 
 } // namespace llvmPy
