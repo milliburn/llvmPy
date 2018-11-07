@@ -365,8 +365,10 @@ Emitter::createFunction(
 
     ir.CreateStore(outerFramePtr, frameOuterPtrGEPBitCast);
 
-    RTScope *innerScope = outerScope.createDerived(
-            innerFrameAlloca, outerFramePtrPtrArg);
+    RTScope *innerScope =
+            outerScope.createDerived(
+                    innerFrameAlloca,
+                    outerFramePtrPtrArg);
 
     // Copy-initialise the contents of arguments.
     iArg = 0;
@@ -428,7 +430,8 @@ Emitter::createFunction(
                     innerFrameAlloca,
                     { types.getInt64(0),
                       types.getInt32(2),
-                      types.getInt64(slotIndex) });
+                      types.getInt64(slotIndex) },
+                    tags.Var + "_" + ident);
             ir.CreateStore(llvm::Constant::getNullValue(types.Ptr), assignGEP);
 
             // TODO: This would be invalidated if the pointer changes
@@ -448,6 +451,11 @@ Emitter::createFunction(
             llvm::Value *value = emit(*innerScope, ret.expr);
             ir.CreateRet(value);
             lastIsRet = true;
+        } else if (isa<DefStmt>(stmt)) {
+            auto &def = *cast<DefStmt>(stmt);
+            llvm::Value *value = emit(*innerScope, def);
+            ir.CreateStore(value, innerScope->slots[def.name]);
+            lastIsRet = false;
         } else {
             emit(*innerScope, *stmt);
             lastIsRet = false;

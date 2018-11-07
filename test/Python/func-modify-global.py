@@ -11,4 +11,6 @@ def func():
 
 func()
 print(y)
-# CHECK: 2
+# CHECK: 1
+
+# TODO: `y` isn't marked as "global" (not supported); hence the behaviour.
