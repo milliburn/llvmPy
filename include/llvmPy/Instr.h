@@ -57,6 +57,7 @@ public:
 private:
     llvm::LLVMContext &ctx;
     std::map<int, llvm::StructType *> mutable frameN;
+    std::map<int, llvm::FunctionType *> mutable funcN;
 };
 
 }

@@ -95,6 +95,10 @@ Types::getInt64(int64_t value) const
 llvm::FunctionType *
 Types::getFuncN(int N) const
 {
+    if (funcN.count(N)) {
+        return funcN[N];
+    }
+
     std::vector<llvm::Type *> argTypes;
     argTypes.push_back(FrameNPtrPtr);
 
@@ -102,7 +106,11 @@ Types::getFuncN(int N) const
         argTypes.push_back(Ptr);
     }
 
-    return llvm::FunctionType::get(Ptr, argTypes, false);
+    auto *ft = llvm::FunctionType::get(Ptr, argTypes, false);
+
+    funcN[N] = ft;
+
+    return ft;
 }
 
 extern "C" PyObj *
