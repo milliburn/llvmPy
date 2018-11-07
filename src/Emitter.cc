@@ -134,13 +134,7 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
             tags.FuncPtr);
 
     args[0] = callFrame;
-
-    if (argCount > 1) {
-        cerr << "Cannot call function with more than 1 arguments ("
-             << argCount << " provided)" << endl;
-        exit(1);
-    }
-
+    
     llvm::Value *funcBitCast = ir.CreateBitCast(
             inst,
             llvm::PointerType::getUnqual(types.getFuncN(argCount)));
