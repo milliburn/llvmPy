@@ -90,6 +90,12 @@ RTModule::llvmPy_print() const
     return ir.getOrInsertFunction("llvmPy_print", types.llvmPy_print);
 }
 
+llvm::Value *
+RTModule::llvmPy_str() const
+{
+    return ir.getOrInsertFunction("llvmPy_str", types.llvmPy_str);
+}
+
 RTFunc::RTFunc(
         llvm::Function &func,
         RTScope &scope)

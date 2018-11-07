@@ -173,7 +173,9 @@ Parser::parseLitExpr()
 {
     if (is(tok_string)) {
         Token tok = last();
-        return new StrLitExpr(tok.str->substr(1, tok.str->length() - 1));
+        auto value = std::make_unique<std::string const>(
+                tok.str->substr(1, tok.str->length() - 1));
+        return new StrLitExpr(std::move(value));
     }
 
     int sign = 0;

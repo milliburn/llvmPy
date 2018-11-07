@@ -53,7 +53,8 @@ add_library(
         src/PyObj.cc
         src/CompilerImpl.h
         src/CompilerImpl.cc
-        include/llvmPy/PyObj/PyObj.h)
+        include/llvmPy/PyObj/PyObj.h
+        src/PyObj/PyStr.cc)
 
 set_target_properties(
         lib${name}

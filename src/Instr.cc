@@ -38,6 +38,8 @@ Types::Types(
     llvmPy_fchk = llvm::FunctionType::get(
             i8Ptr, { FrameNPtrPtr, Ptr, PyIntValue }, false);
     llvmPy_print = llvm::FunctionType::get(Ptr, { Ptr }, false);
+    llvmPy_str = llvm::FunctionType::get(
+            Ptr, { llvm::Type::getInt8PtrTy(ctx) }, false);
 }
 
 llvm::StructType *
@@ -182,4 +184,14 @@ llvmPy_print(llvmPy::PyObj &obj)
     std::string str = obj.py__str__();
     std::cout << str << std::endl;
     return PyNone::get();
+}
+
+/**
+ * @brief Return a PyStr representing the underlying string given.
+ */
+extern "C" llvmPy::PyObj *
+llvmPy_str(uint8_t const *string)
+{
+    auto copy = std::make_unique<std::string const>((char const *) string);
+    return new PyStr(std::move(copy));
 }

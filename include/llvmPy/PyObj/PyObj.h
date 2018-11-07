@@ -9,7 +9,8 @@ namespace llvmPy {
 enum class PyObjType : long {
     None = 0,
     Int = 1,
-    Func = 2,
+    Str = 2,
+    Func = 3,
 };
 
 /**
