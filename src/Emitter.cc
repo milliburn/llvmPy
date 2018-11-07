@@ -33,6 +33,7 @@ static struct {
     string Lambda = "lambda";
     string Def = "def";
     string Var = "var";
+    string String = "str";
 } tags;
 
 Emitter::Emitter(Compiler &c) noexcept
@@ -68,6 +69,7 @@ Emitter::emit(RTScope &scope, AST const &ast)
     case ASTType::ExprCall: return emit(scope, cast<CallExpr>(ast));
     case ASTType::ExprLambda: return emit(scope, cast<LambdaExpr>(ast));
     case ASTType::StmtDef: return emit(scope, cast<DefStmt>(ast));
+    case ASTType::ExprStrLit: return emit(scope, cast<StrLitExpr>(ast));
 
     case ASTType::StmtAssign: {
         auto &stmt = cast<AssignStmt>(ast);
@@ -155,7 +157,7 @@ Emitter::emit(RTScope &scope, IntLitExpr const &expr)
                     types.PyIntValue,
                     static_cast<uint64_t>(expr.value));
 
-    return ir.CreateCall(mod.llvmPy_int(), {value});
+    return ir.CreateCall(mod.llvmPy_int(), { value });
 }
 
 llvm::Value *
@@ -248,6 +250,19 @@ Emitter::emit(RTScope &scope, DefStmt const &def)
             mod.llvmPy_func(),
             { innerFramePtrBitCast,
               functionPtrBitCast });
+}
+
+llvm::Value *
+Emitter::emit(RTScope &scope, StrLitExpr const &lit)
+{
+    RTModule &mod = scope.getModule();
+
+    llvm::Value *globalString =
+            ir.CreateGlobalStringPtr(
+                    lit.getValue(),
+                    tags.String);
+
+    return ir.CreateCall(mod.llvmPy_str(), { globalString });
 }
 
 RTFunc *

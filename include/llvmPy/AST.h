@@ -2,6 +2,7 @@
 #include <llvmPy/Token.h>
 #include <llvmPy/Typed.h>
 #include <string>
+#include <memory>
 
 #ifdef __cplusplus
 namespace llvmPy {
@@ -70,11 +71,12 @@ public:
         return ast->isType(ASTType::ExprStrLit);
     }
 
-    std::string const & str;
-    explicit StrLitExpr(std::string str)
-        : LitExpr(ASTType::ExprStrLit),
-          str(std::move(str)) {}
+    explicit StrLitExpr(std::unique_ptr<std::string const> value);
     void toStream(std::ostream &) const override;
+    std::string const &getValue() const;
+
+private:
+    std::unique_ptr<std::string const> const value;
 };
 
 class DecLitExpr : public LitExpr {

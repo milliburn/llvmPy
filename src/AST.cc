@@ -42,7 +42,7 @@ AST::toStream(std::ostream &) const
 void
 StrLitExpr::toStream(std::ostream & s) const
 {
-    s << '"' << str << '"';
+    s << '"' << getValue() << '"';
 }
 
 void
@@ -151,3 +151,14 @@ operator<< (std::ostream & s, Stmt const & stmt)
     return s;
 }
 
+StrLitExpr::StrLitExpr(std::unique_ptr<std::string const> value)
+: LitExpr(ASTType::ExprStrLit),
+  value(std::move(value))
+{
+}
+
+std::string const &
+StrLitExpr::getValue() const
+{
+    return *value;
+}
