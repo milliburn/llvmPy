@@ -14,7 +14,7 @@ f = lambda: 1
 
 # CHECK: [[frame:%[0-9]]] = bitcast %Frame1* %frame to %FrameN*
 # CHECK-NEXT: [[rv:%[0-9]]] = call %PyObj* @llvmPy_func(%FrameN* [[frame]], i8* bitcast (%PyObj* (%Frame1**)* @lambda to i8*))
-# CHECK-NEXT: store %PyObj* [[rv]], %PyObj** %{{[0-9]}}
+# CHECK-NEXT: store %PyObj* [[rv]], %PyObj** %{{[a-z_0-9]}}
 
 # CHECK: define
 # CHECK-SAME: @lambda(%Frame1** %outerptr)

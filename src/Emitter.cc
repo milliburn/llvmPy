@@ -31,6 +31,7 @@ static struct {
     string InnerFrame = "frame";
     string CallFrame = "callframe";
     string Lambda = "lambda";
+    string Var = "var";
 } tags;
 
 Emitter::Emitter(Compiler &c) noexcept
@@ -341,7 +342,8 @@ Emitter::createFunction(
                     innerFrameAlloca,
                     { types.getInt64(0),
                       types.getInt32(2),
-                      types.getInt64(slotIndex) });
+                      types.getInt64(slotIndex) },
+                    tags.Var + "_" + ident);
             ir.CreateStore(&arg, assignGEP);
 
             // TODO: This would be invalidated if the pointer changes
@@ -356,10 +358,30 @@ Emitter::createFunction(
     // Zero-initialise the contents of assign statements. This will act
     // as a sentinel to detect use before set.
     for (auto *stmt : stmts) {
+        // TODO: Remove code duplication.
         if (stmt->getType() == ASTType::StmtAssign) {
             ir.SetInsertPoint(init);
             auto &assign = *cast<AssignStmt>(stmt);
             auto &ident = assign.lhs;
+            assert(slots.count(ident));
+            auto slotIndex = slots[ident];
+            llvm::Value *assignGEP = ir.CreateGEP(
+                    innerFrameType,
+                    innerFrameAlloca,
+                    { types.getInt64(0),
+                      types.getInt32(2),
+                      types.getInt64(slotIndex) },
+                    tags.Var + "_" + ident);
+            ir.CreateStore(llvm::Constant::getNullValue(types.Ptr), assignGEP);
+
+            // TODO: This would be invalidated if the pointer changes
+            // TODO: (i.e. if the callee's chain ends up lifting the frame
+            // TODO: to heap).
+            innerScope->slots[ident] = assignGEP;
+        } else if (stmt->getType() == ASTType::StmtDef) {
+            ir.SetInsertPoint(init);
+            auto &def = *cast<DefStmt>(stmt);
+            auto &ident = def.name;
             assert(slots.count(ident));
             auto slotIndex = slots[ident];
             llvm::Value *assignGEP = ir.CreateGEP(

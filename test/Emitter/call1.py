@@ -7,7 +7,7 @@ f(1)
 
 # CHECK-LABEL: define %PyObj* @__body__
 # CHECK: [[_None:%[0-9]+]] = call %PyObj* @llvmPy_none()
-# CHECK-NEXT: store %PyObj* [[_None]], %PyObj** [[_None2:%[0-9]+]]
+# CHECK-NEXT: store %PyObj* [[_None]], %PyObj** [[_None2:%[a-z_0-9]+]]
 # CHECK: [[None:%[0-9]+]] = load %PyObj*, %PyObj** [[_None2]]
 # CHECK: [[_1:%[0-9]+]] = call %PyObj* @llvmPy_int(i64 1)
 # CHECK: %callframe = alloca %FrameN*

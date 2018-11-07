@@ -10,7 +10,7 @@ f = lambda: x + 1
 # CHECK-NEXT: alloca %Frame2
 # CHECK: [[X:%[0-9]+]] = call %PyObj* @llvmPy_int(i64 1)
 # CHECK: [[RV:%[0-9]+]] = call %PyObj* @llvmPy_func
-# CHECK-NEXT: store %PyObj* [[RV]], %PyObj** %{{[0-9]+}}
+# CHECK-NEXT: store %PyObj* [[RV]], %PyObj** %{{[a-z_0-9]+}}
 
 # CHECK-LABEL: define %PyObj* @lambda
 # CHECK-NEXT: %outer = load %Frame2*, %Frame2** %outerptr
