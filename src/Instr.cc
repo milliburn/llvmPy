@@ -136,7 +136,7 @@ llvmPy_func(FrameN *frame, uint64_t *label)
 {
     uint64_t prefix = label[-1];
     auto rtFunc = reinterpret_cast<RTFunc *>(prefix);
-    return new PyFunc(rtFunc, frame);
+    return new PyFunc(rtFunc, frame, (void *) label);
 }
 
 /**
@@ -144,12 +144,11 @@ llvmPy_func(FrameN *frame, uint64_t *label)
  * @param np Count of positional arguments passed by the caller.
  * @return Pointer to the function's IR.
  */
-extern "C" llvm::Function *
+extern "C" void *
 llvmPy_fchk(FrameN **callframe, llvmPy::PyFunc &pyfunc, int np)
 {
-    RTFunc &rtfunc = pyfunc.getFunc();
     *callframe = &pyfunc.getFrame();
-    return &rtfunc.getFunction();
+    return pyfunc.getLabel();
 }
 
 /**

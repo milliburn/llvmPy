@@ -55,16 +55,18 @@ public:
         return x->isType(PyObjType::Func);
     }
 
-    PyFunc(RTFunc *func, FrameN *frame)
-    : PyObj(PyObjType::Func), func(*func), frame(frame) {}
+    PyFunc(RTFunc *func, FrameN *frame, void *label)
+    : PyObj(PyObjType::Func), func(*func), frame(frame), label(label) {}
 
 public:
     RTFunc &getFunc() const { return func; }
     FrameN &getFrame() const { return *frame; }
+    void *getLabel() const { return label; }
 
 private:
     RTFunc &func;
     FrameN *frame;
+    void * const label;
 };
 
 } // namespace llvmPy
