@@ -180,8 +180,10 @@ Emitter::emit(RTScope &scope, IdentExpr const &ident)
             exit(127);
         }
 
+        llvm::Value *outerFramePtr = ir.CreateLoad(scope.getOuterFramePtr());
+
         llvm::Value *outerFrameSlotGEP = ir.CreateGEP(
-                scope.getOuterFramePtr(),
+                outerFramePtr,
                 { types.getInt64(0),
                   types.getInt32(2),
                   types.getInt64(0) }); // TODO: True index of slot.
@@ -234,9 +236,10 @@ Emitter::createFunction(
 
     if (outerScope.getInnerFramePtr()) {
         llvm::Value *outerFramePtr = outerScope.getInnerFramePtr();
-        argTypes.push_back(outerFramePtr->getType());
+        argTypes.push_back(
+                llvm::PointerType::getUnqual(outerFramePtr->getType()));
     } else {
-        argTypes.push_back(types.FrameNPtr);
+        argTypes.push_back(types.FrameNPtrPtr);
     }
 
     for (auto &argName : args) {
@@ -258,11 +261,11 @@ Emitter::createFunction(
 
     // Name the arguments.
     int iArg = 0;
-    llvm::Value *outerFrameArg = nullptr;
+    llvm::Value *outerFramePtrPtrArg = nullptr;
     for (auto &arg : function->args()) {
         if (iArg == 0) {
             arg.setName(tags.OuterFrame);
-            outerFrameArg = &arg;
+            outerFramePtrPtrArg = &arg;
         } else {
             arg.setName("arg_" + args[iArg - 1]);
         }
@@ -270,8 +273,8 @@ Emitter::createFunction(
         ++iArg;
     }
 
-    if (!outerFrameArg) {
-        throw "Missing outerFrameArg!";
+    if (!outerFramePtrPtrArg) {
+        throw "Missing outerFramePtrPtrArg!";
     }
 
     // Create function body.
@@ -298,26 +301,30 @@ Emitter::createFunction(
             innerFrameType, 0, tags.InnerFrame);
 
     // Store the frame's self-pointer.
-    llvm::Value *frameSelfPtrGEP = ir.CreateGEP(
-            innerFrameType,
-            innerFrameAlloca,
-            { types.getInt64(0),
-              types.getInt32(0) });
+    llvm::Value *frameSelfPtrGEP =
+            ir.CreateGEP(
+                    innerFrameType,
+                    innerFrameAlloca,
+                    { types.getInt64(0),
+                      types.getInt32(0) });
     ir.CreateStore(innerFrameAlloca, frameSelfPtrGEP);
 
     // Store the frame's outer pointer.
-    llvm::Value *frameOuterPtrGEP = ir.CreateGEP(
-            innerFrameType,
-            innerFrameAlloca,
-            { types.getInt64(0),
-              types.getInt32(1) });
-    llvm::Value *frameOuterPtrGEPBitCast = ir.CreateBitCast(
-            frameOuterPtrGEP,
-            llvm::PointerType::getUnqual(outerFrameArg->getType()));
-    ir.CreateStore(outerFrameArg, frameOuterPtrGEPBitCast);
+    llvm::Value *frameOuterPtrGEP =
+            ir.CreateGEP(
+                    innerFrameType,
+                    innerFrameAlloca,
+                    { types.getInt64(0),
+                      types.getInt32(1) });
+    llvm::Value *frameOuterPtrGEPBitCast =
+            ir.CreateBitCast(
+                    frameOuterPtrGEP,
+                    outerFramePtrPtrArg->getType());
+    llvm::Value *outerFramePtr = ir.CreateLoad(outerFramePtrPtrArg);
+    ir.CreateStore(outerFramePtr, frameOuterPtrGEPBitCast);
 
     RTScope *innerScope = outerScope.createDerived(
-            innerFrameAlloca, outerFrameArg);
+            innerFrameAlloca, outerFramePtrPtrArg);
 
     // Copy-initialise the contents of arguments.
     iArg = 0;
