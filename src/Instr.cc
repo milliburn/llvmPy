@@ -7,8 +7,11 @@
 #include <llvmPy/RT.h>
 #include <llvm/IR/Constants.h>
 #include <iostream>
+#include <stdlib.h>
 using namespace llvmPy;
 using llvm::cast;
+using std::cerr;
+using std::endl;
 
 Types::Types(
         llvm::LLVMContext &ctx,
@@ -115,13 +118,17 @@ llvmPy_add(PyObj &l, PyObj &r)
         }
 
         default:
-            return new PyNone();
-
+            break;
         }
 
     default:
-        return new PyNone();
+        break;
     }
+
+    cerr << "Cannot add " << l.py__str__()
+         << " and " << r.py__str__()
+         << "." << endl;
+    exit(1);
 }
 
 extern "C" PyInt *

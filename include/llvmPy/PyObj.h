@@ -31,6 +31,7 @@ public:
     }
 
     PyNone() : PyObj(PyObjType::None) {}
+    virtual std::string py__str__() override;
 
     static PyNone *get();
 };
@@ -57,6 +58,7 @@ public:
 
     PyFunc(RTFunc *func, FrameN *frame, void *label)
     : PyObj(PyObjType::Func), func(*func), frame(frame), label(label) {}
+    virtual std::string py__str__() override;
 
 public:
     RTFunc &getFunc() const { return func; }
