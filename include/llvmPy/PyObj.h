@@ -3,26 +3,13 @@
 #include <llvmPy/Typed.h>
 #include <string>
 #include <llvmPy/RT/Frame.h>
+#include <llvmPy/PyObj/PyObj.h>
+#include <llvmPy/PyObj/PyStr.h>
 
 #ifdef __cplusplus
 namespace llvmPy {
 
 class RTFunc;
-
-enum class PyObjType : long {
-    None = 0,
-    Int = 1,
-    Func = 2,
-};
-
-/**
- * The base class for all objects accessible on the heap at runtime.
- */
-class PyObj : public Typed<PyObjType> {
-public:
-    PyObj(PyObjType type) : Typed(type) {}
-    virtual std::string py__str__();
-};
 
 class PyNone : public PyObj {
 public:
