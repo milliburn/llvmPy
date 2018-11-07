@@ -132,11 +132,11 @@ llvmPy_none()
 }
 
 extern "C" PyFunc *
-llvmPy_func(FrameN *frame, uint64_t *label)
+llvmPy_func(FrameN *frame, void *label)
 {
-    uint64_t prefix = label[-1];
-    auto rtFunc = reinterpret_cast<RTFunc *>(prefix);
-    return new PyFunc(rtFunc, frame, (void *) label);
+    uint64_t prefix = ((uint64_t *) label)[-1];
+    auto rtfunc = reinterpret_cast<RTFunc *>(prefix);
+    return new PyFunc(rtfunc, frame, label);
 }
 
 /**
