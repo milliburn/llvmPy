@@ -37,8 +37,8 @@ TEST_CASE("Test Suite") {
 
         REQUIRE(sections.size() == 2);
 
-        SECTION(sections[0]) {
-            SECTION(sections[1]) {
+        SECTION(result->getTestName()) {
+            // SECTION(sections[1]) {
                 switch (result->getResultCode()) {
                 case LitResultCode::PASS:
                 case LitResultCode::XPASS:
@@ -60,7 +60,7 @@ TEST_CASE("Test Suite") {
                              result->getOutput());
                     break;
                 }
-            }
+            // }
         }
     }
 }
