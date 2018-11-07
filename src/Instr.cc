@@ -6,9 +6,12 @@
 #include <llvmPy/PyObj.h>
 #include <llvmPy/RT.h>
 #include <llvm/IR/Constants.h>
-
+#include <iostream>
+#include <stdlib.h>
 using namespace llvmPy;
 using llvm::cast;
+using std::cerr;
+using std::endl;
 
 Types::Types(
         llvm::LLVMContext &ctx,
@@ -34,6 +37,7 @@ Types::Types(
             Ptr, { FrameNPtr, i8Ptr }, false);
     llvmPy_fchk = llvm::FunctionType::get(
             i8Ptr, { FrameNPtrPtr, Ptr, PyIntValue }, false);
+    llvmPy_print = llvm::FunctionType::get(Ptr, { Ptr }, false);
 }
 
 llvm::StructType *
@@ -45,6 +49,10 @@ Types::getFrameN() const
 llvm::StructType *
 Types::getFrameN(int N) const
 {
+    if (frameN.count(N)) {
+        return frameN[N];
+    }
+
     llvm::StructType *st = llvm::StructType::create(
             ctx, "Frame" + std::to_string(N));
     st->setBody(
@@ -54,6 +62,7 @@ Types::getFrameN(int N) const
                     llvm::ArrayType::get(Ptr, N)
             },
             true);
+    frameN[N] = st;
     return st;
 }
 
@@ -86,6 +95,10 @@ Types::getInt64(int64_t value) const
 llvm::FunctionType *
 Types::getFuncN(int N) const
 {
+    if (funcN.count(N)) {
+        return funcN[N];
+    }
+
     std::vector<llvm::Type *> argTypes;
     argTypes.push_back(FrameNPtrPtr);
 
@@ -93,7 +106,11 @@ Types::getFuncN(int N) const
         argTypes.push_back(Ptr);
     }
 
-    return llvm::FunctionType::get(Ptr, argTypes, false);
+    auto *ft = llvm::FunctionType::get(Ptr, argTypes, false);
+
+    funcN[N] = ft;
+
+    return ft;
 }
 
 extern "C" PyObj *
@@ -109,13 +126,17 @@ llvmPy_add(PyObj &l, PyObj &r)
         }
 
         default:
-            return new PyNone();
-
+            break;
         }
 
     default:
-        return new PyNone();
+        break;
     }
+
+    cerr << "Cannot add " << l.py__str__()
+         << " and " << r.py__str__()
+         << "." << endl;
+    exit(1);
 }
 
 extern "C" PyInt *
@@ -131,12 +152,11 @@ llvmPy_none()
 }
 
 extern "C" PyFunc *
-llvmPy_func(FrameN *frame, llvm::Function *function)
+llvmPy_func(FrameN *frame, void *label)
 {
-    llvm::Constant *prefix = function->getPrefixData();
-    auto value = cast<llvm::ConstantInt>(prefix);
-    auto rtFunc = reinterpret_cast<RTFunc *>(*value->getValue().getRawData());
-    return new PyFunc(rtFunc, frame);
+    uint64_t prefix = ((uint64_t *) label)[-1];
+    auto rtfunc = reinterpret_cast<RTFunc *>(prefix);
+    return new PyFunc(rtfunc, frame, label);
 }
 
 /**
@@ -144,10 +164,22 @@ llvmPy_func(FrameN *frame, llvm::Function *function)
  * @param np Count of positional arguments passed by the caller.
  * @return Pointer to the function's IR.
  */
-extern "C" llvm::Function *
+extern "C" void *
 llvmPy_fchk(FrameN **callframe, llvmPy::PyFunc &pyfunc, int np)
 {
-    RTFunc &rtfunc = pyfunc.getFunc();
     *callframe = &pyfunc.getFrame();
-    return &rtfunc.getFunction();
+    return pyfunc.getLabel();
+}
+
+/**
+ * @brief Print the str() of `obj` to stdout. The current implementation is a
+ * divergence from Python's print() behaviour.
+ * @param obj The object to print.
+ */
+extern "C" llvmPy::PyObj *
+llvmPy_print(llvmPy::PyObj &obj)
+{
+    std::string str = obj.py__str__();
+    std::cout << str << std::endl;
+    return PyNone::get();
 }

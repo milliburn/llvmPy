@@ -3,7 +3,22 @@
 #include <catch2/catch.hpp>
 #include <llvmPyTest.h>
 #include <stdlib.h>
+#include <sstream>
 using namespace llvmPy;
+
+static std::vector<std::string> tokenize(
+        std::string const &string,
+        char const delimiter)
+{
+    std::vector<std::string> tokens;
+    std::istringstream iss(string);
+    std::string token;
+    while (std::getline(iss, token, delimiter)) {
+        tokens.push_back(token);
+    }
+
+    return tokens;
+}
 
 TEST_CASE("Test Suite") {
     std::string PATH(getenv("PATH"));
@@ -17,28 +32,35 @@ TEST_CASE("Test Suite") {
     lit(results, TEST_PATH);
 
     for (auto result : results) {
-        SECTION(result->getTestName()) {
-            switch (result->getResultCode()) {
-            case LitResultCode::PASS:
-            case LitResultCode::XPASS:
-                SUCCEED(
-                        "Test case successful (" <<
-                        result->getResultCode() <<
-                        ").");
-                break;
+        std::vector<std::string> sections =
+                tokenize(result->getTestName(), '/');
 
-            default:
-                FAIL_CHECK(
-                        "Test case " <<
-                         result->getSuiteName() <<
-                         " :: " <<
-                         result->getTestName() <<
-                         " failed with status " <<
-                         result->getResultCode() <<
-                         " and the following output:\n\n" <<
-                         result->getOutput());
-                break;
-            }
+        REQUIRE(sections.size() == 2);
+
+        SECTION(result->getTestName()) {
+            // SECTION(sections[1]) {
+                switch (result->getResultCode()) {
+                case LitResultCode::PASS:
+                case LitResultCode::XPASS:
+                    SUCCEED(
+                            "Test case successful (" <<
+                            result->getResultCode() <<
+                            ").");
+                    break;
+
+                default:
+                    FAIL_CHECK(
+                            "Test case " <<
+                            result->getSuiteName() <<
+                             " :: " <<
+                             result->getTestName() <<
+                             " failed with status " <<
+                             result->getResultCode() <<
+                             " and the following output:\n\n" <<
+                             result->getOutput());
+                    break;
+                }
+            // }
         }
     }
 }

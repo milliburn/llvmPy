@@ -1,27 +1,27 @@
 #pragma once
-#include "llvm/Target/TargetMachine.h"
 #include <llvm/IR/DataLayout.h>
 #include <llvm/IR/LLVMContext.h>
+#include <vector>
+#include <memory>
 
 #ifdef __cplusplus
 namespace llvmPy {
 
-class RT;
+class CompilerImpl;
 
 class Compiler {
 public:
-    explicit Compiler(RT &rt) noexcept;
+    explicit Compiler() noexcept;
+    ~Compiler();
+    void addAndRunModule(std::unique_ptr<llvm::Module> module);
 
-    RT &getRT() const { return rt; }
+public:
     llvm::LLVMContext &getContext() { return ctx; }
-    llvm::DataLayout const &getDataLayout() const { return dl; }
-    llvm::TargetMachine &getTargetMachine() const { return tm; }
+    llvm::DataLayout const &getDataLayout() const;
 
 private:
     llvm::LLVMContext ctx;
-    llvm::TargetMachine &tm;
-    llvm::DataLayout const dl;
-    RT &rt;
+    std::unique_ptr<CompilerImpl> const impl;
 };
 
 } // namespace llvmPy

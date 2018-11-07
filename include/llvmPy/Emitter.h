@@ -28,6 +28,7 @@ public:
     llvm::Value *emit(RTScope &scope, IdentExpr const &ident);
     llvm::Value *emit(RTScope &scope, CallExpr const &call);
     llvm::Value *emit(RTScope &scope, LambdaExpr const &lambda);
+    llvm::Value *emit(RTScope &scope, DefStmt const &def);
 
     RTModule *createModule(
             std::string const &name,
@@ -36,10 +37,10 @@ public:
     RTFunc *createFunction(
             std::string const &name,
             RTScope &scope,
-            std::vector<Stmt *> const &stmts);
+            std::vector<Stmt *> const &stmts,
+            std::vector<std::string const> const &args);
 
 private:
-    RT &rt;
     llvm::DataLayout const &dl;
     llvm::LLVMContext &ctx;
     llvm::IRBuilder<> ir;

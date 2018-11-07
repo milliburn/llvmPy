@@ -1,6 +1,7 @@
 #include <llvmPy/RT.h>
 #include <llvm/IR/Module.h>
 #include <llvmPy/Instr.h>
+#include <llvmPy/Compiler.h>
 #include <string>
 using namespace llvmPy;
 
@@ -47,7 +48,9 @@ RTModule::RTModule(
         std::string const &name,
         llvm::Module *module,
         Types const &types)
-: ir(*module), types(types), scope(*this)
+: ir(*module),
+  types(types),
+  scope(*this)
 {
 }
 
@@ -81,11 +84,29 @@ RTModule::llvmPy_fchk() const
     return ir.getOrInsertFunction("llvmPy_fchk", types.llvmPy_fchk);
 }
 
+llvm::Value *
+RTModule::llvmPy_print() const
+{
+    return ir.getOrInsertFunction("llvmPy_print", types.llvmPy_print);
+}
+
 RTFunc::RTFunc(
         llvm::Function &func,
         RTScope &scope)
 : func(func),
   scope(scope)
 {
+}
+
+RT::RT(Compiler &compiler)
+: compiler(compiler)
+{
+}
+
+void
+RT::import(RTModule &mod)
+{
+    std::unique_ptr<llvm::Module> ptr(&mod.getModule());
+    compiler.addAndRunModule(std::move(ptr));
 }
 

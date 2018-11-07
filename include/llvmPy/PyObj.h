@@ -21,6 +21,7 @@ enum class PyObjType : long {
 class PyObj : public Typed<PyObjType> {
 public:
     PyObj(PyObjType type) : Typed(type) {}
+    virtual std::string py__str__();
 };
 
 class PyNone : public PyObj {
@@ -30,6 +31,7 @@ public:
     }
 
     PyNone() : PyObj(PyObjType::None) {}
+    virtual std::string py__str__() override;
 
     static PyNone *get();
 };
@@ -42,6 +44,7 @@ public:
 
     PyInt(int64_t value) : PyObj(PyObjType::Int), value(value) {}
     int64_t getValue() const { return value; }
+    virtual std::string py__str__() override;
 
 private:
     int64_t value;
@@ -53,16 +56,19 @@ public:
         return x->isType(PyObjType::Func);
     }
 
-    PyFunc(RTFunc *func, FrameN *frame)
-    : PyObj(PyObjType::Func), func(*func), frame(frame) {}
+    PyFunc(RTFunc *func, FrameN *frame, void *label)
+    : PyObj(PyObjType::Func), func(*func), frame(frame), label(label) {}
+    virtual std::string py__str__() override;
 
 public:
     RTFunc &getFunc() const { return func; }
     FrameN &getFrame() const { return *frame; }
+    void *getLabel() const { return label; }
 
 private:
     RTFunc &func;
     FrameN *frame;
+    void * const label;
 };
 
 } // namespace llvmPy

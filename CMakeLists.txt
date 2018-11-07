@@ -3,7 +3,7 @@ set(name llvmPy)
 project(${name})
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -Wno-unused-variable")
 
 # LLVM
 
@@ -16,7 +16,9 @@ llvm_map_components_to_libnames(
         core
         executionengine
         irreader
-        native)
+        native
+        OrcJIT
+        RuntimeDyld)
 
 # Libraries
 
@@ -48,7 +50,9 @@ add_library(
         src/SyntaxError.cc
         src/Token.cc
         include/llvmPy/PyObj.h
-        src/PyObj.cc)
+        src/PyObj.cc
+        src/CompilerImpl.h
+        src/CompilerImpl.cc)
 
 set_target_properties(
         lib${name}
@@ -85,8 +89,6 @@ add_executable(
         test/main.cc
         test/LexerTest.cc
         test/ParserTest.cc
-        test/testutil.h
-        test/testutil.cc
         test/InstrTest.cc
         test/TestSuite.cc)
 

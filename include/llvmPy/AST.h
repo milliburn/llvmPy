@@ -122,7 +122,7 @@ public:
         return ast->isType(ASTType::ExprLambda);
     }
 
-    std::vector<std::string const *> const args;
+    std::vector<std::string const> const args;
     Expr const & expr;
 
     explicit LambdaExpr(decltype(args) args, Expr * body)
@@ -222,11 +222,11 @@ public:
     }
 
     std::string const &name;
-    std::vector<std::string const *> args;
+    std::vector<std::string const> args;
     std::vector<Stmt *> const stmts;
 
     DefStmt(std::string const &name,
-            std::vector<std::string const *> args,
+            std::vector<std::string const> args,
             std::vector<Stmt *> stmts)
             : Stmt(ASTType::StmtDef),
               name(name),

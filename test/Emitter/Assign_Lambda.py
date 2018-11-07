@@ -9,14 +9,16 @@ f = lambda: 1
 
 # CHECK: define
 # CHECK-SAME: @__body__
+# CHECK-NEXT: %outer = load %FrameN*, %FrameN** %outerptr
 # CHECK-NEXT: %frame = alloca %Frame1
 
 # CHECK: [[frame:%[0-9]]] = bitcast %Frame1* %frame to %FrameN*
-# CHECK-NEXT: [[rv:%[0-9]]] = call %PyObj* @llvmPy_func(%FrameN* [[frame]], i8* bitcast (%PyObj* (%Frame1*)* @lambda to i8*))
-# CHECK-NEXT: store %PyObj* [[rv]], %PyObj** %{{[0-9]}}
+# CHECK-NEXT: [[rv:%[0-9]]] = call %PyObj* @llvmPy_func(%FrameN* [[frame]], i8* bitcast (%PyObj* (%Frame1**)* @lambda to i8*))
+# CHECK-NEXT: store %PyObj* [[rv]], %PyObj** %{{[a-z_0-9]}}
 
 # CHECK: define
-# CHECK-SAME: @lambda(%Frame1* %outer)
+# CHECK-SAME: @lambda(%Frame1** %outerptr)
+# CHECK-NEXT: %outer = load %Frame1*, %Frame1** %outerptr
 # CHECK-NEXT: %frame = alloca %Frame0
 
 # CHECK: [[rv:%[0-9]]] = call %PyObj* @llvmPy_int(i64 1)

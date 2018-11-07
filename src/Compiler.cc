@@ -1,20 +1,42 @@
-#include <llvm/ExecutionEngine/ExecutionEngine.h>
-#include <llvm/Support/TargetSelect.h>
-#include <llvm/Target/TargetMachine.h>
 #include <llvmPy/Compiler.h>
+#include <llvmPy/PyObj.h>
+#include <llvmPy/RT/Frame.h>
+#include "CompilerImpl.h"
+#include <iostream>
+#include <stdlib.h>
 using namespace llvmPy;
+using std::cerr;
+using std::endl;
 
-static llvm::TargetMachine &
-initTargetMachine() {
-    llvm::InitializeNativeTarget();
-    llvm::InitializeNativeTargetAsmParser();
-    llvm::InitializeNativeTargetAsmPrinter();
-    return *llvm::EngineBuilder().selectTarget();
+Compiler::Compiler() noexcept
+: impl(std::make_unique<CompilerImpl>())
+{
 }
 
-Compiler::Compiler(RT &rt) noexcept
-: tm(initTargetMachine()),
-  dl(tm.createDataLayout()),
-  rt(rt)
+Compiler::~Compiler() = default;
+
+llvm::DataLayout const &
+Compiler::getDataLayout() const
 {
+    return impl->getDataLayout();
+}
+
+void
+Compiler::addAndRunModule(std::unique_ptr<llvm::Module> module)
+{
+    impl->addModule(std::move(module));
+    llvm::JITSymbol moduleBody = impl->findSymbol("__body__");
+
+    auto expectedTargetAddress = moduleBody.getAddress();
+
+    if (auto error = expectedTargetAddress.takeError()) {
+        llvm::logAllUnhandledErrors(std::move(error), llvm::errs(), "Error: ");
+        exit(2);
+    }
+
+    llvm::JITTargetAddress targetAddress = expectedTargetAddress.get();
+    auto moduleBodyPtr = reinterpret_cast<void(*)(void *)>(targetAddress);
+
+    Frame<0> *emptyFrame = new Frame<0>();
+    moduleBodyPtr(emptyFrame);
 }

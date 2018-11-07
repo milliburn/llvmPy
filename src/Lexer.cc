@@ -320,6 +320,8 @@ Lexer::ident()
         add(Token(kw_lambda));
     } else if (s == "import") {
         add(Token(kw_import));
+    } else if (s == "return") {
+        add(Token(kw_return));
     } else {
         add(Token(tok_ident, new string(move(s))));
     }

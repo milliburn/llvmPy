@@ -14,6 +14,7 @@ class Value;
 
 namespace llvmPy {
 
+class Compiler;
 class Types;
 class RTModule;
 class RTScope;
@@ -69,6 +70,7 @@ public:
     llvm::Value *llvmPy_none() const;
     llvm::Value *llvmPy_func() const;
     llvm::Value *llvmPy_fchk() const;
+    llvm::Value *llvmPy_print() const;
 
 private:
     llvm::Module &ir;
@@ -92,6 +94,11 @@ private:
 
 class RT {
 public:
+    explicit RT(Compiler &compiler);
+    void import(RTModule &mod);
+
+private:
+    Compiler &compiler;
 };
 
 } // namespace llvmPy
