@@ -7,6 +7,7 @@
 #include <llvm/Support/Casting.h>
 #include <llvm/Support/raw_ostream.h>
 #include <iostream>
+#include <map>
 #include <stdlib.h>
 using namespace llvmPy;
 using llvm::cast;
@@ -17,6 +18,7 @@ using std::to_string;
 using std::vector;
 using std::cerr;
 using std::endl;
+using std::map;
 
 static struct {
     string FuncObj = "";
@@ -46,7 +48,7 @@ Emitter::createModule(
     auto *module = new llvm::Module(name, ctx);
     module->setDataLayout(dl);
     RTModule *rtModule = new RTModule(name, module, types);
-    RTFunc *body = createFunction("__body__", rtModule->getScope(), stmts);
+    RTFunc *body = createFunction("__body__", rtModule->getScope(), stmts, {});
     rtModule->setBody(body);
     llvm::verifyModule(*module);
     return rtModule;
@@ -200,7 +202,8 @@ Emitter::emit(RTScope &scope, LambdaExpr const &lambda)
     RTFunc *func = createFunction(
             tags.Lambda,
             scope,
-            { new ReturnStmt(lambda.expr) });
+            { new ReturnStmt(lambda.expr) },
+            lambda.args);
 
     llvm::Value *innerFramePtrBitCast = ir.CreateBitCast(
             scope.getInnerFramePtr(),
@@ -220,9 +223,11 @@ RTFunc *
 Emitter::createFunction(
         std::string const &name,
         RTScope &outerScope,
-        std::vector<Stmt *> const &stmts)
+        std::vector<Stmt *> const &stmts,
+        std::vector<std::string const> const &args)
 {
     RTModule &mod = outerScope.getModule();
+    map<string, size_t> slots; // Names and indices of slots in the frame.
 
     llvm::BasicBlock *insertPoint = ir.GetInsertBlock();
     vector<llvm::Type *> argTypes;
@@ -232,6 +237,13 @@ Emitter::createFunction(
         argTypes.push_back(outerFramePtr->getType());
     } else {
         argTypes.push_back(types.FrameNPtr);
+    }
+
+    for (auto &argName : args) {
+        if (!slots.count(argName)) {
+            slots[argName] = slots.size();
+            argTypes.push_back(types.Ptr);
+        }
     }
 
     llvm::Function *function =
@@ -251,6 +263,8 @@ Emitter::createFunction(
         if (iArg == 0) {
             arg.setName(tags.OuterFrame);
             outerFrameArg = &arg;
+        } else {
+            arg.setName("arg_" + args[iArg - 1]);
         }
 
         ++iArg;
@@ -265,19 +279,21 @@ Emitter::createFunction(
     llvm::BasicBlock *init = &function->getEntryBlock();
     llvm::BasicBlock *prog = &function->back();
 
-    int slotCount = 0;
-
-    // Find the number of slots to allocate in the frame.
+    // Add slots that originate from assignments.
     for (auto *stmt : stmts) {
         if (stmt->getType() == ASTType::StmtAssign) {
-            slotCount++;
+            auto assignStmt = *cast<AssignStmt>(stmt);
+            auto ident = assignStmt.lhs;
+            if (!slots.count(ident)) {
+                slots[ident] = slots.size();
+            }
         }
     }
 
     ir.SetInsertPoint(init);
 
     // Generate the frame.
-    llvm::StructType *innerFrameType = types.getFrameN(slotCount);
+    llvm::StructType *innerFrameType = types.getFrameN(slots.size());
     llvm::AllocaInst *innerFrameAlloca = ir.CreateAlloca(
             innerFrameType, 0, tags.InnerFrame);
 
@@ -303,22 +319,47 @@ Emitter::createFunction(
     RTScope *innerScope = outerScope.createDerived(
             innerFrameAlloca, outerFrameArg);
 
-    // Zero-initialise the contents of assign statements. This will act
-    // as a sentinel to detect use before set.
-    int iSlot = 0;
-    for (auto *stmt : stmts) {
-        if (stmt->getType() == ASTType::StmtAssign) {
+    // Copy-initialise the contents of arguments.
+    iArg = 0;
+    for (auto &arg : function->args()) {
+        if (iArg > 0) {
+            auto ident = args[iArg - 1];
             ir.SetInsertPoint(init);
-            auto &assign = *cast<AssignStmt>(stmt);
-            auto &ident = assign.lhs;
+            assert(slots.count(ident));
+            auto slotIndex = slots[ident];
             llvm::Value *assignGEP = ir.CreateGEP(
                     innerFrameType,
                     innerFrameAlloca,
                     { types.getInt64(0),
                       types.getInt32(2),
-                      types.getInt64(iSlot) });
+                      types.getInt64(slotIndex) });
+            ir.CreateStore(&arg, assignGEP);
+
+            // TODO: This would be invalidated if the pointer changes
+            // TODO: (i.e. if the callee's chain ends up lifting the frame
+            // TODO: to heap).
+            innerScope->slots[ident] = assignGEP;
+        }
+
+        iArg++;
+    }
+
+    // Zero-initialise the contents of assign statements. This will act
+    // as a sentinel to detect use before set.
+    for (auto *stmt : stmts) {
+        if (stmt->getType() == ASTType::StmtAssign) {
+            ir.SetInsertPoint(init);
+            auto &assign = *cast<AssignStmt>(stmt);
+            auto &ident = assign.lhs;
+            assert(slots.count(ident));
+            auto slotIndex = slots[ident];
+            llvm::Value *assignGEP = ir.CreateGEP(
+                    innerFrameType,
+                    innerFrameAlloca,
+                    { types.getInt64(0),
+                      types.getInt32(2),
+                      types.getInt64(slotIndex) });
             ir.CreateStore(llvm::Constant::getNullValue(types.Ptr), assignGEP);
-            iSlot++;
 
             // TODO: This would be invalidated if the pointer changes
             // TODO: (i.e. if the callee's chain ends up lifting the frame

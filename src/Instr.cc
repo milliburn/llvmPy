@@ -46,6 +46,10 @@ Types::getFrameN() const
 llvm::StructType *
 Types::getFrameN(int N) const
 {
+    if (frameN.count(N)) {
+        return frameN[N];
+    }
+
     llvm::StructType *st = llvm::StructType::create(
             ctx, "Frame" + std::to_string(N));
     st->setBody(
@@ -55,6 +59,7 @@ Types::getFrameN(int N) const
                     llvm::ArrayType::get(Ptr, N)
             },
             true);
+    frameN[N] = st;
     return st;
 }
 

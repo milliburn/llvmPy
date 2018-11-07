@@ -114,12 +114,13 @@ Parser::parseExpr()
         lhs = parseExpr();
         want(tok_rp);
     } else if (is(kw_lambda)) {
-        vector<string const *> args;
+        vector<string const> args;
 
         while (true) {
             if (is(tok_ident)) {
                 Token &ident = last();
-                args.push_back(ident.str);
+                std::string str = *ident.str;
+                args.push_back(str);
                 if (is(tok_comma)) continue;
             }
 

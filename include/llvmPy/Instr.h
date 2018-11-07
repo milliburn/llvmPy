@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <llvmPy/PyObj.h>
 #include <llvmPy/RT/Frame.h>
+#include <map>
 
 #ifdef __cplusplus
 
@@ -55,6 +56,7 @@ public:
 
 private:
     llvm::LLVMContext &ctx;
+    std::map<int, llvm::StructType *> mutable frameN;
 };
 
 }

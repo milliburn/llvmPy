@@ -36,7 +36,8 @@ public:
     RTFunc *createFunction(
             std::string const &name,
             RTScope &scope,
-            std::vector<Stmt *> const &stmts);
+            std::vector<Stmt *> const &stmts,
+            std::vector<std::string const> const &args);
 
 private:
     llvm::DataLayout const &dl;
