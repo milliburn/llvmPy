@@ -59,6 +59,7 @@ enum TokenType {
     kw_def = 1000 | tok_kw,
     kw_lambda,
     kw_import,
+    kw_return,
 };
 
 class Token {

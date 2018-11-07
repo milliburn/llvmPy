@@ -73,13 +73,17 @@ Parser::parseStmt()
             if (is(tok_eof)) break;
             want(tok_indent);
             if (last().depth < indent) break;
-            if (last().depth != innerIndent) {
+            if (last().depth > innerIndent) {
                 throw SyntaxError("Invalid indent");
             }
             stmts.push_back(parseStmt());
         }
 
         return new DefStmt(*ident.str, args, stmts);
+    } else if (is(kw_return)) {
+        auto &expr = *parseExpr();
+        parseEndOfStmt();
+        return new ReturnStmt(expr);
     }
 
     auto state = save();
