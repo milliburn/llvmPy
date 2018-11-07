@@ -120,7 +120,7 @@ DefStmt::toStream(std::ostream &s) const
 
     for (int i = 0; i < args.size(); ++i) {
         if (i > 0) s << ", ";
-        s << *args[i];
+        s << args[i];
     }
 
     s << "):\n";

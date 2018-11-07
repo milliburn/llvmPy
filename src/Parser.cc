@@ -45,13 +45,13 @@ Parser::parseStmt()
         want(tok_ident);
         Token &ident = last();
         want(tok_lp);
-        vector<string const *> args;
+        vector<string const> args;
         vector<Stmt *> stmts;
 
         if (!is(tok_rp)) {
             while (true) {
                 want(tok_ident);
-                args.push_back(last().str);
+                args.push_back(*last().str);
                 if (is(tok_rp)) break;
                 else want(tok_comma);
             }
@@ -72,8 +72,9 @@ Parser::parseStmt()
         while (true) {
             if (is(tok_eof)) break;
             want(tok_indent);
-            if (last().depth < indent) break;
-            if (last().depth > innerIndent) {
+            int stmtDepth = last().depth;
+            if (stmtDepth < innerIndent) break;
+            if (stmtDepth > innerIndent) {
                 throw SyntaxError("Invalid indent");
             }
             stmts.push_back(parseStmt());

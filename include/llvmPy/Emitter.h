@@ -28,6 +28,7 @@ public:
     llvm::Value *emit(RTScope &scope, IdentExpr const &ident);
     llvm::Value *emit(RTScope &scope, CallExpr const &call);
     llvm::Value *emit(RTScope &scope, LambdaExpr const &lambda);
+    llvm::Value *emit(RTScope &scope, DefStmt const &def);
 
     RTModule *createModule(
             std::string const &name,

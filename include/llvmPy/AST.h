@@ -222,11 +222,11 @@ public:
     }
 
     std::string const &name;
-    std::vector<std::string const *> args;
+    std::vector<std::string const> args;
     std::vector<Stmt *> const stmts;
 
     DefStmt(std::string const &name,
-            std::vector<std::string const *> args,
+            std::vector<std::string const> args,
             std::vector<Stmt *> stmts)
             : Stmt(ASTType::StmtDef),
               name(name),

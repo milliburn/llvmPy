@@ -31,6 +31,7 @@ static struct {
     string InnerFrame = "frame";
     string CallFrame = "callframe";
     string Lambda = "lambda";
+    string Def = "def";
     string Var = "var";
 } tags;
 
@@ -66,6 +67,7 @@ Emitter::emit(RTScope &scope, AST const &ast)
     case ASTType::ExprIdent: return emit(scope, cast<IdentExpr>(ast));
     case ASTType::ExprCall: return emit(scope, cast<CallExpr>(ast));
     case ASTType::ExprLambda: return emit(scope, cast<LambdaExpr>(ast));
+    case ASTType::StmtDef: return emit(scope, cast<DefStmt>(ast));
 
     case ASTType::StmtAssign: {
         auto &stmt = cast<AssignStmt>(ast);
@@ -135,7 +137,7 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
             tags.FuncPtr);
 
     args[0] = callFrame;
-    
+
     llvm::Value *funcBitCast = ir.CreateBitCast(
             inst,
             llvm::PointerType::getUnqual(types.getFuncN(argCount)));
@@ -197,19 +199,50 @@ Emitter::emit(RTScope &scope, LambdaExpr const &lambda)
 {
     RTModule &mod = scope.getModule();
 
-    RTFunc *func = createFunction(
-            tags.Lambda,
-            scope,
-            { new ReturnStmt(lambda.expr) },
-            lambda.args);
+    RTFunc *func =
+            createFunction(
+                    tags.Lambda,
+                    scope,
+                    { new ReturnStmt(lambda.expr) },
+                    lambda.args);
 
-    llvm::Value *innerFramePtrBitCast = ir.CreateBitCast(
-            scope.getInnerFramePtr(),
-            types.FrameNPtr);
+    llvm::Value *innerFramePtrBitCast =
+            ir.CreateBitCast(
+                    scope.getInnerFramePtr(),
+                    types.FrameNPtr);
 
-    llvm::Value *functionPtrBitCast = ir.CreateBitCast(
-            &func->getFunction(),
-            types.i8Ptr);
+    llvm::Value *functionPtrBitCast =
+            ir.CreateBitCast(
+                    &func->getFunction(),
+                    types.i8Ptr);
+
+    return ir.CreateCall(
+            mod.llvmPy_func(),
+            { innerFramePtrBitCast,
+              functionPtrBitCast });
+}
+
+llvm::Value *
+Emitter::emit(RTScope &scope, DefStmt const &def)
+{
+    RTModule &mod = scope.getModule();
+
+    RTFunc *func =
+            createFunction(
+                    tags.Def + "_" + def.name,
+                    scope,
+                    def.stmts,
+                    def.args);
+
+    llvm::Value *innerFramePtrBitCast =
+            ir.CreateBitCast(
+                    scope.getInnerFramePtr(),
+                    types.FrameNPtr);
+
+    llvm::Value *functionPtrBitCast =
+            ir.CreateBitCast(
+                    &func->getFunction(),
+                    types.i8Ptr);
 
     return ir.CreateCall(
             mod.llvmPy_func(),
@@ -283,6 +316,12 @@ Emitter::createFunction(
         if (stmt->getType() == ASTType::StmtAssign) {
             auto assignStmt = *cast<AssignStmt>(stmt);
             auto ident = assignStmt.lhs;
+            if (!slots.count(ident)) {
+                slots[ident] = slots.size();
+            }
+        } else if (stmt->getType() == ASTType::StmtDef) {
+            auto defStmt = *cast<DefStmt>(stmt);
+            auto ident = defStmt.name;
             if (!slots.count(ident)) {
                 slots[ident] = slots.size();
             }

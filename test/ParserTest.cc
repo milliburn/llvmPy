@@ -84,7 +84,7 @@ TEST_CASE("Parser", "[Parser]") {
         REQUIRE(expr("f(x+1, 2)") == "f((x + 1i), 2i)");
     }
 
-    SECTION("Function definitions") {
+    SECTION("Function definitions 1") {
         string f1_in =
                 "def func():\n"
                 "    y = x + 1\n"
@@ -96,5 +96,22 @@ TEST_CASE("Parser", "[Parser]") {
                 "  z = (9i + 2i)";
 
         REQUIRE(expr(f1_in) == f1_out);
+    }
+
+    SECTION("Function definitions 2") {
+        string input =
+                "def func(x):\n"
+                "    y = x + 1\n"
+                "    return y + 2\n"
+                "\n"
+                "print(func(1))\n";
+
+        string expect =
+                "def func(x):\n"
+                "  y = (x + 1i)\n"
+                "  return (y + 2i)\n"
+                "print(func(1i))\n"
+
+        REQUIRE(expr(input) == expect);
     }
 }
