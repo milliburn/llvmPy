@@ -27,6 +27,7 @@ static struct {
     string RetVal = "";
     string Arg = "";
     string OuterFrame = "outer";
+    string OuterFramePtr = "outerptr";
     string InnerFrame = "frame";
     string CallFrame = "callframe";
     string Lambda = "lambda";
@@ -264,7 +265,7 @@ Emitter::createFunction(
     llvm::Value *outerFramePtrPtrArg = nullptr;
     for (auto &arg : function->args()) {
         if (iArg == 0) {
-            arg.setName(tags.OuterFrame);
+            arg.setName(tags.OuterFramePtr);
             outerFramePtrPtrArg = &arg;
         } else {
             arg.setName("arg_" + args[iArg - 1]);
@@ -295,6 +296,10 @@ Emitter::createFunction(
 
     ir.SetInsertPoint(init);
 
+    // Dereference the outer frame.
+    llvm::Value *outerFramePtr =
+            ir.CreateLoad(outerFramePtrPtrArg, tags.OuterFrame);
+
     // Generate the frame.
     llvm::StructType *innerFrameType = types.getFrameN(slots.size());
     llvm::AllocaInst *innerFrameAlloca = ir.CreateAlloca(
@@ -310,17 +315,20 @@ Emitter::createFunction(
     ir.CreateStore(innerFrameAlloca, frameSelfPtrGEP);
 
     // Store the frame's outer pointer.
+
     llvm::Value *frameOuterPtrGEP =
             ir.CreateGEP(
                     innerFrameType,
                     innerFrameAlloca,
                     { types.getInt64(0),
                       types.getInt32(1) });
+
     llvm::Value *frameOuterPtrGEPBitCast =
             ir.CreateBitCast(
                     frameOuterPtrGEP,
-                    outerFramePtrPtrArg->getType());
-    llvm::Value *outerFramePtr = ir.CreateLoad(outerFramePtrPtrArg);
+                    llvm::PointerType::getUnqual(
+                            outerFramePtr->getType()));
+
     ir.CreateStore(outerFramePtr, frameOuterPtrGEPBitCast);
 
     RTScope *innerScope = outerScope.createDerived(
