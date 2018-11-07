@@ -132,11 +132,10 @@ llvmPy_none()
 }
 
 extern "C" PyFunc *
-llvmPy_func(FrameN *frame, llvm::Function *function)
+llvmPy_func(FrameN *frame, uint64_t *label)
 {
-    llvm::Constant *prefix = function->getPrefixData();
-    auto value = cast<llvm::ConstantInt>(prefix);
-    auto rtFunc = reinterpret_cast<RTFunc *>(*value->getValue().getRawData());
+    uint64_t prefix = label[-1];
+    auto rtFunc = reinterpret_cast<RTFunc *>(prefix);
     return new PyFunc(rtFunc, frame);
 }
 

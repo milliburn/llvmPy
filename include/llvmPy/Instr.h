@@ -64,7 +64,7 @@ extern "C" {
 llvmPy::PyObj *llvmPy_add(llvmPy::PyObj &, llvmPy::PyObj &);
 llvmPy::PyInt *llvmPy_int(int64_t value);
 llvmPy::PyNone *llvmPy_none();
-llvmPy::PyFunc *llvmPy_func(llvmPy::FrameN *frame, llvm::Function *function);
+llvmPy::PyFunc *llvmPy_func(llvmPy::FrameN *frame, uint64_t *label);
 llvm::Function *llvmPy_fchk(llvmPy::FrameN **callframe, llvmPy::PyFunc &pyfunc, int np);
 llvmPy::PyObj *llvmPy_print(llvmPy::PyObj &);
 
