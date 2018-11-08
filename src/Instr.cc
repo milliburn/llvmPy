@@ -40,6 +40,7 @@ Types::Types(
     llvmPy_print = llvm::FunctionType::get(Ptr, { Ptr }, false);
     llvmPy_str = llvm::FunctionType::get(
             Ptr, { llvm::Type::getInt8PtrTy(ctx) }, false);
+    llvmPy_bool = llvm::FunctionType::get(Ptr, { PyIntValue }, false);
 
     llvm::FunctionType *cmp = llvm::FunctionType::get(Ptr, { Ptr, Ptr }, false);
     llvmPy_lt = cmp;

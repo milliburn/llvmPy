@@ -9,6 +9,6 @@
 
 # CHECK: [[LHS:%[0-9]]] = call %PyObj* @llvmPy_int(i64 1)
 # CHECK-NEXT: [[RHS:%[0-9]]] = call %PyObj* @llvmPy_int(i64 2)
-# CHECK-NEXT: [[RV:%[0-9]]] = call %PyObj* @llvmPy_lte(%PyObj* [[LHS]], %PyObj* [[RHS]])
+# CHECK-NEXT: [[RV:%[0-9]]] = call %PyObj* @llvmPy_le(%PyObj* [[LHS]], %PyObj* [[RHS]])
 
-# CHECK-DAG: declare %PyObj* @llvmPy_lte(%PyObj*, %PyObj*)
+# CHECK-DAG: declare %PyObj* @llvmPy_le(%PyObj*, %PyObj*)
