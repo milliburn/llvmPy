@@ -30,6 +30,7 @@ public:
     llvm::Value *emit(RTScope &scope, LambdaExpr const &lambda);
     llvm::Value *emit(RTScope &scope, DefStmt const &def);
     llvm::Value *emit(RTScope &scope, StrLitExpr const &lit);
+    llvm::Value *emit(RTScope &scope, BinaryExpr const &expr);
 
     RTModule *createModule(
             std::string const &name,

@@ -40,6 +40,15 @@ Types::Types(
     llvmPy_print = llvm::FunctionType::get(Ptr, { Ptr }, false);
     llvmPy_str = llvm::FunctionType::get(
             Ptr, { llvm::Type::getInt8PtrTy(ctx) }, false);
+    llvmPy_bool = llvm::FunctionType::get(Ptr, { PyIntValue }, false);
+
+    llvm::FunctionType *cmp = llvm::FunctionType::get(Ptr, { Ptr, Ptr }, false);
+    llvmPy_lt = cmp;
+    llvmPy_le = cmp;
+    llvmPy_eq = cmp;
+    llvmPy_ne = cmp;
+    llvmPy_ge = cmp;
+    llvmPy_gt = cmp;
 }
 
 llvm::StructType *
@@ -189,9 +198,51 @@ llvmPy_print(llvmPy::PyObj &obj)
 /**
  * @brief Return a PyStr representing the underlying string given.
  */
-extern "C" llvmPy::PyObj *
+extern "C" llvmPy::PyStr *
 llvmPy_str(uint8_t const *string)
 {
     auto copy = std::make_unique<std::string const>((char const *) string);
     return new PyStr(std::move(copy));
+}
+
+extern "C" llvmPy::PyBool *
+llvmPy_bool(uint64_t value)
+{
+    return &PyBool::get(value != 0);
+}
+
+extern "C" llvmPy::PyBool *
+llvmPy_lt(llvmPy::PyObj &l, llvmPy::PyObj &r)
+{
+    return &PyBool::get(l.py__lt__(r));
+}
+
+extern "C" llvmPy::PyBool *
+llvmPy_le(llvmPy::PyObj &l, llvmPy::PyObj &r)
+{
+    return &PyBool::get(l.py__le__(r));
+}
+
+extern "C" llvmPy::PyBool *
+llvmPy_eq(llvmPy::PyObj &l, llvmPy::PyObj &r)
+{
+    return &PyBool::get(l.py__eq__(r));
+}
+
+extern "C" llvmPy::PyBool *
+llvmPy_ne(llvmPy::PyObj &l, llvmPy::PyObj &r)
+{
+    return &PyBool::get(l.py__ne__(r));
+}
+
+extern "C" llvmPy::PyBool *
+llvmPy_ge(llvmPy::PyObj &l, llvmPy::PyObj &r)
+{
+    return &PyBool::get(l.py__ge__(r));
+}
+
+extern "C" llvmPy::PyBool *
+llvmPy_gt(llvmPy::PyObj &l, llvmPy::PyObj &r)
+{
+    return &PyBool::get(l.py__gt__(r));
 }

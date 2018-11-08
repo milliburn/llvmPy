@@ -351,7 +351,9 @@ Lexer::syntax()
         if (is('=')) {
             if (a == '=') {
                 t = tok_eq;
-            } else if (strchr("<>!", a)) {
+            } else if (a == '!') {
+                t = tok_neq;
+            } else if (strchr("<>", a)) {
                 t |= tok_cmpeq;
             } else {
                 t |= tok_assign;

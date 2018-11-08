@@ -54,7 +54,12 @@ add_library(
         src/CompilerImpl.h
         src/CompilerImpl.cc
         include/llvmPy/PyObj/PyObj.h
-        src/PyObj/PyStr.cc)
+        src/PyObj/PyStr.cc
+        include/llvmPy/PyObj/PyBool.h
+        src/PyObj/PyBool.cc
+        src/PyObj/PyObj.cc
+        src/PyObj/PyInt.cc
+        include/llvmPy/PyObj/PyInt.h)
 
 set_target_properties(
         lib${name}
@@ -92,7 +97,8 @@ add_executable(
         test/LexerTest.cc
         test/ParserTest.cc
         test/InstrTest.cc
-        test/TestSuite.cc)
+        test/TestSuite.cc
+        test/PyObjTest.cc)
 
 # The test suites depend on an up-to-date llvmPy binary.
 add_dependencies(
