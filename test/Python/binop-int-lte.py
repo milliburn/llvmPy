@@ -33,4 +33,4 @@ print(2 >= 2)
 print(2 == 2)
 # CHECK-NEXT: True
 print(2 != 2)
-# CHECK-NEXT: True
+# CHECK-NEXT: False

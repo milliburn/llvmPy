@@ -82,6 +82,7 @@ TEST_CASE("Parser", "[Parser]") {
         REQUIRE(expr("f()") == "f()");
         REQUIRE(expr("f(1)") == "f(1i)");
         REQUIRE(expr("f(x+1, 2)") == "f((x + 1i), 2i)");
+        REQUIRE(expr("print(1 != 2)") == "print((1i != 2i))");
     }
 
     SECTION("Function definitions 1") {
