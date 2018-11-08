@@ -22,6 +22,9 @@ public:
     PyObj(PyObjType type) : Typed(type) {}
     virtual std::string py__str__();
 
+    virtual PyObj &py__add__(PyObj &rhs);
+    virtual PyObj &py__mul__(PyObj &rhs);
+
     virtual bool py__lt__(PyObj &rhs);
     virtual bool py__le__(PyObj &rhs);
     virtual bool py__eq__(PyObj &rhs);

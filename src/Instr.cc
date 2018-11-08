@@ -30,7 +30,8 @@ Types::Types(
 
     PyIntValue = llvm::IntegerType::get(ctx, dl.getPointerSizeInBits());
 
-    llvmPy_add = llvm::FunctionType::get(Ptr, { Ptr, Ptr }, false);
+    llvmPy_binop = llvm::FunctionType::get(Ptr, { Ptr, Ptr }, false);
+    llvmPy_add = llvmPy_binop;
     llvmPy_int = llvm::FunctionType::get(Ptr, { PyIntValue }, false);
     llvmPy_none = llvm::FunctionType::get(Ptr, {}, false);
     llvmPy_func = llvm::FunctionType::get(
@@ -42,7 +43,7 @@ Types::Types(
             Ptr, { llvm::Type::getInt8PtrTy(ctx) }, false);
     llvmPy_bool = llvm::FunctionType::get(Ptr, { PyIntValue }, false);
 
-    llvm::FunctionType *cmp = llvm::FunctionType::get(Ptr, { Ptr, Ptr }, false);
+    llvm::FunctionType *cmp = llvmPy_binop;
     llvmPy_lt = cmp;
     llvmPy_le = cmp;
     llvmPy_eq = cmp;
@@ -127,27 +128,13 @@ Types::getFuncN(int N) const
 extern "C" PyObj *
 llvmPy_add(PyObj &l, PyObj &r)
 {
-    switch (l.getType()) {
-    case PyObjType::Int:
-        switch (r.getType()) {
-        case PyObjType::Int: {
-            PyInt &lhs = cast<PyInt>(l);
-            PyInt &rhs = cast<PyInt>(r);
-            return new PyInt(lhs.getValue() + rhs.getValue());
-        }
+    return &l.py__add__(r);
+}
 
-        default:
-            break;
-        }
-
-    default:
-        break;
-    }
-
-    cerr << "Cannot add " << l.py__str__()
-         << " and " << r.py__str__()
-         << "." << endl;
-    exit(1);
+extern "C" llvmPy::PyObj *
+llvmPy_mul(llvmPy::PyObj &l, llvmPy::PyObj &r)
+{
+    return &l.py__mul__(r);
 }
 
 extern "C" PyInt *

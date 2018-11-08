@@ -66,6 +66,7 @@ public:
 
 public:
     llvm::Value *llvmPy_add() const;
+    llvm::Value *llvmPy_mul() const;
     llvm::Value *llvmPy_int() const;
     llvm::Value *llvmPy_none() const;
     llvm::Value *llvmPy_func() const;

@@ -42,6 +42,8 @@ public:
 
     llvm::IntegerType *PyIntValue;
 
+    llvm::FunctionType *llvmPy_binop;
+
     llvm::FunctionType *llvmPy_add;
     llvm::FunctionType *llvmPy_int;
     llvm::FunctionType *llvmPy_none;
@@ -74,6 +76,7 @@ private:
 extern "C" {
 
 llvmPy::PyObj *llvmPy_add(llvmPy::PyObj &, llvmPy::PyObj &);
+llvmPy::PyObj *llvmPy_mul(llvmPy::PyObj &, llvmPy::PyObj &);
 llvmPy::PyInt *llvmPy_int(int64_t value);
 llvmPy::PyNone *llvmPy_none();
 llvmPy::PyFunc *llvmPy_func(llvmPy::FrameN *frame, void *label);

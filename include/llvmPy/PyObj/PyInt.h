@@ -15,6 +15,8 @@ public:
     explicit PyInt(int64_t value);
     int64_t getValue() const;
     std::string py__str__() override;
+    PyObj &py__add__(PyObj &rhs) override;
+    PyObj &py__mul__(PyObj &rhs) override;
     bool py__lt__(PyObj &rhs) override;
     bool py__le__(PyObj &rhs) override;
     bool py__eq__(PyObj &rhs) override;

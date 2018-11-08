@@ -21,6 +21,36 @@ PyInt::py__str__()
     return std::to_string(value);
 }
 
+PyObj &
+PyInt::py__add__(PyObj &rhs)
+{
+    int64_t lv = getValue();
+    int64_t rv;
+
+    if (rhs.getType() == PyObjType::Int) {
+        rv = cast<PyInt>(rhs).getValue();
+    } else {
+        throw "Invalid right-hand operator";
+    }
+
+    return *new PyInt(lv + rv);
+}
+
+PyObj &
+PyInt::py__mul__(PyObj &rhs)
+{
+    int64_t lv = getValue();
+    int64_t rv;
+
+    if (rhs.getType() == PyObjType::Int) {
+        rv = cast<PyInt>(rhs).getValue();
+    } else {
+        throw "Invalid right-hand operator";
+    }
+
+    return *new PyInt(lv * rv);
+}
+
 int
 PyInt::cmp(PyObj &rhs, bool throwIfInvalid)
 {
