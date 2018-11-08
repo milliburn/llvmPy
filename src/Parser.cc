@@ -5,8 +5,33 @@ using std::vector;
 using std::string;
 using std::to_string;
 
+static std::map<TokenType, int>
+initPrecedence()
+{
+    // Follows the table at:
+    // https://docs.python.org/3/reference/expressions.html#operator-precedence
+    std::map<TokenType, int> map;
+
+    map[tok_lt] = -6;
+    map[tok_lte] = -6;
+    map[tok_eq] = -6;
+    map[tok_neq] = -6;
+    map[tok_gt] = -6;
+    map[tok_gte] = -6;
+
+    map[tok_add] = -11;
+    map[tok_sub] = -11;
+
+    map[tok_mul] = -12;
+    map[tok_div] = -12;
+
+    return map;
+}
+
 Parser::Parser(vector<Token> & tokens)
-: tokens(tokens), lasttoken(nullptr)
+: tokens(tokens),
+  precedence(initPrecedence()),
+  lasttoken(nullptr)
 {
     iter = tokens.begin();
 }

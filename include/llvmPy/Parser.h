@@ -3,6 +3,7 @@
 #include <llvmPy/AST.h>
 #include <vector>
 #include <string>
+#include <map>
 
 #ifdef __cplusplus
 namespace llvmPy {
@@ -20,6 +21,7 @@ public:
 private:
     std::vector<Token> & tokens;
     std::vector<Token>::iterator iter;
+    std::map<TokenType, int> const precedence;
 
     Token * lasttoken;
 
