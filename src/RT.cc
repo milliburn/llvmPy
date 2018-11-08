@@ -102,6 +102,42 @@ RTModule::llvmPy_bool() const
     return ir.getOrInsertFunction("llvmPy_bool", types.llvmPy_bool);
 }
 
+llvm::Value *
+RTModule::llvmPy_lt() const
+{
+    return ir.getOrInsertFunction("llvmPy_lt", types.llvmPy_lt);
+}
+
+llvm::Value *
+RTModule::llvmPy_le() const
+{
+    return ir.getOrInsertFunction("llvmPy_le", types.llvmPy_le);
+}
+
+llvm::Value *
+RTModule::llvmPy_eq() const
+{
+    return ir.getOrInsertFunction("llvmPy_eq", types.llvmPy_eq);
+}
+
+llvm::Value *
+RTModule::llvmPy_ne() const
+{
+    return ir.getOrInsertFunction("llvmPy_ne", types.llvmPy_ne);
+}
+
+llvm::Value *
+RTModule::llvmPy_ge() const
+{
+    return ir.getOrInsertFunction("llvmPy_ge", types.llvmPy_ge);
+}
+
+llvm::Value *
+RTModule::llvmPy_gt() const
+{
+    return ir.getOrInsertFunction("llvmPy_gt", types.llvmPy_gt);
+}
+
 RTFunc::RTFunc(
         llvm::Function &func,
         RTScope &scope)

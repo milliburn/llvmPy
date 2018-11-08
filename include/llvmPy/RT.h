@@ -73,6 +73,12 @@ public:
     llvm::Value *llvmPy_print() const;
     llvm::Value *llvmPy_str() const;
     llvm::Value *llvmPy_bool() const;
+    llvm::Value *llvmPy_lt() const;
+    llvm::Value *llvmPy_le() const;
+    llvm::Value *llvmPy_eq() const;
+    llvm::Value *llvmPy_ne() const;
+    llvm::Value *llvmPy_ge() const;
+    llvm::Value *llvmPy_gt() const;
 
 private:
     llvm::Module &ir;

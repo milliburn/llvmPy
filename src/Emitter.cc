@@ -275,10 +275,20 @@ Emitter::emit(RTScope &scope, BinaryExpr const &expr)
     auto *lhs = emit(scope, expr.lhs);
     auto *rhs = emit(scope, expr.rhs);
 
+    llvm::Value *f;
+
     switch (expr.op) {
-    case tok_add: return ir.CreateCall(mod.llvmPy_add(), { lhs, rhs });
+    case tok_add: f = mod.llvmPy_add(); break;
+    case tok_lt: f = mod.llvmPy_lt(); break;
+    case tok_lte: f = mod.llvmPy_le(); break;
+    case tok_eq: f = mod.llvmPy_eq(); break;
+    case tok_neq: f = mod.llvmPy_ne(); break;
+    case tok_gte: f = mod.llvmPy_ge(); break;
+    case tok_gt: f = mod.llvmPy_gt(); break;
     default: return nullptr;
     }
+
+    return ir.CreateCall(f, { lhs, rhs });
 }
 
 RTFunc *
