@@ -61,8 +61,6 @@ Emitter::createModule(
 llvm::Value *
 Emitter::emit(RTScope &scope, AST const &ast)
 {
-    RTModule &mod = scope.getModule();
-
     switch (ast.getType()) {
     case ASTType::ExprIntLit: return emit(scope, cast<IntLitExpr>(ast));
     case ASTType::ExprIdent: return emit(scope, cast<IdentExpr>(ast));
@@ -70,6 +68,7 @@ Emitter::emit(RTScope &scope, AST const &ast)
     case ASTType::ExprLambda: return emit(scope, cast<LambdaExpr>(ast));
     case ASTType::StmtDef: return emit(scope, cast<DefStmt>(ast));
     case ASTType::ExprStrLit: return emit(scope, cast<StrLitExpr>(ast));
+    case ASTType::ExprBinary: return emit(scope, cast<BinaryExpr>(ast));
 
     case ASTType::StmtAssign: {
         auto &stmt = cast<AssignStmt>(ast);
@@ -82,17 +81,6 @@ Emitter::emit(RTScope &scope, AST const &ast)
     case ASTType::StmtExpr: {
         auto &expr = cast<ExprStmt>(ast);
         return emit(scope, expr.expr);
-    }
-
-    case ASTType::ExprBinary: {
-        auto &expr = cast<BinaryExpr>(ast);
-        auto *lhs = emit(scope, expr.lhs);
-        auto *rhs = emit(scope, expr.rhs);
-
-        switch (expr.op) {
-        case tok_add: return ir.CreateCall(mod.llvmPy_add(), { lhs, rhs });
-        default: return nullptr;
-        }
     }
 
     default:
@@ -278,6 +266,19 @@ Emitter::emit(RTScope &scope, StrLitExpr const &lit)
                     tags.String);
 
     return ir.CreateCall(mod.llvmPy_str(), { globalString });
+}
+
+llvm::Value *
+Emitter::emit(RTScope &scope, BinaryExpr const &expr)
+{
+    RTModule &mod = scope.getModule();
+    auto *lhs = emit(scope, expr.lhs);
+    auto *rhs = emit(scope, expr.rhs);
+
+    switch (expr.op) {
+    case tok_add: return ir.CreateCall(mod.llvmPy_add(), { lhs, rhs });
+    default: return nullptr;
+    }
 }
 
 RTFunc *
