@@ -5,6 +5,7 @@
 #include <llvmPy/RT/Frame.h>
 #include <llvmPy/PyObj/PyObj.h>
 #include <llvmPy/PyObj/PyStr.h>
+#include <llvmPy/PyObj/PyBool.h>
 
 #ifdef __cplusplus
 namespace llvmPy {

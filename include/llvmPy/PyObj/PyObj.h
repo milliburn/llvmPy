@@ -10,7 +10,8 @@ enum class PyObjType : long {
     None = 0,
     Int = 1,
     Str = 2,
-    Func = 3,
+    Bool = 3,
+    Func = 4,
 };
 
 /**
