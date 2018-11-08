@@ -21,9 +21,11 @@ class PyObj : public Typed<PyObjType> {
 public:
     PyObj(PyObjType type) : Typed(type) {}
     virtual std::string py__str__();
+
     virtual bool py__lt__(PyObj &rhs);
     virtual bool py__le__(PyObj &rhs);
     virtual bool py__eq__(PyObj &rhs);
+    virtual bool py__ne__(PyObj &rhs);
     virtual bool py__ge__(PyObj &rhs);
     virtual bool py__gt__(PyObj &rhs);
 };

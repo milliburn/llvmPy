@@ -31,6 +31,12 @@ PyObj::py__eq__(PyObj &)
 }
 
 bool
+PyObj::py__ne__(PyObj &rhs)
+{
+    return !py__eq__(rhs);
+}
+
+bool
 PyObj::py__ge__(PyObj &)
 {
     return false;

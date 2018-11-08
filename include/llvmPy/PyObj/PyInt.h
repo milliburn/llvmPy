@@ -22,7 +22,10 @@ public:
     bool py__gt__(PyObj &rhs) override;
 
 private:
+    static constexpr int InvalidCmp = ~0;
+
     int64_t value;
+    int cmp(PyObj &rhs, bool throwIfInvalid);
 };
 
 } // namespace llvmPy
