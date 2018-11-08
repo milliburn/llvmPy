@@ -57,7 +57,9 @@ add_library(
         src/PyObj/PyStr.cc
         include/llvmPy/PyObj/PyBool.h
         src/PyObj/PyBool.cc
-        src/PyObj/PyObj.cc)
+        src/PyObj/PyObj.cc
+        src/PyObj/PyInt.cc
+        include/llvmPy/PyObj/PyInt.h)
 
 set_target_properties(
         lib${name}

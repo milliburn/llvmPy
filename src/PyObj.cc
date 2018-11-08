@@ -12,11 +12,6 @@ PyNone::get()
     return &PY_NONE;
 }
 
-std::string
-PyInt::py__str__()
-{
-    return std::to_string(value);
-}
 
 std::string
 PyNone::py__str__()
