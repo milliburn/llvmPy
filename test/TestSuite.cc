@@ -4,6 +4,8 @@
 #include <llvmPyTest.h>
 #include <stdlib.h>
 #include <sstream>
+#include <map>
+#include <vector>
 using namespace llvmPy;
 
 static std::vector<std::string> tokenize(
@@ -35,7 +37,24 @@ runTests()
     return results;
 }
 
-static std::vector<LitTestResult *> *results;
+static std::map<std::string, std::vector<LitTestResult *>>
+buildResults(std::vector <LitTestResult *> const &results)
+{
+    std::map<std::string, std::vector<LitTestResult *>> output;
+
+    for (auto result : results) {
+        std::vector<std::string> sections =
+                tokenize(result->getTestName(), '/');
+
+        if (!output.count(sections[0])) {
+            output[sections[0]] = std::vector<LitTestResult *>();
+        }
+
+        output[sections[0]].push_back(result);
+    }
+
+    return output;
+}
 
 static void
 report(LitTestResult const &result)
@@ -63,17 +82,22 @@ report(LitTestResult const &result)
     }
 }
 
+static std::vector<LitTestResult *> *results;
+static std::map<std::string, std::vector<LitTestResult *>> sections;
+
 TEST_CASE("Test Suite") {
     if (!results) {
         results = runTests();
+        sections = buildResults(*results);
     }
 
-    for (auto result : *results) {
-        std::vector<std::string> sections =
-                tokenize(result->getTestName(), '/');
-
-        SECTION(result->getTestName()) {
-            report(*result);
+    for (auto section : sections) {
+        SECTION(section.first) {
+            for (auto result : section.second) {
+                SECTION(result->getTestName()) {
+                    report(*result);
+                }
+            }
         }
     }
 }
