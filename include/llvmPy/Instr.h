@@ -49,6 +49,7 @@ public:
     llvm::FunctionType *llvmPy_fchk;
     llvm::FunctionType *llvmPy_print;
     llvm::FunctionType *llvmPy_str;
+    llvm::FunctionType *llvmPy_bool;
 
     llvm::ConstantInt *getInt32(int32_t value) const;
     llvm::ConstantInt *getInt64(int64_t value) const;
@@ -71,7 +72,8 @@ llvmPy::PyNone *llvmPy_none();
 llvmPy::PyFunc *llvmPy_func(llvmPy::FrameN *frame, void *label);
 void *llvmPy_fchk(llvmPy::FrameN **callframe, llvmPy::PyFunc &pyfunc, int np);
 llvmPy::PyObj *llvmPy_print(llvmPy::PyObj &);
-llvmPy::PyObj *llvmPy_str(uint8_t const *string);
+llvmPy::PyStr *llvmPy_str(uint8_t const *string);
+llvmPy::PyBool *llvmPy_bool(uint64_t value);
 
 } // extern "C"
 

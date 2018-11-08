@@ -40,6 +40,7 @@ Types::Types(
     llvmPy_print = llvm::FunctionType::get(Ptr, { Ptr }, false);
     llvmPy_str = llvm::FunctionType::get(
             Ptr, { llvm::Type::getInt8PtrTy(ctx) }, false);
+    llvmPy_bool = llvm::FunctionType::get(Ptr, { PyIntValue }, false);
 }
 
 llvm::StructType *
@@ -189,9 +190,15 @@ llvmPy_print(llvmPy::PyObj &obj)
 /**
  * @brief Return a PyStr representing the underlying string given.
  */
-extern "C" llvmPy::PyObj *
+extern "C" llvmPy::PyStr *
 llvmPy_str(uint8_t const *string)
 {
     auto copy = std::make_unique<std::string const>((char const *) string);
     return new PyStr(std::move(copy));
+}
+
+extern "C" llvmPy::PyBool *
+llvmPy_bool(uint64_t value)
+{
+    return &PyBool::get(value != 0);
 }

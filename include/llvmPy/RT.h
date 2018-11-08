@@ -72,6 +72,7 @@ public:
     llvm::Value *llvmPy_fchk() const;
     llvm::Value *llvmPy_print() const;
     llvm::Value *llvmPy_str() const;
+    llvm::Value *llvmPy_bool() const;
 
 private:
     llvm::Module &ir;
