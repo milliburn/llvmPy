@@ -4,6 +4,8 @@ using namespace llvmPy;
 using std::vector;
 using std::string;
 using std::to_string;
+using std::unique_ptr;
+using std::make_unique;
 
 static std::map<TokenType, int>
 initPrecedence()
@@ -169,7 +171,7 @@ Parser::parseExpr()
     // Extended parse of left-hand-side expression.
 
     if (is(tok_lp)) {
-        vector<Expr const *> args;
+        vector<Expr *> args;
 
         if (!is(tok_rp)) {
             while (true) {
@@ -179,7 +181,13 @@ Parser::parseExpr()
             }
         }
 
-        lhs = new CallExpr(lhs, args);
+        auto *call = new CallExpr(unique_ptr<Expr>(lhs));
+        lhs = call;
+
+        for (auto &arg : args) {
+            auto ptr = unique_ptr<Expr>(arg);
+            call->addArgument(std::move(ptr));
+        }
     }
 
     // Parse right-hand-side expression.

@@ -157,13 +157,17 @@ public:
         return ast->isType(ASTType::ExprCall);
     }
 
-    Expr const &lhs;
-    std::vector<Expr const *> const args;
-    CallExpr(Expr *lhs, std::vector<Expr const *> args)
-        : Expr(ASTType::ExprCall),
-          lhs(*lhs),
-          args(std::move(args)) {}
+    explicit CallExpr(std::unique_ptr<Expr> callee);
     void toStream(std::ostream &) const override;
+
+public:
+    Expr const &getCallee() const;
+    std::vector<std::unique_ptr<Expr const>> const &getArguments() const;
+    void addArgument(std::unique_ptr<Expr> arg);
+
+private:
+    std::unique_ptr<Expr const> callee;
+    std::vector<std::unique_ptr<Expr const>> arguments;
 };
 
 class Stmt : public AST {

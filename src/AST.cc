@@ -85,7 +85,9 @@ BinaryExpr::toStream(std::ostream & s) const
 void
 CallExpr::toStream(std::ostream &s) const
 {
-    s << lhs << '(';
+    s << getCallee() << '(';
+
+    auto &args = getArguments();
 
     for (int i = 0; i < args.size(); ++i) {
         if (i > 0) s << ", ";
@@ -161,4 +163,28 @@ std::string const &
 StrLitExpr::getValue() const
 {
     return *value;
+}
+
+CallExpr::CallExpr(std::unique_ptr<Expr> callee)
+: Expr(ASTType::ExprCall),
+  callee(std::move(callee))
+{
+}
+
+Expr const &
+CallExpr::getCallee() const
+{
+    return *callee;
+}
+
+std::vector<std::unique_ptr<Expr const>> const &
+CallExpr::getArguments() const
+{
+    return arguments;
+}
+
+void
+CallExpr::addArgument(std::unique_ptr<Expr> arg)
+{
+    arguments.push_back(std::move(arg));
 }

@@ -92,25 +92,27 @@ llvm::Value *
 Emitter::emit(RTScope &scope, CallExpr const &call)
 {
     RTModule &mod = scope.getModule();
+    auto &callee = call.getCallee();
+    auto &args = call.getArguments();
 
-    if (isa<IdentExpr>(call.lhs)) {
-        auto lhsIdent = cast<IdentExpr>(call.lhs);
+    if (isa<IdentExpr>(callee)) {
+        auto lhsIdent = cast<IdentExpr>(callee);
         if (lhsIdent.name == "print") {
-            llvm::Value *arg = emit(scope, *call.args[0]);
+            llvm::Value *arg = emit(scope, *args[0]);
             return ir.CreateCall(mod.llvmPy_print(), { arg });
         }
     }
 
-    llvm::Value *lhs = emit(scope, call.lhs);
+    llvm::Value *lhs = emit(scope, callee);
     lhs->setName(tags.FuncObj);
-    vector<llvm::Value *> args;
-    args.push_back(nullptr); // Placeholder for the callFrame.
+    vector<llvm::Value *> argSlots;
+    argSlots.push_back(nullptr); // Placeholder for the callFrame.
     int argCount = 0;
 
-    for (auto *arg : call.args) {
+    for (auto &arg : args) {
         llvm::Value *value = emit(scope, *arg);
         value->setName(tags.Arg);
-        args.push_back(value);
+        argSlots.push_back(value);
         argCount++;
     }
 
@@ -126,13 +128,13 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
             { callFrame, lhs, np },
             tags.FuncPtr);
 
-    args[0] = callFrame;
+    argSlots[0] = callFrame;
 
     llvm::Value *funcBitCast = ir.CreateBitCast(
             inst,
             llvm::PointerType::getUnqual(types.getFuncN(argCount)));
 
-    return ir.CreateCall(funcBitCast, args, tags.RetVal);
+    return ir.CreateCall(funcBitCast, argSlots, tags.RetVal);
 }
 
 llvm::Value *
