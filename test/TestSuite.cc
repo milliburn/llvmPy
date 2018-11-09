@@ -6,7 +6,16 @@
 #include <sstream>
 #include <map>
 #include <vector>
+#include <memory>
 using namespace llvmPy;
+using std::map;
+using std::string;
+using std::vector;
+
+struct Section {
+    map<string, std::unique_ptr<Section>> subsections;
+    vector<LitTestResult *> results;
+};
 
 static std::vector<std::string> tokenize(
         std::string const &string,
@@ -22,7 +31,7 @@ static std::vector<std::string> tokenize(
     return tokens;
 }
 
-static std::vector<LitTestResult *> *
+static std::vector<LitTestResult *>
 runTests()
 {
     std::string PATH(getenv("PATH"));
@@ -32,25 +41,29 @@ runTests()
            "/../../../bin:" +
            PATH;
     setenv("PATH", PATH.c_str(), 1);
-    auto *results = new std::vector<LitTestResult *>();
-    lit(*results, TEST_PATH);
+    vector<LitTestResult *> results;
+    lit(results, TEST_PATH);
     return results;
 }
 
-static std::map<std::string, std::vector<LitTestResult *>>
-buildResults(std::vector <LitTestResult *> const &results)
+static std::unique_ptr<Section>
+buildResults(vector<LitTestResult *> const &results)
 {
-    std::map<std::string, std::vector<LitTestResult *>> output;
+    auto output = std::make_unique<Section>();
 
     for (auto result : results) {
-        std::vector<std::string> sections =
-                tokenize(result->getTestName(), '/');
+        vector<string> sections = tokenize(result->getTestName(), '/');
+        Section *next = output.get();
 
-        if (!output.count(sections[0])) {
-            output[sections[0]] = std::vector<LitTestResult *>();
+        for (auto section : sections) {
+            if (!next->subsections.count(section)) {
+                next->subsections[section] = std::make_unique<Section>();
+            }
+
+            next = next->subsections[section].get();
         }
 
-        output[sections[0]].push_back(result);
+        next->results.push_back(result);
     }
 
     return output;
@@ -82,22 +95,27 @@ report(LitTestResult const &result)
     }
 }
 
-static std::vector<LitTestResult *> *results;
-static std::map<std::string, std::vector<LitTestResult *>> sections;
-
-TEST_CASE("Test Suite") {
-    if (!results) {
-        results = runTests();
-        sections = buildResults(*results);
+static void
+tree(Section const &section)
+{
+    for (auto result : section.results) {
+        report(*result);
     }
 
-    for (auto section : sections) {
-        SECTION(section.first) {
-            for (auto result : section.second) {
-                SECTION(result->getTestName()) {
-                    report(*result);
-                }
-            }
+    for (auto &subsection : section.subsections) {
+        SECTION(subsection.first) {
+            tree(*subsection.second);
         }
     }
+}
+
+static std::unique_ptr<Section> testResults;
+
+TEST_CASE("Test Suite") {
+    if (!testResults) {
+        auto results = runTests();
+        testResults = buildResults(results);
+    }
+
+    tree(*testResults);
 }
