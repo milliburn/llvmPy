@@ -6,7 +6,7 @@
 #ifdef __cplusplus
 namespace llvmPy {
 
-enum TokenType : size_t {
+enum TokenType {
     tok_eof = 0,
 
     // Modifiers
