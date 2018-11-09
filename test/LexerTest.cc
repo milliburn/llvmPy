@@ -43,40 +43,40 @@ tokenize(string input)
 
 TEST_CASE("Lexer", "[Lexer]") {
     SECTION("Numbers") {
-        REQUIRE(tokenize("2") == ">0 2n");
-        REQUIRE(tokenize("2.0") == ">0 2.0n");
-        REQUIRE(tokenize("-2") == ">0 - 2n");
+        CHECK(tokenize("2") == ">0 2n");
+        CHECK(tokenize("2.0") == ">0 2.0n");
+        CHECK(tokenize("-2") == ">0 - 2n");
     }
 
     SECTION("Strings") {
-        REQUIRE(tokenize("\"Hello!\"") == ">0 \"Hello!\"");
+        CHECK(tokenize("\"Hello!\"") == ">0 \"Hello!\"");
 
         // Preserve the type of string delimiter used
-        REQUIRE(tokenize("\'Hello!\'") == ">0 \'Hello!\'");
+        CHECK(tokenize("\'Hello!\'") == ">0 \'Hello!\'");
 
         // Preserve escaped delimiters
-        REQUIRE(tokenize("\"Escaped \\\"String\\\"\"") ==
+        CHECK(tokenize("\"Escaped \\\"String\\\"\"") ==
                 ">0 \"Escaped \\\"String\\\"\"");
 
         // Ensure the lexer can handle strings longer than its internal buffer.
         string str(Lexer::BUFFER_SIZE * 2, 'x');
-        REQUIRE(tokenize("\"" + str + "\"") == ">0 \"" + str + "\"");
+        CHECK(tokenize("\"" + str + "\"") == ">0 \"" + str + "\"");
     }
 
     SECTION("Identifiers") {
-        REQUIRE(tokenize("xyz") == ">0 xyz");
-        REQUIRE(tokenize("True") == ">0 True");
-        REQUIRE(tokenize("False") == ">0 False");
-        REQUIRE(tokenize("None") == ">0 None");
-        REQUIRE(tokenize("_under_score_123") == ">0 _under_score_123");
-        REQUIRE(tokenize("def") == ">0 def");
+        CHECK(tokenize("xyz") == ">0 xyz");
+        CHECK(tokenize("True") == ">0 True");
+        CHECK(tokenize("False") == ">0 False");
+        CHECK(tokenize("None") == ">0 None");
+        CHECK(tokenize("_under_score_123") == ">0 _under_score_123");
+        CHECK(tokenize("def") == ">0 def");
     }
 
     SECTION("Operators and syntax") {
-        REQUIRE(tokenize("*") == ">0 *");
-        REQUIRE(tokenize("(*)") == ">0 ( * )");
-        REQUIRE(tokenize("+=") == ">0 +=");
-        REQUIRE(tokenize("+ =") == ">0 + =");
+        CHECK(tokenize("*") == ">0 *");
+        CHECK(tokenize("(*)") == ">0 ( * )");
+        CHECK(tokenize("+=") == ">0 +=");
+        CHECK(tokenize("+ =") == ">0 + =");
     }
 
     SECTION("Multiple statements") {
@@ -86,7 +86,7 @@ TEST_CASE("Lexer", "[Lexer]") {
     }
 
     SECTION("Function definitions") {
-        REQUIRE(tokenize("def f():\n  x = y + 1\n") ==
+        CHECK(tokenize("def f():\n  x = y + 1\n") ==
                 ">0 def f ( ) :\n>2 x = y + 1n");
     }
 
