@@ -445,3 +445,9 @@ Parser::parseEndOfStmt()
         throw ParserError("Expected end of statement");
     }
 }
+
+int
+Parser::getPrecedence(TokenType)
+{
+    return 0;
+}

@@ -59,7 +59,9 @@ add_library(
         src/PyObj/PyBool.cc
         src/PyObj/PyObj.cc
         src/PyObj/PyInt.cc
-        include/llvmPy/PyObj/PyInt.h)
+        include/llvmPy/PyObj/PyInt.h
+        include/llvmPy/Parser/ExprParser.h
+        src/Parser/ExprParser.cc)
 
 set_target_properties(
         lib${name}
@@ -98,7 +100,8 @@ add_executable(
         test/ParserTest.cc
         test/InstrTest.cc
         test/TestSuite.cc
-        test/PyObjTest.cc)
+        test/PyObjTest.cc
+        test/Parser/ExprParserTest.cc)
 
 # The test suites depend on an up-to-date llvmPy binary.
 add_dependencies(

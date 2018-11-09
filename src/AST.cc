@@ -188,3 +188,45 @@ CallExpr::addArgument(std::unique_ptr<Expr> arg)
 {
     arguments.push_back(std::move(arg));
 }
+
+TupleExpr::TupleExpr()
+: Expr(ASTType::ExprTuple)
+{
+
+}
+
+void
+TupleExpr::toStream(std::ostream &s) const
+{
+    AST::toStream(s);
+}
+
+std::vector<std::unique_ptr<Expr const>> const &
+TupleExpr::getMembers()
+{
+    return members;
+}
+
+void
+TupleExpr::addMember(std::unique_ptr<Expr> member)
+{
+
+}
+
+TokenExpr::TokenExpr(TokenType type)
+: Expr(ASTType::ExprToken), tokenType(type)
+{
+
+}
+
+void
+TokenExpr::toStream(std::ostream &s) const
+{
+    AST::toStream(s);
+}
+
+TokenType
+TokenExpr::getTokenType() const
+{
+    return tokenType;
+}
