@@ -1,31 +1,41 @@
 #include <llvmPy/Parser.h>
 #include <llvmPy/SyntaxError.h>
+#include <stack>
+#include <llvm/Support/Casting.h>
+#include <deque>
+
 using namespace llvmPy;
 using std::vector;
 using std::string;
 using std::to_string;
 using std::unique_ptr;
 using std::make_unique;
+using llvm::dyn_cast;
 
 static std::map<TokenType, int>
 initPrecedence()
 {
     // Follows the table at:
     // https://docs.python.org/3/reference/expressions.html#operator-precedence
+    // (where lower precedences are at the top).
     std::map<TokenType, int> map;
 
-    map[tok_lt] = -6;
-    map[tok_lte] = -6;
-    map[tok_eq] = -6;
-    map[tok_neq] = -6;
-    map[tok_gt] = -6;
-    map[tok_gte] = -6;
+    map[kw_lambda] = 1;
 
-    map[tok_add] = -11;
-    map[tok_sub] = -11;
+    map[tok_lt] = 6;
+    map[tok_lte] = 6;
+    map[tok_eq] = 6;
+    map[tok_neq] = 6;
+    map[tok_gt] = 6;
+    map[tok_gte] = 6;
 
-    map[tok_mul] = -12;
-    map[tok_div] = -12;
+    map[tok_add] = 11;
+    map[tok_sub] = 11;
+
+    map[tok_mul] = 12;
+    map[tok_div] = 12;
+
+    map[tok_comma] = 17; // Tuple binding
 
     return map;
 }
@@ -130,6 +140,126 @@ Parser::parseStmt()
     Expr * expr = parseExpr();
     parseEndOfStmt();
     return new ExprStmt(expr);
+}
+
+std::unique_ptr<Expr>
+Parser::parseExpr2()
+{
+    // Implements the "train-yard shunting algorithm" for operator precedence.
+    std::deque<unique_ptr<Expr>> output;
+    std::stack<unique_ptr<TokenExpr>> operators;
+
+    while (true) {
+
+        if (auto *expr = parseLitExpr()) {
+            output.emplace_front(expr);
+        } else if (is(kw_lambda)) {
+            vector<string const> args;
+
+            while (true) {
+                if (is(tok_ident)) {
+                    Token &ident = last();
+                    std::string str = *ident.str;
+                    args.push_back(str);
+                    if (is(tok_comma)) continue;
+                }
+
+                want(tok_colon);
+                break;
+            }
+
+            Expr *body = parseExpr();
+            output.emplace_front(new LambdaExpr(args, body));
+        } else if (is(tok_ident)) {
+            output.emplace_front(new IdentExpr(last().str));
+        } else if (is(tok_lp)) {
+            operators.emplace(new TokenExpr(tok_lp));
+        } else if (is(tok_comma)) {
+            // Create or extend a tuple. This is among the
+            // most binding operators.
+            output.emplace_front(new TokenExpr(tok_comma));
+        } else if (is(tok_rp)) {
+            for (;;) {
+                auto expr = std::move(operators.top());
+                operators.pop();
+
+                // Pop operators until the first '(' is encountered.
+                if (auto *token = llvm::dyn_cast<TokenExpr>(expr.get())) {
+                    if (token->getTokenType() == tok_lp) {
+                        break;
+                    }
+                }
+
+                output.push_front(std::move(expr));
+            }
+
+            // Mark end of group (i.e. call).
+            output.emplace_front(new TokenExpr(tok_rp));
+        } else if (is_a(tok_oper)) {
+            if (operators.empty()) {
+                operators.emplace(new TokenExpr(last().type));
+            } else {
+                for (;;) {
+                    int tokenPrecedence = getPrecedence(last().type);
+                    int topPrecedence = getPrecedence(
+                            operators.top()->getTokenType());
+
+                    if (tokenPrecedence <= topPrecedence) {
+                        auto top = std::move(operators.top());
+                        operators.pop();
+                        output.push_front(std::move(top));
+                    } else {
+                        operators.emplace(new TokenExpr(last().type));
+                        break;
+                    }
+                }
+            }
+        }
+
+        break;
+    }
+
+    // Pop remaining stack to output.
+    while (!operators.empty()) {
+        auto op = std::move(operators.top());
+        operators.pop();
+        output.push_front(std::move(op));
+    }
+
+    // Assemble AST by popping output in reverse.
+    std::stack<std::unique_ptr<Expr>> result;
+    while (!output.empty()) {
+        auto expr = std::move(output.back());
+        output.pop_back();
+
+        if (auto *e = dyn_cast<LitExpr>(expr.get())) {
+            result.push(std::move(expr));
+        } else if (auto *e = dyn_cast<TokenExpr>(expr.get())) {
+            auto token = e->getTokenType();
+
+            if (token == tok_comma) {
+                auto right = std::move(result.top());
+                result.pop();
+                auto left = std::move(result.top());
+                result.pop();
+
+                if (auto *t = dyn_cast<TupleExpr>(right.get())) {
+                    // TODO: Should be reverse.
+                    t->addMember(std::move(left));
+                    result.push(std::move(right));
+                } else {
+                    auto tuple = make_unique<TupleExpr>();
+                    // TODO: Should be reverse.
+                    t->addMember(std::move(right));
+                    t->addMember(std::move(left));
+                    result.push(std::move(tuple));
+                }
+            }
+        }
+    }
+
+    // TODO: This is a placeholder.
+    return std::move(output.front());
 }
 
 Expr *

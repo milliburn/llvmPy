@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <memory>
 
 #ifdef __cplusplus
 namespace llvmPy {
@@ -17,6 +18,7 @@ public:
     Expr * parseExpr();
     void   parseEndOfStmt();
     LitExpr * parseLitExpr();
+    std::unique_ptr<Expr> parseExpr2();
 
 private:
     std::vector<Token> & tokens;
@@ -37,6 +39,8 @@ private:
 
     void want(TokenType);
     void want_a(TokenType);
+
+    int getPrecedence(TokenType);
 
 };
 

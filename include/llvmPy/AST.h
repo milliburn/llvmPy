@@ -10,6 +10,8 @@ namespace llvmPy {
 enum class ASTType {
     Ignore,
     Expr,
+    ExprToken,
+    ExprTuple,
     ExprIdent,
     ExprLit,
     ExprStrLit,
@@ -168,6 +170,36 @@ public:
 private:
     std::unique_ptr<Expr const> callee;
     std::vector<std::unique_ptr<Expr const>> arguments;
+};
+
+class TokenExpr : public Expr {
+public:
+    static bool classof(AST const *ast) {
+        return ast->isType(ASTType::ExprToken);
+    }
+
+    explicit TokenExpr(TokenType type);
+    void toStream(std::ostream &) const override;
+
+public:
+    TokenType getTokenType() const;
+
+private:
+    TokenType tokenType;
+};
+
+/** A group consists of expressions separated by comma (a tuple). */
+class TupleExpr : public Expr {
+public:
+    explicit TupleExpr();
+    void toStream(std::ostream &) const override;
+
+public:
+    std::vector<std::unique_ptr<Expr const>> const &getMembers();
+    void addMember(std::unique_ptr<Expr> member);
+
+private:
+    std::vector<std::unique_ptr<Expr const>> members;
 };
 
 class Stmt : public AST {
