@@ -2,71 +2,94 @@
 #include <llvm/Support/Casting.h>
 using namespace llvmPy;
 
+static std::map<TokenType, int>
+initPrecedence()
+{
+    // Follows the table at:
+    // https://docs.python.org/3/reference/expressions.html#operator-precedence
+    // (where lower precedences are at the top).
+    std::map<TokenType, int> map;
+
+    map[kw_lambda] = 1;
+
+    map[tok_lt] = 6;
+    map[tok_lte] = 6;
+    map[tok_eq] = 6;
+    map[tok_neq] = 6;
+    map[tok_gt] = 6;
+    map[tok_gte] = 6;
+
+    map[tok_add] = 11;
+    map[tok_sub] = 11;
+
+    map[tok_mul] = 12;
+    map[tok_div] = 12;
+
+    map[tok_comma] = 17; // Tuple binding
+
+    return map;
+}
+
 std::unique_ptr<Expr>
 ExprParser::fromIter(
-        ExprParser::TTokenIter iter,
+        ExprParser::TTokenIter &iter,
         ExprParser::TTokenIter end)
 {
-    ExprParser parser(std::move(iter), std::move(end));
+    ExprParser parser(iter, std::move(end));
     return parser.parse();
 }
 
 ExprParser::ExprParser(
-        ExprParser::TTokenIter &&iter,
-        ExprParser::TTokenIter &&end)
-: iter(iter), iter_end(end)
+        ExprParser::TTokenIter &iter,
+        ExprParser::TTokenIter end)
+: iter(iter), iter_end(end), precedences(initPrecedence())
 {
 }
 
 std::unique_ptr<Expr>
 ExprParser::parse()
 {
-    while (!end()) {
-        consume();
-    }
-
-    while (!operators.empty()) {
-        output.push(operators.top());
-        operators.pop();
-    }
-
-    while (!output.empty()) {
-        evaluate();
-    }
-
-    std::unique_ptr<Expr> rv(result.top());
-    return rv;
+    Expr *result = parseImpl(0, nullptr);
+    return std::unique_ptr<Expr>(result);
 }
 
-void
-ExprParser::consume()
+Expr *
+ExprParser::parseImpl(int lastPrec, Expr *lhs)
 {
-    if (auto *lit = findIntegerLiteral()) {
-        output.push(lit);
-    } else if (auto *ident = findIdentifier()) {
-        output.push(ident);
-    } else if (auto *token = findOperator()) {
-        operators.push(token);
+    if (end()) {
+        return lhs;
     }
-}
 
-void
-ExprParser::evaluate()
-{
-    // while (!output.empty()) {
-    //     auto expr = output.front();
-    //     output.pop_front();
-    //
-    //     if (llvm::isa<LitExpr>(expr) || llvm::isa<IdentExpr>(expr)) {
-    //         result.push(expr);
-    //         break;
-    //     } else if (auto *op = llvm::dyn_cast<TokenExpr>(expr)) {
-    //         auto a = result.top(); result.pop();
-    //         auto b = result.top(); result.pop();
-    //         result.push(new BinaryExpr(a, op->getTokenType(), b));
-    //         break;
-    //     }
-    // }
+    Expr *rhs = nullptr;
+    TokenExpr *op = nullptr;
+    int curPrec = 0;
+
+    if ((op = findOperator())) {
+        curPrec = getPrecedence(op);
+        if (curPrec <= lastPrec) {
+            back();
+            return lhs;
+        }
+    }
+
+    if ((rhs = findIntegerLiteral()) || (rhs = findIdentifier())) {
+    }
+
+    rhs = parseImpl(curPrec, rhs);
+
+    if (!lhs && !op) {
+        return rhs;
+    } else if (lhs && !op) {
+        assert(!rhs);
+        return lhs;
+    } else if (!lhs && op) {
+        // This can happen with numbers (e.g. +1, -2).
+        assert(false && "Not implemented");
+        return nullptr;
+    } else {
+        Expr *binop = new BinaryExpr(lhs, op->getTokenType(), rhs);
+        return parseImpl(0, binop);
+    }
 }
 
 bool
@@ -105,39 +128,18 @@ ExprParser::token() const
     return *iter;
 }
 
-std::stack<Expr *> const &
-ExprParser::getOutput() const
-{
-    return output;
-}
-
-std::stack<Expr *> const &
-ExprParser::getOperators() const
-{
-    return operators;
-}
-
 IntLitExpr *
 ExprParser::findIntegerLiteral()
 {
-    int sign = 0;
-
-    if (is(tok_add)) {
-        sign = 1;
-        next();
-    } else if (is(tok_sub)) {
-        sign = -1;
-        next();
-    }
+    // Sign is applied separately.
 
     if (is(tok_number)) {
         std::string const *text = token().str;
         int64_t value = atol(text->c_str());
         next();
-        return new IntLitExpr(sign < 0 ? -value : value);
+        return new IntLitExpr(value);
     }
 
-    back();
     return nullptr;
 }
 
@@ -145,7 +147,9 @@ IdentExpr *
 ExprParser::findIdentifier()
 {
     if (is(tok_ident)) {
-        return new IdentExpr(token().str);
+        auto *expr = new IdentExpr(token().str);
+        next();
+        return expr;
     }
 
     return nullptr;
@@ -156,8 +160,25 @@ ExprParser::findOperator()
 {
     if (is_a(tok_oper)) {
         TokenType tokenType = token().type;
+        next();
         return new TokenExpr(tokenType);
     }
 
     return nullptr;
+}
+
+int
+ExprParser::getPrecedence(TokenType tokenType) const
+{
+    if (precedences.count(tokenType)) {
+        return precedences.at(tokenType);
+    } else {
+        return 0;
+    }
+}
+
+int
+ExprParser::getPrecedence(TokenExpr *tokenExpr) const
+{
+    return getPrecedence(tokenExpr->getTokenType());
 }

@@ -5,8 +5,7 @@
 #include <vector>
 #include <memory>
 #include <istream>
-#include <deque>
-#include <stack>
+#include <map>
 
 #ifdef __cplusplus
 namespace llvmPy {
@@ -19,19 +18,16 @@ class ExprParser {
 public:
     typedef std::vector<Token>::iterator TTokenIter;
 
-    static std::unique_ptr<Expr> fromIter(TTokenIter iter, TTokenIter end);
+    static std::unique_ptr<Expr> fromIter(TTokenIter &iter, TTokenIter end);
 
-    explicit ExprParser(TTokenIter &&tokens, TTokenIter &&end);
+    explicit ExprParser(TTokenIter &tokens, TTokenIter end);
     std::unique_ptr<Expr> parse();
 
     IntLitExpr *findIntegerLiteral();
     IdentExpr *findIdentifier();
     TokenExpr *findOperator();
-    void consume();
-    void evaluate();
 
-    std::stack<Expr *> const &getOutput() const;
-    std::stack<Expr *> const &getOperators() const;
+    Expr *parseImpl(int precedence, Expr *lhs);
 
 protected:
     bool is(TokenType tokenType);
@@ -41,14 +37,14 @@ protected:
     void back();
 
 private:
-    TTokenIter iter;
+    TTokenIter &iter;
     TTokenIter iter_end;
-    std::stack<Expr *> output;
-    std::stack<Expr *> operators;
-    std::stack<Expr *> result;
     Token const &token() const;
 
+    int getPrecedence(TokenType tokenType) const;
+    int getPrecedence(TokenExpr *tokenExpr) const;
 
+    std::map<TokenType, int> const precedences;
 };
 
 } // namespace llvmPy
