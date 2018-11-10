@@ -71,15 +71,15 @@ ExprParser::parseImpl(int lastPrec, Expr *lhs, int depth)
     TokenExpr *op = nullptr;
     int curPrec = 0;
 
-    if (is(tok_lp)) {
+    if (is(tok_rp)) {
         next();
-        return parseImpl(0, nullptr, depth + 1);
-    } else if (is(tok_rp)) {
-        next();
-        return lhs;
-    }
 
-    if ((op = findOperator())) {
+        if (!lhs) {
+            lhs = new TupleExpr();
+        }
+
+        return lhs;
+    } else if ((op = findOperator())) {
         curPrec = getPrecedence(op);
         if (curPrec <= lastPrec) {
             back();
@@ -87,26 +87,27 @@ ExprParser::parseImpl(int lastPrec, Expr *lhs, int depth)
         }
     }
 
-    if ((rhs = findIntegerLiteral()) || (rhs = findIdentifier())) {
+    if (is(tok_lp)) {
+        // Obtain the parenthesised subexpression.
+        next();
+        rhs = parseImpl(0, nullptr, depth + 1);
+    } else if ((rhs = findIntegerLiteral())) {
+    } else if ((rhs = findIdentifier())) {
     }
-
-    bool const isLeftParen = is(tok_lp);
 
     rhs = parseImpl(curPrec, rhs, depth);
 
-    if (!lhs && !op) {
-        return rhs;
-    } else if (lhs && !op) {
-        if (!rhs) {
-            // Independent literal or identifier.
-            return lhs;
-        } else if (isLeftParen) {
-            // Function call.
-            return buildCall(lhs, rhs);
-        } else {
-            throw "Not implemented";
-        }
-    } else if (!lhs && op) {
+    if (lhs && op && rhs) {
+        // Apply binary operator to LHS and RHS.
+        Expr *binop = new BinaryExpr(lhs, op->getTokenType(), rhs);
+        return parseImpl(lastPrec, binop, depth);
+    } else if (lhs && !op && rhs) {
+        // Function call (apply arguments in RHS to callee in LHS).
+        return buildCall(lhs, rhs);
+    } else if (lhs && !op && !rhs) {
+        // Independent expression (generally literal or identifier).
+        return lhs;
+    } else if (!lhs && op && rhs) {
         int sign = 0;
 
         switch (op->getTokenType()) {
@@ -128,10 +129,29 @@ ExprParser::parseImpl(int lastPrec, Expr *lhs, int depth)
         default:
             throw "Not implemented";
         }
+    } else if (!lhs && !op) {
+        return rhs;
     } else {
-        Expr *binop = new BinaryExpr(lhs, op->getTokenType(), rhs);
-        return parseImpl(lastPrec, binop, depth);
+        throw "Not implemented";
     }
+}
+
+CallExpr *
+ExprParser::buildCall(Expr *lhs, Expr *rhs)
+{
+    auto *call = new CallExpr(std::unique_ptr<Expr>(lhs));
+
+    if (auto *tuple = dyn_cast<TupleExpr>(rhs)) {
+        for (auto &member : tuple->getMembers()) {
+            call->addArgument(std::move(member));
+        }
+
+        delete(tuple);
+    } else if (rhs) {
+        call->addArgument(std::unique_ptr<Expr>(rhs));
+    }
+
+    return call;
 }
 
 bool
@@ -223,22 +243,4 @@ int
 ExprParser::getPrecedence(TokenExpr *tokenExpr) const
 {
     return getPrecedence(tokenExpr->getTokenType());
-}
-
-CallExpr *
-ExprParser::buildCall(Expr *lhs, Expr *rhs)
-{
-    auto *call = new CallExpr(std::unique_ptr<Expr>(lhs));
-
-    if (auto *tuple = dyn_cast<TupleExpr>(rhs)) {
-        for (auto &member : tuple->getMembers()) {
-            call->addArgument(std::move(member));
-        }
-
-        delete(tuple);
-    } else if (rhs) {
-        call->addArgument(std::unique_ptr<Expr>(rhs));
-    }
-
-    return call;
 }

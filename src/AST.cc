@@ -211,7 +211,18 @@ TupleExpr::TupleExpr()
 void
 TupleExpr::toStream(std::ostream &s) const
 {
-    AST::toStream(s);
+    s << "(";
+
+    int i = 0;
+    for (auto const &member : members) {
+        if (i > 0) {
+            s << ", ";
+        }
+
+        s << member;
+    }
+
+    s << ")";
 }
 
 std::vector<std::unique_ptr<Expr const>> &
