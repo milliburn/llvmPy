@@ -48,6 +48,11 @@ AST::toStream(std::ostream &) const
 }
 
 void
+EmptyAST::toStream(std::ostream &) const
+{
+}
+
+void
 StrLitExpr::toStream(std::ostream & s) const
 {
     s << '"' << getValue() << '"';

@@ -9,6 +9,7 @@ namespace llvmPy {
 
 enum class ASTType {
     Ignore,
+    Empty,
     Expr,
     ExprToken,
     ExprTuple,
@@ -45,6 +46,16 @@ public:
 
 protected:
     explicit AST(ASTType type) : Typed(type) {};
+};
+
+class EmptyAST : public AST {
+public:
+    static bool classof(AST const *ast) {
+        return ast->isType(ASTType::Empty);
+    }
+
+    EmptyAST() : AST(ASTType::Empty) {}
+    void toStream(std::ostream &) const override;
 };
 
 class Expr : public AST {

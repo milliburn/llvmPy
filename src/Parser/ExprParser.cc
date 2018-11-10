@@ -50,12 +50,18 @@ ExprParser::ExprParser(
 std::unique_ptr<Expr>
 ExprParser::parse()
 {
-    Expr *result = parseImpl(0, nullptr);
+    Expr *result = parseImpl();
     return std::unique_ptr<Expr>(result);
 }
 
 Expr *
-ExprParser::parseImpl(int lastPrec, Expr *lhs)
+ExprParser::parseImpl()
+{
+    return parseImpl(0, nullptr, 0);
+}
+
+Expr *
+ExprParser::parseImpl(int lastPrec, Expr *lhs, int depth)
 {
     if (end()) {
         return lhs;
@@ -64,6 +70,14 @@ ExprParser::parseImpl(int lastPrec, Expr *lhs)
     Expr *rhs = nullptr;
     TokenExpr *op = nullptr;
     int curPrec = 0;
+
+    if (is(tok_lp)) {
+        next();
+        return parseImpl(0, nullptr, depth + 1);
+    } else if (is(tok_rp)) {
+        next();
+        return lhs;
+    }
 
     if ((op = findOperator())) {
         curPrec = getPrecedence(op);
@@ -76,7 +90,7 @@ ExprParser::parseImpl(int lastPrec, Expr *lhs)
     if ((rhs = findIntegerLiteral()) || (rhs = findIdentifier())) {
     }
 
-    rhs = parseImpl(curPrec, rhs);
+    rhs = parseImpl(curPrec, rhs, depth);
 
     if (!lhs && !op) {
         return rhs;
@@ -105,14 +119,9 @@ ExprParser::parseImpl(int lastPrec, Expr *lhs)
         default:
             throw "Not implemented";
         }
-
-
-        // This can happen with numbers (e.g. +1, -2).
-
-        return nullptr;
     } else {
         Expr *binop = new BinaryExpr(lhs, op->getTokenType(), rhs);
-        return parseImpl(lastPrec, binop);
+        return parseImpl(lastPrec, binop, depth);
     }
 }
 

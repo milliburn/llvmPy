@@ -42,14 +42,18 @@ parseToString(std::string input)
     auto begin = tokens.begin();
     auto expr = ExprParser::fromIter(begin, tokens.end());
     std::ostringstream ss;
-    ss << *expr;
+
+    if (expr) {
+        ss << *expr;
+    }
+
     return ss.str();
 }
 
 static void
 check(std::string input, std::string expect)
 {
-    INFO("For " << input);
+    INFO("For: " << input);
     auto actual = parseToString(input);
     CHECK(actual == expect);
 }
@@ -68,6 +72,9 @@ TEST_CASE("ExprParser", "[ExprParser]") {
 
         SECTION("Parentheses") {
             check("()", "");
+            check("(1)", "1i");
+            check("(-1)", "-1i");
+            check("(True)", "True");
         }
     }
 
@@ -95,5 +102,13 @@ TEST_CASE("ExprParser", "[ExprParser]") {
         check("1 + 2 * 3 * 4", "(1i + ((2i * 3i) * 4i))");
         check("1 * 2 * 3 + 4", "(((1i * 2i) * 3i) + 4i)");
         check("1 * 2 + 3 * 4", "((1i * 2i) + (3i * 4i))");
+    }
+
+    SECTION("Expressions with two or three binary operators and parentheses") {
+        check("1 + (2 + 3)", "(1i + (2i + 3i))");
+        check("1 * (2 + 3)", "(1i * (2i + 3i))");
+        check("(1 + 2) * 3", "((1i + 2i) * 3i)");
+        check("(1 < 2) + 3", "((1i < 2i) + 3i)");
+        check("1 + 2 * (3 + 4)", "(1i + (2i * (3i + 4i)))");
     }
 }

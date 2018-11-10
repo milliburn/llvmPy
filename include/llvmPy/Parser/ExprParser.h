@@ -26,7 +26,8 @@ public:
     IdentExpr *findIdentifier();
     TokenExpr *findOperator();
 
-    Expr *parseImpl(int precedence, Expr *lhs);
+    Expr *parseImpl();
+    Expr *parseImpl(int precedence, Expr *lhs, int depth);
 
 protected:
     bool is(TokenType tokenType);
