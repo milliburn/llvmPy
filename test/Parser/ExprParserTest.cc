@@ -1,9 +1,8 @@
 #include <llvmPy/Lexer.h>
 #include <llvmPy/Parser/ExprParser.h>
+#include <catch2/catch.hpp>
 #include <string>
 #include <sstream>
-#include <llvm/Support/Casting.h>
-#include <catch2/catch.hpp>
 using namespace llvmPy;
 
 static std::vector<Token>
@@ -48,12 +47,22 @@ parseToString(std::string input)
 }
 
 TEST_CASE("ExprParser", "[ExprParser]") {
-    SECTION("It should parse literals") {
-        CHECK(parseToString("1") == "1i");
-        CHECK(parseToString("True") == "True");
+    SECTION("Literals") {
+        SECTION("Integer") {
+            CHECK(parseToString("1") == "1i");
+            CHECK(parseToString("-1") == "-1i");
+            CHECK(parseToString("+1") == "1i");
+        }
+
+        SECTION("Identifier") {
+            CHECK(parseToString("True") == "True");
+        }
     }
 
-    SECTION("It should parse binary operations") {
-        // CHECK(parseToString("1 + 2") == "(1i + 2i)");
+    SECTION("It should parse binary expressions with one operator") {
+        CHECK(parseToString("1 + 2") == "(1i + 2i)");
+        CHECK(parseToString("1 - 2") == "(1i - 2i)");
+        CHECK(parseToString("1 * 2") == "(1i * 2i)");
+        CHECK(parseToString("1 / 2") == "(1i / 2i)");
     }
 }

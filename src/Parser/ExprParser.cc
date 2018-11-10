@@ -1,6 +1,7 @@
 #include <llvmPy/Parser/ExprParser.h>
 #include <llvm/Support/Casting.h>
 using namespace llvmPy;
+using llvm::dyn_cast;
 
 static std::map<TokenType, int>
 initPrecedence()
@@ -83,8 +84,31 @@ ExprParser::parseImpl(int lastPrec, Expr *lhs)
         assert(!rhs);
         return lhs;
     } else if (!lhs && op) {
+        int sign = 0;
+
+        switch (op->getTokenType()) {
+        case tok_sub:
+            sign = -1;
+            // FALLTHROUGH
+        case tok_add:
+            if (auto *literal = dyn_cast<IntLitExpr>(rhs)) {
+                if (sign < 0) {
+                    auto value = literal->getValue();
+                    delete literal;
+                    literal = new IntLitExpr(-value);
+                }
+
+                return literal;
+            } else {
+                // FALLTHROUGH
+            }
+        default:
+            throw "Not implemented";
+        }
+
+
         // This can happen with numbers (e.g. +1, -2).
-        assert(false && "Not implemented");
+
         return nullptr;
     } else {
         Expr *binop = new BinaryExpr(lhs, op->getTokenType(), rhs);
