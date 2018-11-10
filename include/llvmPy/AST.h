@@ -206,6 +206,10 @@ private:
 /** A group consists of expressions separated by comma (a tuple). */
 class TupleExpr : public Expr {
 public:
+    static bool classof(AST const *ast) {
+        return ast->isType(ASTType::ExprTuple);
+    }
+
     explicit TupleExpr();
     void toStream(std::ostream &) const override;
 

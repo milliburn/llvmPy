@@ -219,7 +219,7 @@ TupleExpr::toStream(std::ostream &s) const
             s << ", ";
         }
 
-        s << member;
+        s << *member;
     }
 
     s << ")";
