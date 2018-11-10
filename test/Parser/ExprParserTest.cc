@@ -78,6 +78,12 @@ TEST_CASE("ExprParser", "[ExprParser]") {
         }
     }
 
+        // SECTION("Function call") {
+        //     check("f()", "f()");
+        //     check("f(1)", "f(1i)");
+        //     check("f(1, 2)", "f(1i, 2i)");
+        // }
+
     SECTION("Expressions with one binary operator") {
         std::string const operators[] = {
                 "+", "-", "*", "/",

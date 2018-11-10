@@ -197,7 +197,7 @@ CallExpr::getArguments() const
 }
 
 void
-CallExpr::addArgument(std::unique_ptr<Expr> arg)
+CallExpr::addArgument(std::unique_ptr<Expr const> arg)
 {
     arguments.push_back(std::move(arg));
 }
@@ -214,7 +214,7 @@ TupleExpr::toStream(std::ostream &s) const
     AST::toStream(s);
 }
 
-std::vector<std::unique_ptr<Expr const>> const &
+std::vector<std::unique_ptr<Expr const>> &
 TupleExpr::getMembers()
 {
     return members;

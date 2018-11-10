@@ -8,6 +8,7 @@ namespace llvmPy {
 
 enum TokenType {
     tok_eof = 0,
+    tok_unknown = tok_eof,
 
     // Modifiers
     tok_assign = 0x80000000,

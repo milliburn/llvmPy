@@ -90,13 +90,22 @@ ExprParser::parseImpl(int lastPrec, Expr *lhs, int depth)
     if ((rhs = findIntegerLiteral()) || (rhs = findIdentifier())) {
     }
 
+    bool const isLeftParen = is(tok_lp);
+
     rhs = parseImpl(curPrec, rhs, depth);
 
     if (!lhs && !op) {
         return rhs;
     } else if (lhs && !op) {
-        assert(!rhs);
-        return lhs;
+        if (!rhs) {
+            // Independent literal or identifier.
+            return lhs;
+        } else if (isLeftParen) {
+            // Function call.
+            return buildCall(lhs, rhs);
+        } else {
+            throw "Not implemented";
+        }
     } else if (!lhs && op) {
         int sign = 0;
 
@@ -214,4 +223,22 @@ int
 ExprParser::getPrecedence(TokenExpr *tokenExpr) const
 {
     return getPrecedence(tokenExpr->getTokenType());
+}
+
+CallExpr *
+ExprParser::buildCall(Expr *lhs, Expr *rhs)
+{
+    auto *call = new CallExpr(std::unique_ptr<Expr>(lhs));
+
+    if (auto *tuple = dyn_cast<TupleExpr>(rhs)) {
+        for (auto &member : tuple->getMembers()) {
+            call->addArgument(std::move(member));
+        }
+
+        delete(tuple);
+    } else if (rhs) {
+        call->addArgument(std::unique_ptr<Expr>(rhs));
+    }
+
+    return call;
 }

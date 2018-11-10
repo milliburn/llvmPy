@@ -180,7 +180,7 @@ public:
 public:
     Expr const &getCallee() const;
     std::vector<std::unique_ptr<Expr const>> const &getArguments() const;
-    void addArgument(std::unique_ptr<Expr> arg);
+    void addArgument(std::unique_ptr<Expr const> arg);
 
 private:
     std::unique_ptr<Expr const> callee;
@@ -210,7 +210,7 @@ public:
     void toStream(std::ostream &) const override;
 
 public:
-    std::vector<std::unique_ptr<Expr const>> const &getMembers();
+    std::vector<std::unique_ptr<Expr const>> &getMembers();
     void addMember(std::unique_ptr<Expr> member);
 
 private:

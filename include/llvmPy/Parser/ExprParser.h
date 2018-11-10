@@ -25,6 +25,7 @@ public:
     IntLitExpr *findIntegerLiteral();
     IdentExpr *findIdentifier();
     TokenExpr *findOperator();
+    CallExpr *buildCall(Expr *lhs, Expr *rhs);
 
     Expr *parseImpl();
     Expr *parseImpl(int precedence, Expr *lhs, int depth);
