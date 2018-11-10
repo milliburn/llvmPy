@@ -1,36 +1,72 @@
 #include <llvmPy/Parser/ExprParser.h>
+#include <llvm/Support/Casting.h>
 using namespace llvmPy;
 
 std::unique_ptr<Expr>
-ExprParser::fromIter(ExprParser::TTokenIter iter)
+ExprParser::fromIter(
+        ExprParser::TTokenIter iter,
+        ExprParser::TTokenIter end)
 {
-    ExprParser parser(iter);
+    ExprParser parser(std::move(iter), std::move(end));
     return parser.parse();
 }
 
-ExprParser::ExprParser(ExprParser::TTokenIter iter)
-: iter(iter)
+ExprParser::ExprParser(
+        ExprParser::TTokenIter &&iter,
+        ExprParser::TTokenIter &&end)
+: iter(iter), iter_end(end)
 {
 }
 
 std::unique_ptr<Expr>
 ExprParser::parse()
 {
-    consume();
-    std::unique_ptr<Expr> result(output.back());
-    return result;
+    while (!end()) {
+        consume();
+    }
+
+    while (!operators.empty()) {
+        output.push(operators.top());
+        operators.pop();
+    }
+
+    while (!output.empty()) {
+        evaluate();
+    }
+
+    std::unique_ptr<Expr> rv(result.top());
+    return rv;
 }
 
 void
 ExprParser::consume()
 {
-    if (auto lit = findIntegerLiteral()) {
-        output.push_back(lit);
-    } else if (auto ident = findIdentifier()) {
-        output.push_back(ident);
-    } else if (auto token = findOperator()) {
-        operators.push_back(token);
+    if (auto *lit = findIntegerLiteral()) {
+        output.push(lit);
+    } else if (auto *ident = findIdentifier()) {
+        output.push(ident);
+    } else if (auto *token = findOperator()) {
+        operators.push(token);
     }
+}
+
+void
+ExprParser::evaluate()
+{
+    // while (!output.empty()) {
+    //     auto expr = output.front();
+    //     output.pop_front();
+    //
+    //     if (llvm::isa<LitExpr>(expr) || llvm::isa<IdentExpr>(expr)) {
+    //         result.push(expr);
+    //         break;
+    //     } else if (auto *op = llvm::dyn_cast<TokenExpr>(expr)) {
+    //         auto a = result.top(); result.pop();
+    //         auto b = result.top(); result.pop();
+    //         result.push(new BinaryExpr(a, op->getTokenType(), b));
+    //         break;
+    //     }
+    // }
 }
 
 bool
@@ -43,6 +79,12 @@ bool
 ExprParser::is_a(TokenType tokenType)
 {
     return token().type & tokenType;
+}
+
+bool
+ExprParser::end()
+{
+    return iter == iter_end || (*iter).type == tok_eof;
 }
 
 void
@@ -61,6 +103,18 @@ Token const &
 ExprParser::token() const
 {
     return *iter;
+}
+
+std::stack<Expr *> const &
+ExprParser::getOutput() const
+{
+    return output;
+}
+
+std::stack<Expr *> const &
+ExprParser::getOperators() const
+{
+    return operators;
 }
 
 IntLitExpr *

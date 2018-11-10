@@ -33,6 +33,14 @@ indentToStream(ostream &s, Stmt const &stmt, int indent)
     }
 }
 
+std::string
+AST::toString() const
+{
+    std::ostringstream ss;
+    toStream(ss);
+    return ss.str();
+}
+
 void
 AST::toStream(std::ostream &) const
 {

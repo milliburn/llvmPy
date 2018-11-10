@@ -41,6 +41,8 @@ public:
         return true;
     }
 
+    std::string toString() const;
+
 protected:
     explicit AST(ASTType type) : Typed(type) {};
 };

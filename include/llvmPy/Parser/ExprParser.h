@@ -6,6 +6,7 @@
 #include <memory>
 #include <istream>
 #include <deque>
+#include <stack>
 
 #ifdef __cplusplus
 namespace llvmPy {
@@ -16,28 +17,35 @@ namespace llvmPy {
  */
 class ExprParser {
 public:
-    typedef std::vector<Token>::iterator & TTokenIter;
+    typedef std::vector<Token>::iterator TTokenIter;
 
-    static std::unique_ptr<Expr> fromIter(TTokenIter iter);
+    static std::unique_ptr<Expr> fromIter(TTokenIter iter, TTokenIter end);
 
-    explicit ExprParser(TTokenIter tokens);
+    explicit ExprParser(TTokenIter &&tokens, TTokenIter &&end);
     std::unique_ptr<Expr> parse();
 
     IntLitExpr *findIntegerLiteral();
     IdentExpr *findIdentifier();
     TokenExpr *findOperator();
     void consume();
+    void evaluate();
+
+    std::stack<Expr *> const &getOutput() const;
+    std::stack<Expr *> const &getOperators() const;
 
 protected:
     bool is(TokenType tokenType);
     bool is_a(TokenType tokenType);
+    bool end();
     void next();
     void back();
 
 private:
     TTokenIter iter;
-    std::deque<Expr *> output;
-    std::deque<Expr *> operators;
+    TTokenIter iter_end;
+    std::stack<Expr *> output;
+    std::stack<Expr *> operators;
+    std::stack<Expr *> result;
     Token const &token() const;
 
 
