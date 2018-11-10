@@ -4,7 +4,6 @@
 #include <llvmPy/AST.h>
 #include <vector>
 #include <memory>
-#include <istream>
 #include <map>
 
 #ifdef __cplusplus

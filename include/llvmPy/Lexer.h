@@ -7,8 +7,6 @@
 #ifdef __cplusplus
 namespace llvmPy {
 
-class Token;
-
 class Lexer {
 public:
     static constexpr long BUFFER_SIZE = 64;
