@@ -57,13 +57,17 @@ check(std::string input, std::string expect)
 TEST_CASE("ExprParser", "[ExprParser]") {
     SECTION("Literals") {
         SECTION("Integer") {
-            CHECK(parseToString("1") == "1i");
-            CHECK(parseToString("-1") == "-1i");
-            CHECK(parseToString("+1") == "1i");
+            check("1", "1i");
+            check("-1", "-1i");
+            check("+1", "1i");
         }
 
         SECTION("Identifier") {
-            CHECK(parseToString("True") == "True");
+            check("True", "True");
+        }
+
+        SECTION("Parentheses") {
+            check("()", "");
         }
     }
 
@@ -74,7 +78,7 @@ TEST_CASE("ExprParser", "[ExprParser]") {
         };
 
         for (auto &op : operators) {
-            CHECK(parseToString("1 " + op + " 2") == "(1i " + op + " 2i)");
+            check("1 " + op + " 2", "(1i " + op + " 2i)");
         }
     }
 
