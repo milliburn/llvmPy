@@ -60,9 +60,13 @@ TEST_CASE("ExprParser", "[ExprParser]") {
     }
 
     SECTION("It should parse binary expressions with one operator") {
-        CHECK(parseToString("1 + 2") == "(1i + 2i)");
-        CHECK(parseToString("1 - 2") == "(1i - 2i)");
-        CHECK(parseToString("1 * 2") == "(1i * 2i)");
-        CHECK(parseToString("1 / 2") == "(1i / 2i)");
+        std::string operators[] = {
+                "+", "-", "*", "/",
+                "<", "<=", "==", "!=", ">=", ">",
+        };
+
+        for (auto op : operators) {
+            CHECK(parseToString("1 " + op + " 2") == "(1i " + op + " 2i)");
+        }
     }
 }
