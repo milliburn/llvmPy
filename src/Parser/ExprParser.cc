@@ -112,7 +112,7 @@ ExprParser::parseImpl(int lastPrec, Expr *lhs)
         return nullptr;
     } else {
         Expr *binop = new BinaryExpr(lhs, op->getTokenType(), rhs);
-        return parseImpl(0, binop);
+        return parseImpl(lastPrec, binop);
     }
 }
 
