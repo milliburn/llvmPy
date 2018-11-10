@@ -22,6 +22,10 @@ cl::opt<bool> IsIR(
         "ir",
         cl::desc("Print resulting LLVM IR and exit"));
 
+cl::opt<bool> IsParser(
+        "parser",
+        cl::desc("Print resulting parser tree and exit"));
+
 cl::opt<string> Filename(
         cl::Positional,
         cl::desc("file"));
@@ -50,6 +54,14 @@ main(int argc, char **argv)
 
     Parser parser(tokens);
     parser.parse(stmts);
+
+    if (IsParser) {
+        for (auto const &stmt : stmts) {
+            std::cout << *stmt << std::endl;
+        }
+
+        return 0;
+    }
 
     Compiler compiler;
     Emitter em(compiler);
