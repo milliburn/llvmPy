@@ -22,6 +22,7 @@ enum class ASTType {
     ExprBinary,
     ExprLambda,
     ExprCall,
+    ExprGroup,
     ExprAny,
     Stmt,
     StmtExpr,

@@ -19,22 +19,6 @@ tokenize(std::string input)
     return tokens;
 }
 
-// static ExprParser
-// start(std::string input)
-// {
-//     std::vector<Token> tokens = tokenize(input);
-//     ExprParser parser(tokens.begin(), tokens.end());
-//     return parser;
-// }
-
-// static std::unique_ptr<Expr>
-// parse(std::string input)
-// {
-//     ExprParser parser = start(input);
-//     auto result = parser.parse();
-//     return result;
-// }
-
 static std::string
 parseToString(std::string input)
 {
@@ -71,17 +55,42 @@ TEST_CASE("ExprParser", "[ExprParser]") {
         }
 
         SECTION("Parentheses") {
-            check("()", "()");
-            check("(1)", "1i");
+            check("()", "()"); // Empty tuple.
+            check("(1)", "1i"); // Single value (no tuple).
             check("(-1)", "-1i");
             check("(True)", "True");
+        }
+    }
+
+    SECTION("Tuples") {
+        SECTION("Flat") {
+            check("()", "()");
+            // check("(1,)", "(1i,)");
+            check("(1, 2)", "(1i, 2i)");
+            check("(1, 2, 3)", "(1i, 2i, 3i)");
+        }
+
+        SECTION("Nested") {
+            check("((1, 2), 3)", "((1i, 2i), 3i)");
+            check("(1, (2, 3))", "(1i, (2i, 3i))");
+            check("(1, 2, (3, 4, 5))", "(1i, 2i, (3i, 4i, 5i))");
+            check("(1, 2, (3, 4, 5), 6, 7)", "(1i, 2i, (3i, 4i, 5i), 6i, 7i)");
+        }
+
+        SECTION("Mixed") {
+            // Some of these examples would not be valid syntax, but any such
+            // errors wouldn't occur at the parser level.
+            check("(1 * 2 + 3, 4 + 5 * 6, 7 + 8 + 9)",
+                  "(((1i * 2i) + 3i), (4i + (5i * 6i)), ((7i + 8i) + 9i))");
+            check("(1, 2 + 3, 4 + (5, 6), 7)",
+                  "(1i, (2i + 3i), (4i + (5i, 6i)), 7i)");
         }
     }
 
     SECTION("Function call") {
         check("f()", "f()");
         check("f(1)", "f(1i)");
-        // check("f(1, 2)", "f(1i, 2i)");
+        check("f(1, 2)", "f(1i, 2i)");
     }
 
     SECTION("Expressions with one binary operator") {
@@ -112,7 +121,11 @@ TEST_CASE("ExprParser", "[ExprParser]") {
 
     SECTION("Expressions with two or three binary operators and parentheses") {
         check("1 + (2 + 3)", "(1i + (2i + 3i))");
+        check("(1 + 2) + 3", "((1i + 2i) + 3i)");
+        check("((1 + 2) + 3)", "((1i + 2i) + 3i)");
         check("1 * (2 + 3)", "(1i * (2i + 3i))");
+        check("(1 * 2) + 3", "((1i * 2i) + 3i)");
+        check("((1 * 2) + 3)", "((1i * 2i) + 3i)");
         check("(1 + 2) * 3", "((1i + 2i) * 3i)");
         check("(1 < 2) + 3", "((1i < 2i) + 3i)");
         check("1 + 2 * (3 + 4)", "(1i + (2i * (3i + 4i)))");

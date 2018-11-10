@@ -50,37 +50,68 @@ ExprParser::ExprParser(
 std::unique_ptr<Expr>
 ExprParser::parse()
 {
-    Expr *result = parseImpl();
+    Expr *result = readExpr(0, nullptr);
+    if (!result) result = new TupleExpr();
     return std::unique_ptr<Expr>(result);
 }
 
 Expr *
-ExprParser::parseImpl()
+ExprParser::readSubExpr()
 {
-    return parseImpl(0, nullptr, 0);
+    TokenType term = tok_unknown;
+
+    if (is(tok_lp)) {
+        next();
+        term = tok_rp;
+    }
+
+    TupleExpr *tuple = nullptr;
+
+    for (;;) {
+        auto *expr = readExpr(0, nullptr);
+
+        if (end() || (term && is(term))) {
+            next();
+
+            if (tuple) {
+                tuple->addMember(std::unique_ptr<Expr>(expr));
+                return tuple;
+            } else if (!expr) {
+                return new TupleExpr();
+            } else {
+                return expr;
+            }
+        } else if (is(tok_comma)) {
+            // This subexpression is a tuple.
+            next();
+
+            if (!tuple) {
+                tuple = new TupleExpr();
+            }
+
+            tuple->addMember(std::unique_ptr<Expr>(expr));
+        }
+    }
 }
 
 Expr *
-ExprParser::parseImpl(int lastPrec, Expr *lhs, int depth)
+ExprParser::readExpr(int lastPrec, Expr *lhs)
 {
-    if (end()) {
-        return lhs;
-    }
-
     Expr *rhs = nullptr;
     TokenExpr *op = nullptr;
     int curPrec = 0;
 
-    if (is(tok_rp)) {
-        next();
-
-        if (!lhs) {
-            lhs = new TupleExpr();
-        }
-
+    if (end() || is(tok_rp)) {
+        // End of (sub)expression.
+        // Terminator (if any) is intentionally left un-consumed.
+        return lhs;
+    } else if (is(tok_comma)) {
+        // Comma is a delimiter (no binding) between expressions.
+        // It is intentionally left un-consumed.
         return lhs;
     } else if ((op = findOperator())) {
         curPrec = getPrecedence(op);
+
         if (curPrec <= lastPrec) {
             back();
             return lhs;
@@ -88,19 +119,16 @@ ExprParser::parseImpl(int lastPrec, Expr *lhs, int depth)
     }
 
     if (is(tok_lp)) {
-        // Obtain the parenthesised subexpression.
-        next();
-        rhs = parseImpl(0, nullptr, depth + 1);
-    } else if ((rhs = findIntegerLiteral())) {
-    } else if ((rhs = findIdentifier())) {
+        rhs = readSubExpr();
+        rhs = readExpr(curPrec, rhs);
+    } else if ((rhs = findIntegerLiteral()) || (rhs = findIdentifier())) {
+        rhs = readExpr(curPrec, rhs);
     }
-
-    rhs = parseImpl(curPrec, rhs, depth);
 
     if (lhs && op && rhs) {
         // Apply binary operator to LHS and RHS.
         Expr *binop = new BinaryExpr(lhs, op->getTokenType(), rhs);
-        return parseImpl(lastPrec, binop, depth);
+        return readExpr(lastPrec, binop);
     } else if (lhs && !op && rhs) {
         // Function call (apply arguments in RHS to callee in LHS).
         return buildCall(lhs, rhs);
@@ -175,7 +203,9 @@ ExprParser::end()
 void
 ExprParser::next()
 {
-    iter++;
+    if (!end()) {
+        iter++;
+    }
 }
 
 void

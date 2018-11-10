@@ -220,6 +220,11 @@ TupleExpr::toStream(std::ostream &s) const
         }
 
         s << *member;
+        i += 1;
+    }
+
+    if (members.size() == 1) {
+        s << ",";
     }
 
     s << ")";
@@ -234,7 +239,8 @@ TupleExpr::getMembers()
 void
 TupleExpr::addMember(std::unique_ptr<Expr> member)
 {
-
+    members.push_back(std::move(member));
+    // members.insert(members.begin(), std::move(member));
 }
 
 TokenExpr::TokenExpr(TokenType type)
