@@ -139,11 +139,7 @@ ExprParser::readExpr(int lastPrec, Expr *lhs)
             (rhs = findStringLiteral()) ||
             (rhs = findIdentifier()) ||
             (rhs = findLambdaExpr())) {
-        rhs = readExpr(
-                llvm::isa<LambdaExpr>(rhs)
-                        ? getPrecedence(kw_lambda)
-                        : curPrec,
-                rhs);
+        rhs = readExpr(curPrec, rhs);
     }
 
     if (lhs && op && rhs) {
