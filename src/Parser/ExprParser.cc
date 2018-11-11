@@ -121,7 +121,10 @@ ExprParser::readExpr(int lastPrec, Expr *lhs)
     if (is(tok_lp)) {
         rhs = readSubExpr();
         rhs = readExpr(curPrec, rhs);
-    } else if ((rhs = findIntegerLiteral()) || (rhs = findIdentifier())) {
+    } else if (
+            (rhs = findNumericLiteral()) ||
+            (rhs = findStringLiteral()) ||
+            (rhs = findIdentifier())) {
         rhs = readExpr(curPrec, rhs);
     }
 
@@ -148,6 +151,14 @@ ExprParser::readExpr(int lastPrec, Expr *lhs)
                     auto value = literal->getValue();
                     delete literal;
                     literal = new IntLitExpr(-value);
+                }
+
+                return literal;
+            } else if (auto *literal = dyn_cast<DecLitExpr>(rhs)) {
+                if (sign < 0) {
+                    auto value = literal->getValue();
+                    delete literal;
+                    literal = new DecLitExpr(-value);
                 }
 
                 return literal;
@@ -220,16 +231,37 @@ ExprParser::token() const
     return *iter;
 }
 
-IntLitExpr *
-ExprParser::findIntegerLiteral()
+Expr *
+ExprParser::findNumericLiteral()
 {
     // Sign is applied separately.
 
     if (is(tok_number)) {
         std::string const *text = token().str;
-        int64_t value = atol(text->c_str());
         next();
-        return new IntLitExpr(value);
+
+        if (text->find('.') != std::string::npos) {
+            double value = atof(text->c_str());
+            return new DecLitExpr(value);
+        } else {
+            int64_t value = atol(text->c_str());
+            return new IntLitExpr(value);
+        }
+    }
+
+    return nullptr;
+}
+
+StrLitExpr *
+ExprParser::findStringLiteral()
+{
+    if (is(tok_string)) {
+        // The substring removes string delimiters (" or ').
+        std::string const *str = token().str;
+        auto value = std::make_unique<std::string const>(
+                str->substr(1, str->length() - 2));
+        next();
+        return new StrLitExpr(std::move(value));
     }
 
     return nullptr;

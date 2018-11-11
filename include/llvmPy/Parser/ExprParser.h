@@ -22,7 +22,8 @@ public:
     explicit ExprParser(TTokenIter &tokens, TTokenIter end);
     std::unique_ptr<Expr> parse();
 
-    IntLitExpr *findIntegerLiteral();
+    Expr * findNumericLiteral();
+    StrLitExpr *findStringLiteral();
     IdentExpr *findIdentifier();
     TokenExpr *findOperator();
     CallExpr *buildCall(Expr *lhs, Expr *rhs);

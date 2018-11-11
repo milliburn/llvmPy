@@ -44,14 +44,23 @@ check(std::string input, std::string expect)
 
 TEST_CASE("ExprParser", "[ExprParser]") {
     SECTION("Literals") {
-        SECTION("Integer") {
+        SECTION("Integers") {
             check("1", "1i");
             check("-1", "-1i");
             check("+1", "1i");
         }
 
-        SECTION("Identifier") {
+        SECTION("Decimals") {
+            check("1.0", "1d");
+            check("-1.0", "-1d");
+            check("+1.0", "1d");
+            check("2.5", "2.5d");
+        }
+
+        SECTION("Identifiers") {
             check("True", "True");
+            check("False", "False");
+            check("x", "x");
         }
 
         SECTION("Parentheses") {
@@ -59,6 +68,13 @@ TEST_CASE("ExprParser", "[ExprParser]") {
             check("(1)", "1i"); // Single value (no tuple).
             check("(-1)", "-1i");
             check("(True)", "True");
+        }
+
+        SECTION("Strings") {
+            check("\"Test\"", "\"Test\"");
+            check("'Test'", "\"Test\"");
+            check("\"\"", "\"\"");
+            check("''", "\"\"");
         }
     }
 

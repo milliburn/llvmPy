@@ -106,6 +106,8 @@ public:
         : LitExpr(ASTType::ExprDecLit),
           value(v) {}
     void toStream(std::ostream &) const override;
+
+    double getValue() const { return value; }
 };
 
 class IntLitExpr : public LitExpr {
