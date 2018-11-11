@@ -69,12 +69,21 @@ ExprParser::readSubExpr()
 
     for (;;) {
         auto *expr = readExpr(0, nullptr);
+        bool isTerminal = false;
 
-        if (end() || (term && is(term))) {
+        if (end() || is(tok_colon)) {
+            isTerminal = true;
+        } else if (term && is(term)) {
             next();
+            isTerminal = true;
+        }
 
+        if (isTerminal) {
             if (tuple) {
-                tuple->addMember(std::unique_ptr<Expr>(expr));
+                if (expr) {
+                    tuple->addMember(std::unique_ptr<Expr>(expr));
+                }
+
                 return tuple;
             } else if (!expr) {
                 return new TupleExpr();
@@ -105,6 +114,10 @@ ExprParser::readExpr(int lastPrec, Expr *lhs)
         // End of (sub)expression.
         // Terminator (if any) is intentionally left un-consumed.
         return lhs;
+    } else if (is(tok_colon)) {
+        // The colon is used in lambda-expressions and
+        // as a statement terminator.
+        return lhs;
     } else if (is(tok_comma)) {
         // Comma is a delimiter (no binding) between expressions.
         // It is intentionally left un-consumed.
@@ -124,8 +137,13 @@ ExprParser::readExpr(int lastPrec, Expr *lhs)
     } else if (
             (rhs = findNumericLiteral()) ||
             (rhs = findStringLiteral()) ||
-            (rhs = findIdentifier())) {
-        rhs = readExpr(curPrec, rhs);
+            (rhs = findIdentifier()) ||
+            (rhs = findLambdaExpr())) {
+        rhs = readExpr(
+                llvm::isa<LambdaExpr>(rhs)
+                        ? getPrecedence(kw_lambda)
+                        : curPrec,
+                rhs);
     }
 
     if (lhs && op && rhs) {
@@ -286,6 +304,40 @@ ExprParser::findOperator()
         TokenType tokenType = token().type;
         next();
         return new TokenExpr(tokenType);
+    }
+
+    return nullptr;
+}
+
+LambdaExpr *
+ExprParser::findLambdaExpr()
+{
+    if (is(kw_lambda)) {
+        next();
+
+        std::vector<std::string const> argNames;
+
+        Expr *argsSubExpr = readSubExpr();
+
+        if (auto *tuple = dyn_cast<TupleExpr>(argsSubExpr)) {
+            for (auto const &member : tuple->getMembers()) {
+                auto const &ident = llvm::cast<IdentExpr>(*member);
+                argNames.push_back(ident.getName());
+            }
+        } else if (auto *ident = dyn_cast<IdentExpr>(argsSubExpr)) {
+            argNames.push_back(ident->getName());
+        } else {
+            assert(false && "Invalid argument subexpression");
+        }
+
+        delete(argsSubExpr);
+
+        assert(is(tok_colon));
+        next();
+
+        Expr *lambdaBody = readSubExpr();
+
+        return new LambdaExpr(argNames, lambdaBody);
     }
 
     return nullptr;

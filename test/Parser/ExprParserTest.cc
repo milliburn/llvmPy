@@ -76,12 +76,19 @@ TEST_CASE("ExprParser", "[ExprParser]") {
             check("\"\"", "\"\"");
             check("''", "\"\"");
         }
+
+        SECTION("Lambda expressions") {
+            check("lambda: None", "(lambda: None)");
+            check("lambda: x + 1", "(lambda: (x + 1i))");
+            check("lambda x: x + 1", "(lambda x: (x + 1i))");
+            check("lambda x, y: x + 1", "(lambda x, y: (x + 1i))");
+        }
     }
 
     SECTION("Tuples") {
         SECTION("Flat") {
             check("()", "()");
-            // check("(1,)", "(1i,)");
+            check("(1,)", "(1i,)");
             check("(1, 2)", "(1i, 2i)");
             check("(1, 2, 3)", "(1i, 2i, 3i)");
         }
@@ -107,6 +114,8 @@ TEST_CASE("ExprParser", "[ExprParser]") {
         check("f()", "f()");
         check("f(1)", "f(1i)");
         check("f(1, 2)", "f(1i, 2i)");
+        check("f(x + 1, 2)", "f((x + 1i), 2i)");
+        check("print(1 != 2)", "print((1i != 2i))");
     }
 
     SECTION("Expressions with one binary operator") {

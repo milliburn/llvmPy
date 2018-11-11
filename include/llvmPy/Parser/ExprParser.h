@@ -26,6 +26,7 @@ public:
     StrLitExpr *findStringLiteral();
     IdentExpr *findIdentifier();
     TokenExpr *findOperator();
+    LambdaExpr *findLambdaExpr();
     CallExpr *buildCall(Expr *lhs, Expr *rhs);
 
     Expr *readExpr(int precedence, Expr *lhs);

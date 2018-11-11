@@ -136,6 +136,8 @@ public:
         : Expr(ASTType::ExprIdent),
           name(*str) {}
     void toStream(std::ostream &) const override;
+
+    std::string const &getName() const { return name; }
 };
 
 class LambdaExpr : public Expr {
