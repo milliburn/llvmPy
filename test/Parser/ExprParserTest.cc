@@ -136,6 +136,15 @@ TEST_CASE("ExprParser", "[ExprParser]") {
         check("1 < 2 + 3", "(1i < (2i + 3i))");
     }
 
+    SECTION("Expressions with embedded negatives") {
+        check("1 + - 2", "(1i + -2i)");
+        check("1 + -2", "(1i + -2i)");
+        check("1 +- 2", "(1i + -2i)");
+        check("1 +-2", "(1i + -2i)");
+        check("1+-2", "(1i + -2i)");
+        check("1+- 2", "(1i + -2i)");
+    }
+
     SECTION("Expressions with three binary operators") {
         check("1 + 2 + 3 + 4", "(((1i + 2i) + 3i) + 4i)");
         check("1 + 2 * 3 + 4", "((1i + (2i * 3i)) + 4i)");

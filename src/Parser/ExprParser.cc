@@ -157,6 +157,10 @@ ExprParser::readExpr(int lastPrec, Expr *lhs)
         // Independent expression (generally literal or identifier).
         return lhs;
     } else if (!lhs && op && rhs) {
+        // Special case of an independent expression such as -1, which
+        // normally would be interpreted as a binary subtraction.
+        // TODO: This should be parsed as an unary operation instead.
+
         int sign = 0;
 
         switch (op->getTokenType()) {
@@ -252,7 +256,16 @@ ExprParser::token() const
 Expr *
 ExprParser::findNumericLiteral()
 {
-    // Sign is applied separately.
+    int sign = 0;
+
+    // TODO: Sign should be parsed as an unary operation instead.
+    if (is(tok_add)) {
+        next();
+        sign = 1;
+    } else if (is(tok_sub)) {
+        next();
+        sign = -1;
+    }
 
     if (is(tok_number)) {
         std::string const *text = token().str;
@@ -260,14 +273,18 @@ ExprParser::findNumericLiteral()
 
         if (text->find('.') != std::string::npos) {
             double value = atof(text->c_str());
-            return new DecLitExpr(value);
+            return new DecLitExpr(sign < 0 ? -value : value);
         } else {
             int64_t value = atol(text->c_str());
-            return new IntLitExpr(value);
+            return new IntLitExpr(sign < 0 ? -value : value);
         }
-    }
+    } else {
+        if (sign != 0) {
+            back();
+        }
 
-    return nullptr;
+        return nullptr;
+    }
 }
 
 StrLitExpr *
