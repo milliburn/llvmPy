@@ -6,6 +6,8 @@ using std::string;
 using std::stringstream;
 using std::endl;
 
+static constexpr int INDENT = 4;
+
 static void
 indentToStream(ostream &s, Stmt const &stmt, int indent)
 {
@@ -138,7 +140,7 @@ DefStmt::toStream(std::ostream &s) const
     s << "):" << endl;
 
     for (auto const &stmt : body->getStatements()) {
-        indentToStream(s, *stmt, 2);
+        indentToStream(s, *stmt, INDENT);
     }
 }
 

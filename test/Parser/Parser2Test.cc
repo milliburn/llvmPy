@@ -182,7 +182,7 @@ TEST_CASE("Parser2", "[Parser2]") {
                 "    y = x + 1\n"
                 "    z = 9 + 2\n",
                 "def func():\n"
-                "  y = (x + 1i)\n"
-                "  z = (9i + 2i)\n");
+                "    y = (x + 1i)\n"
+                "    z = (9i + 2i)\n");
     }
 }

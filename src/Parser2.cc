@@ -566,6 +566,7 @@ ReturnStmt *
 Parser2::findReturnStatement()
 {
     if (is(kw_return)) {
+        next();
         auto *expr = readExpr();
         assert(expr);
         return new ReturnStmt(*expr);
