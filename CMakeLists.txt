@@ -97,7 +97,6 @@ add_executable(
         ${name}Test
         test/main.cc
         test/LexerTest.cc
-        test/ParserTest.cc
         test/InstrTest.cc
         test/TestSuite.cc
         test/PyObjTest.cc
