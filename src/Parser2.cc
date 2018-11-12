@@ -55,6 +55,22 @@ Parser2::parse()
     return std::unique_ptr<Expr>(result);
 }
 
+std::unique_ptr<Stmt>
+Parser2::read()
+{
+    auto compound = std::make_unique<CompoundStmt>();
+
+    for (;;) {
+        if (auto *stmt = readStatement(0)) {
+            compound->addStatement(std::unique_ptr<Stmt>(stmt));
+        } else {
+            break;
+        }
+    }
+
+    return std::move(compound);
+}
+
 Expr *
 Parser2::readSubExpr()
 {
@@ -172,18 +188,127 @@ Parser2::readExpr(int lastPrec, Expr *lhs)
     }
 }
 
+/**
+ * @brief Read a simple or block statement.
+ *
+ * A statement _must_ start with an indentation followed by either a simple or
+ * block statement. A statement concludes with either EOL or EOF, although
+ * statements may themselves consume additional EOLs (in case of blocks). The
+ * applicable read___() method _must_ consume a terminating EOL, but not a
+ * terminating EOF.
+ *
+ * @param indent Indentation level of the current compound statement.
+ *        Pass 0 when reading modules.
+ */
 Stmt *
-Parser2::readStatement()
+Parser2::readStatement(int indent)
 {
     Stmt *stmt = nullptr;
 
-    if (
-            (stmt = findDefStatement(0)) ||
-            (stmt = findReturnStatement())) {
+    // Pass by and ignore any empty lines.
+    for (;;) {
+        if (is(tok_indent)) {
+            next();
+            if (is(tok_eol)) {
+                next();
+                continue;
+            } else if (is(tok_eof)) {
+                return nullptr;
+            } else {
+                back();
+                expectIndent(indent);
+                break;
+            }
+        } else if (is(tok_eof)) {
+            return nullptr;
+        }
     }
 
-    assert(is(tok_semicolon) || is(tok_eol) || is(tok_eof));
+    if (auto *simple = readSimpleStatement(indent)) {
+        stmt = simple;
+    } else if (auto *block = readBlockStatement(indent)) {
+        stmt = block;
+    } else {
+        assert(false && "Unexpected statement");
+        return nullptr;
+    }
+
+    while (is(tok_eol)) {
+        next();
+    }
+
     return stmt;
+}
+
+/**
+ * @brief Read an one-line statement such as "return 1" or "print('foo')".
+ *
+ * The lower-level parsers are expected to not consume EOLs unless the statement
+ * is broken into multiple lines by means of a \ (not implemented).
+ */
+Stmt *
+Parser2::readSimpleStatement(int indent)
+{
+    CompoundStmt *compound = nullptr;
+    Stmt *stmt = nullptr;
+
+    for (;;) {
+        if (stmt) {
+            assert(compound);
+            compound->addStatement(std::unique_ptr<Stmt>(stmt));
+            stmt = nullptr;
+        }
+
+        if (is(tok_eol)) {
+            next();
+            break;
+        } else if (is(tok_eof)) {
+            break;
+        }
+
+        if (auto *ret = findReturnStatement()) {
+            stmt = ret;
+        } else if (auto *assign = findAssignStatement()) {
+            stmt = assign;
+        } else if (auto *expr = readExpr()) {
+            stmt = new ExprStmt(expr);
+        } else {
+            return nullptr;
+        }
+
+        if (is(tok_semicolon)) {
+            // Successive statements will acquire the original's indent.
+            next();
+
+            if (!compound) {
+                compound = new CompoundStmt();
+            }
+        } else {
+            break;
+        }
+    }
+
+    if (compound) {
+        return compound;
+    } else {
+        return stmt;
+    }
+}
+
+/**
+ * @brief Read a block statement consisting of a header and compound statement.
+ *
+ * The header of a block statement must be at the `indent` level, whereas
+ * the compound statement must have greater indentation.
+ */
+Stmt *
+Parser2::readBlockStatement(int indent)
+{
+    if (auto *def = findDefStatement(indent)) {
+        return def;
+    } else {
+        return nullptr;
+    }
 }
 
 CallExpr *
@@ -339,32 +464,27 @@ Parser2::findDefStatement(int outerIndent)
 {
     if (is(kw_def)) {
         next();
-        auto *functionName = llvm::cast<IdentExpr>(readExpr(0, nullptr));
+
+        // TODO: Is this appropriate?
+        // TODO: The expression parser considers the function signature
+        // TODO: a "call expression", which is then deconstructed.
+
+        auto *fnSignatureExpr = readExpr();
+        auto *fnSignature = llvm::cast<CallExpr>(fnSignatureExpr);
+        auto &fnNameExpr = fnSignature->getCallee();
+        auto &fnName = llvm::cast<IdentExpr>(fnNameExpr);
         std::vector<std::string const> argNames;
-
-        assert(is(tok_lp));
-        next();
-
-        auto *argsSubExpr = readSubExpr();
-
-        assert(is(tok_rp));
-        next();
-
-        if (auto *tuple = dyn_cast<TupleExpr>(argsSubExpr)) {
-            for (auto const &member : tuple->getMembers()) {
-                auto const &ident = llvm::cast<IdentExpr>(*member);
-                argNames.push_back(ident.getName());
-            }
-        } else if (auto *ident = dyn_cast<IdentExpr>(argsSubExpr)) {
-            argNames.push_back(ident->getName());
-        } else {
-            assert(false && "Invalid argument subexpression");
-        }
-
-        delete(argsSubExpr);
 
         assert(is(tok_colon));
         next();
+
+        for (auto &arg : fnSignature->getArguments()) {
+            auto *ident = llvm::cast<IdentExpr>(arg.get());
+            argNames.push_back(ident->getName());
+        }
+
+        // TODO: Right now this kills the underlying string.
+        // delete(fnSignatureExpr);
 
         assert(is(tok_eol));
         next();
@@ -373,7 +493,7 @@ Parser2::findDefStatement(int outerIndent)
         assert(body);
 
         return new DefStmt(
-                functionName->getName(),
+                fnName.getName(),
                 std::move(argNames),
                 std::unique_ptr<CompoundStmt>(body));
     } else {
@@ -381,6 +501,19 @@ Parser2::findDefStatement(int outerIndent)
     }
 }
 
+/**
+ * @brief Read a compound statement.
+ *
+ * A compound statement consists of one or more statements at an equal level
+ * of indentation. The indentation of the inner statements _must_ be greater
+ * than `outerIndent`, and must remain stable throughout.
+ *
+ * A compound statement concludes when EOF, or otherwise when the indentation
+ * level of a following line is less than or equal to the `outerIndent`.
+ *
+ * @param outerIndent The indentation level of the enclosing block header
+ *        (e.g. the if-statement).
+ */
 CompoundStmt *
 Parser2::readCompoundStatement(int outerIndent)
 {
@@ -392,16 +525,14 @@ Parser2::readCompoundStatement(int outerIndent)
     assert(is(tok_indent));
     auto const innerIndent = static_cast<int>(token().depth);
     assert(innerIndent > outerIndent);
-    back(); // To simplify the loop.
 
     for (;;) {
-        if (isEnd()) {
+        if (is(tok_eof)) {
             break;
         }
 
         assert(is(tok_indent));
         auto const indent = static_cast<int>(token().depth);
-        next();
 
         if (is(tok_eol)) {
             // Ignore indents if the line is otherwise empty.
@@ -411,7 +542,12 @@ Parser2::readCompoundStatement(int outerIndent)
             back();
             break;
         } else if (indent == innerIndent) {
-            auto *stmt = readStatement();
+            auto *stmt = readStatement(innerIndent);
+
+            if (!stmt) {
+                break;
+            }
+
             assert(stmt);
             compound->addStatement(std::unique_ptr<Stmt>(stmt));
         } else {
@@ -438,6 +574,27 @@ Parser2::findReturnStatement()
     }
 }
 
+AssignStmt *
+Parser2::findAssignStatement()
+{
+    if (is(tok_ident)) {
+        auto const *name = token().str;
+        next();
+
+        if (is_a(tok_assign)) {
+            next();
+            auto *expr = readExpr();
+            assert(expr);
+            return new AssignStmt(name, expr);
+        } else {
+            back();
+            return nullptr;
+        }
+    } else {
+        return nullptr;
+    }
+}
+
 int
 Parser2::getPrecedence(TokenType tokenType) const
 {
@@ -452,4 +609,13 @@ int
 Parser2::getPrecedence(TokenExpr *tokenExpr) const
 {
     return getPrecedence(tokenExpr->getTokenType());
+}
+
+void
+Parser2::expectIndent(int indent)
+{
+    assert(is(tok_indent));
+    int const actual = static_cast<int>(token().depth);
+    assert(indent == actual && "Unexpected indent");
+    next();
 }

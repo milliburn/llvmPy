@@ -29,12 +29,16 @@ public:
     LambdaExpr *findLambdaExpression();
     DefStmt *findDefStatement(int indent);
     ReturnStmt *findReturnStatement();
+    AssignStmt *findAssignStatement();
 
     CallExpr *buildCall(Expr *lhs, Expr *rhs);
 
+    std::unique_ptr<Stmt> read();
     Expr *readExpr(int precedence = 0, Expr *lhs = nullptr);
     Expr *readSubExpr();
-    Stmt *readStatement();
+    Stmt *readStatement(int indent);
+    Stmt *readSimpleStatement(int indent);
+    Stmt *readBlockStatement(int indent);
     CompoundStmt *readCompoundStatement(int outerIndent);
 
     bool isEnd();
@@ -54,6 +58,8 @@ private:
     int getPrecedence(TokenExpr *tokenExpr) const;
 
     std::map<TokenType, int> const precedences;
+
+    void expectIndent(int indent);
 };
 
 } // namespace llvmPy

@@ -318,6 +318,8 @@ public:
     void toStream(std::ostream &s) const override;
 
 public:
+    std::string const &getName() const { return name; }
+    std::vector<std::string const> const &getArguments() const { return args; }
     CompoundStmt const &getBody() const { return *body; }
 };
 
