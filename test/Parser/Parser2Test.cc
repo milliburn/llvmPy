@@ -1,5 +1,5 @@
 #include <llvmPy/Lexer.h>
-#include <llvmPy/Parser/ExprParser.h>
+#include <llvmPy/Parser2.h>
 #include <string>
 #include <sstream>
 #include <catch2/catch.hpp>
@@ -24,7 +24,7 @@ parseToString(std::string input)
 {
     auto tokens = tokenize(input);
     auto begin = tokens.begin();
-    auto expr = ExprParser::fromIter(begin, tokens.end());
+    auto expr = Parser2::fromIter(begin, tokens.end());
     std::ostringstream ss;
 
     if (expr) {
@@ -42,7 +42,7 @@ check(std::string input, std::string expect)
     CHECK(actual == expect);
 }
 
-TEST_CASE("ExprParser", "[ExprParser]") {
+TEST_CASE("Parser2", "[Parser2]") {
     SECTION("Literals") {
         SECTION("Integers") {
             check("1", "1i");

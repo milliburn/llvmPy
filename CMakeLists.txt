@@ -60,8 +60,8 @@ add_library(
         src/PyObj/PyObj.cc
         src/PyObj/PyInt.cc
         include/llvmPy/PyObj/PyInt.h
-        include/llvmPy/Parser/ExprParser.h
-        src/Parser/ExprParser.cc)
+        include/llvmPy/Parser2.h
+        src/Parser2.cc)
 
 set_target_properties(
         lib${name}

@@ -13,13 +13,13 @@ namespace llvmPy {
  * This class is specialized towards parsing the AST of a single expression
  * (which may be a complex tree) out of a stream of tokens.
  */
-class ExprParser {
+class Parser2 {
 public:
     typedef std::vector<Token>::iterator TTokenIter;
 
     static std::unique_ptr<Expr> fromIter(TTokenIter &iter, TTokenIter end);
 
-    explicit ExprParser(TTokenIter &tokens, TTokenIter end);
+    explicit Parser2(TTokenIter &tokens, TTokenIter end);
     std::unique_ptr<Expr> parse();
 
     Expr * findNumericLiteral();

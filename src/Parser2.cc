@@ -1,4 +1,4 @@
-#include <llvmPy/Parser/ExprParser.h>
+#include <llvmPy/Parser2.h>
 #include <llvm/Support/Casting.h>
 using namespace llvmPy;
 using llvm::dyn_cast;
@@ -32,23 +32,23 @@ initPrecedence()
 }
 
 std::unique_ptr<Expr>
-ExprParser::fromIter(
-        ExprParser::TTokenIter &iter,
-        ExprParser::TTokenIter end)
+Parser2::fromIter(
+        Parser2::TTokenIter &iter,
+        Parser2::TTokenIter end)
 {
-    ExprParser parser(iter, std::move(end));
+    Parser2 parser(iter, std::move(end));
     return parser.parse();
 }
 
-ExprParser::ExprParser(
-        ExprParser::TTokenIter &iter,
-        ExprParser::TTokenIter end)
+Parser2::Parser2(
+        Parser2::TTokenIter &iter,
+        Parser2::TTokenIter end)
 : iter(iter), iter_end(end), precedences(initPrecedence())
 {
 }
 
 std::unique_ptr<Expr>
-ExprParser::parse()
+Parser2::parse()
 {
     Expr *result = readExpr(0, nullptr);
     if (!result) result = new TupleExpr();
@@ -56,7 +56,7 @@ ExprParser::parse()
 }
 
 Expr *
-ExprParser::readSubExpr()
+Parser2::readSubExpr()
 {
     TokenType term = tok_unknown;
 
@@ -104,7 +104,7 @@ ExprParser::readSubExpr()
 }
 
 Expr *
-ExprParser::readExpr(int lastPrec, Expr *lhs)
+Parser2::readExpr(int lastPrec, Expr *lhs)
 {
     Expr *rhs = nullptr;
     TokenExpr *binaryOp = nullptr;
@@ -173,7 +173,7 @@ ExprParser::readExpr(int lastPrec, Expr *lhs)
 }
 
 CallExpr *
-ExprParser::buildCall(Expr *lhs, Expr *rhs)
+Parser2::buildCall(Expr *lhs, Expr *rhs)
 {
     auto *call = new CallExpr(std::unique_ptr<Expr>(lhs));
 
@@ -191,25 +191,25 @@ ExprParser::buildCall(Expr *lhs, Expr *rhs)
 }
 
 bool
-ExprParser::is(TokenType tokenType)
+Parser2::is(TokenType tokenType)
 {
     return token().type == tokenType;
 }
 
 bool
-ExprParser::is_a(TokenType tokenType)
+Parser2::is_a(TokenType tokenType)
 {
     return token().type & tokenType;
 }
 
 bool
-ExprParser::isEnd()
+Parser2::isEnd()
 {
     return iter == iter_end || (*iter).type == tok_eof;
 }
 
 void
-ExprParser::next()
+Parser2::next()
 {
     if (!isEnd()) {
         iter++;
@@ -217,19 +217,19 @@ ExprParser::next()
 }
 
 void
-ExprParser::back()
+Parser2::back()
 {
     iter--;
 }
 
 Token const &
-ExprParser::token() const
+Parser2::token() const
 {
     return *iter;
 }
 
 Expr *
-ExprParser::findNumericLiteral()
+Parser2::findNumericLiteral()
 {
     if (is(tok_number)) {
         std::string const *text = token().str;
@@ -248,7 +248,7 @@ ExprParser::findNumericLiteral()
 }
 
 StrLitExpr *
-ExprParser::findStringLiteral()
+Parser2::findStringLiteral()
 {
     if (is(tok_string)) {
         // The substring removes string delimiters (" or ').
@@ -263,7 +263,7 @@ ExprParser::findStringLiteral()
 }
 
 IdentExpr *
-ExprParser::findIdentifier()
+Parser2::findIdentifier()
 {
     if (is(tok_ident)) {
         auto *expr = new IdentExpr(token().str);
@@ -275,7 +275,7 @@ ExprParser::findIdentifier()
 }
 
 TokenExpr *
-ExprParser::findOperator()
+Parser2::findOperator()
 {
     if (is_a(tok_oper)) {
         TokenType tokenType = token().type;
@@ -287,7 +287,7 @@ ExprParser::findOperator()
 }
 
 LambdaExpr *
-ExprParser::findLambdaExpr()
+Parser2::findLambdaExpr()
 {
     if (is(kw_lambda)) {
         next();
@@ -321,7 +321,7 @@ ExprParser::findLambdaExpr()
 }
 
 int
-ExprParser::getPrecedence(TokenType tokenType) const
+Parser2::getPrecedence(TokenType tokenType) const
 {
     if (precedences.count(tokenType)) {
         return precedences.at(tokenType);
@@ -331,7 +331,7 @@ ExprParser::getPrecedence(TokenType tokenType) const
 }
 
 int
-ExprParser::getPrecedence(TokenExpr *tokenExpr) const
+Parser2::getPrecedence(TokenExpr *tokenExpr) const
 {
     return getPrecedence(tokenExpr->getTokenType());
 }
