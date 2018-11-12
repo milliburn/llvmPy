@@ -140,9 +140,8 @@ DefStmt::toStream(std::ostream &s) const
 
     s << "):\n";
 
-    for (int i = 0; i < stmts.size(); ++i) {
-        if (i > 0) s << '\n';
-        indentToStream(s, *stmts[i], 2);
+    for (auto const &stmt : body->getStatements()) {
+        indentToStream(s, *stmt, 2);
     }
 }
 

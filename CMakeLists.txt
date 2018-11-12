@@ -101,7 +101,7 @@ add_executable(
         test/InstrTest.cc
         test/TestSuite.cc
         test/PyObjTest.cc
-        test/Parser/ExprParserTest.cc)
+        test/Parser/Parser2Test.cc)
 
 # The test suites depend on an up-to-date llvmPy binary.
 add_dependencies(

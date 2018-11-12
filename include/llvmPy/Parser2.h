@@ -26,11 +26,16 @@ public:
     StrLitExpr *findStringLiteral();
     IdentExpr *findIdentifier();
     TokenExpr *findOperator();
-    LambdaExpr *findLambdaExpr();
+    LambdaExpr *findLambdaExpression();
+    DefStmt *findDefStatement(int indent);
+    ReturnStmt *findReturnStatement();
+
     CallExpr *buildCall(Expr *lhs, Expr *rhs);
 
-    Expr *readExpr(int precedence, Expr *lhs);
+    Expr *readExpr(int precedence = 0, Expr *lhs = nullptr);
     Expr *readSubExpr();
+    Stmt *readStatement();
+    CompoundStmt *readCompoundStatement(int outerIndent);
 
     bool isEnd();
 

@@ -141,7 +141,7 @@ Parser2::readExpr(int lastPrec, Expr *lhs)
             (rhs = findNumericLiteral()) ||
             (rhs = findStringLiteral()) ||
             (rhs = findIdentifier()) ||
-            (rhs = findLambdaExpr())) {
+            (rhs = findLambdaExpression())) {
         rhs = readExpr(curPrec, rhs);
     }
 
@@ -169,6 +169,18 @@ Parser2::readExpr(int lastPrec, Expr *lhs)
         return rhs;
     } else {
         throw "Not implemented";
+    }
+}
+
+Stmt *
+Parser2::readStatement()
+{
+    if (auto *stmt = findDefStatement(0)) {
+        return stmt;
+    } else if (auto *stmt = findReturnStatement()) {
+        return stmt;
+    } else {
+        return nullptr;
     }
 }
 
@@ -287,7 +299,7 @@ Parser2::findOperator()
 }
 
 LambdaExpr *
-Parser2::findLambdaExpr()
+Parser2::findLambdaExpression()
 {
     if (is(kw_lambda)) {
         next();
@@ -315,6 +327,110 @@ Parser2::findLambdaExpr()
         Expr *lambdaBody = readSubExpr();
 
         return new LambdaExpr(argNames, lambdaBody);
+    } else {
+        return nullptr;
+    }
+}
+
+DefStmt *
+Parser2::findDefStatement(int outerIndent)
+{
+    if (is(kw_def)) {
+        next();
+        auto *functionName = llvm::cast<IdentExpr>(readExpr(0, nullptr));
+        std::vector<std::string const> argNames;
+
+        assert(is(tok_lp));
+        next();
+
+        auto *argsSubExpr = readSubExpr();
+
+        assert(is(tok_rp));
+        next();
+
+        if (auto *tuple = dyn_cast<TupleExpr>(argsSubExpr)) {
+            for (auto const &member : tuple->getMembers()) {
+                auto const &ident = llvm::cast<IdentExpr>(*member);
+                argNames.push_back(ident.getName());
+            }
+        } else if (auto *ident = dyn_cast<IdentExpr>(argsSubExpr)) {
+            argNames.push_back(ident->getName());
+        } else {
+            assert(false && "Invalid argument subexpression");
+        }
+
+        delete(argsSubExpr);
+
+        assert(is(tok_colon));
+        next();
+
+        assert(is(tok_eol));
+        next();
+
+        CompoundStmt *body = readCompoundStatement(outerIndent);
+        assert(body);
+
+        return new DefStmt(
+                functionName->getName(),
+                std::move(argNames),
+                std::unique_ptr<CompoundStmt>(body));
+    } else {
+        return nullptr;
+    }
+}
+
+CompoundStmt *
+Parser2::readCompoundStatement(int outerIndent)
+{
+    auto *compound = new CompoundStmt();
+
+    // A compound statement _must_ contain at least one inner statement,
+    // or otherwise `pass`.
+
+    assert(is(tok_indent));
+    auto const innerIndent = static_cast<int>(token().depth);
+    assert(innerIndent > outerIndent);
+    back(); // To simplify the loop.
+
+    for (;;) {
+        if (isEnd()) {
+            break;
+        }
+
+        assert(is(tok_indent));
+        auto const indent = static_cast<int>(token().depth);
+        next();
+
+        if (is(tok_eol)) {
+            // Ignore indents if the line is otherwise empty.
+            next();
+        } else if (indent <= outerIndent) {
+            // End of statement.
+            back();
+            break;
+        } else if (indent == innerIndent) {
+            auto *stmt = readStatement();
+            assert(stmt);
+            compound->addStatement(std::unique_ptr<Stmt>(stmt));
+        } else {
+            // Covers cases where:
+            //   (a) outerIndent < indent < innerIndent
+            //   (b) indent > innerIndent
+            assert(false && "Unexpected indent");
+            return nullptr;
+        }
+    }
+
+    return compound;
+}
+
+ReturnStmt *
+Parser2::findReturnStatement()
+{
+    if (is(kw_return)) {
+        auto *expr = readExpr();
+        assert(expr);
+        return new ReturnStmt(*expr);
     } else {
         return nullptr;
     }

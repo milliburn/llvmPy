@@ -234,11 +234,17 @@ Emitter::emit(RTScope &scope, DefStmt const &def)
 {
     RTModule &mod = scope.getModule();
 
+    std::vector<Stmt *> statements;
+
+    for (auto const &stmt : def.getBody().getStatements()) {
+        statements.push_back(const_cast<Stmt *>(stmt.get()));
+    }
+
     RTFunc *func =
             createFunction(
                     tags.Def + "_" + def.name,
                     scope,
-                    def.stmts,
+                    statements,
                     def.args);
 
     llvm::Value *innerFramePtrBitCast =
@@ -364,8 +370,8 @@ Emitter::createFunction(
                 slots[ident] = slots.size();
             }
         } else if (stmt->getType() == ASTType::StmtDef) {
-            auto defStmt = *cast<DefStmt>(stmt);
-            auto ident = defStmt.name;
+            auto *defStmt = cast<DefStmt>(stmt);
+            auto ident = defStmt->name;
             if (!slots.count(ident)) {
                 slots[ident] = slots.size();
             }

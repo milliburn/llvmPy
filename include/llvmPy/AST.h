@@ -295,6 +295,8 @@ public:
     void toStream(std::ostream &) const override;
 };
 
+class CompoundStmt;
+
 class DefStmt : public Stmt {
 public:
     static bool classof(AST const *ast) {
@@ -303,17 +305,20 @@ public:
 
     std::string const &name;
     std::vector<std::string const> args;
-    std::vector<Stmt *> const stmts;
+    std::unique_ptr<CompoundStmt> body;
 
     DefStmt(std::string const &name,
             std::vector<std::string const> args,
-            std::vector<Stmt *> stmts)
+            std::unique_ptr<CompoundStmt> body)
             : Stmt(ASTType::StmtDef),
               name(name),
               args(std::move(args)),
-              stmts(std::move(stmts)) {}
+              body(std::move(body)) {}
 
     void toStream(std::ostream &) const override;
+
+public:
+    CompoundStmt const &getBody() const { return *body; }
 };
 
 class ReturnStmt : public Stmt {

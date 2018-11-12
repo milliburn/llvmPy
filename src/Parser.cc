@@ -117,7 +117,8 @@ Parser::parseStmt()
             stmts.push_back(parseStmt());
         }
 
-        return new DefStmt(*ident.str, args, stmts);
+        // return new DefStmt(*ident.str, args, stmts);
+        return nullptr;
     } else if (is(kw_return)) {
         auto &expr = *parseExpr();
         parseEndOfStmt();
