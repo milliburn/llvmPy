@@ -6,7 +6,7 @@
 using namespace llvmPy;
 
 static std::vector<Token>
-tokenize(std::string input)
+tokenize(std::string input, bool erase)
 {
     std::istringstream stream(input);
     Lexer lexer(stream);
@@ -15,16 +15,20 @@ tokenize(std::string input)
     REQUIRE(tokens.size() > 1);
     REQUIRE(tokens[0].type == tok_indent);
     // Remove the indent marker (expressions don't expect it).
-    tokens.erase(tokens.begin());
+    if (erase) {
+        tokens.erase(tokens.begin());
+    }
     return tokens;
 }
 
 static std::string
-parseToString(std::string input)
+parseExprToString(std::string input)
 {
-    auto tokens = tokenize(input);
+    auto tokens = tokenize(input, true);
     auto begin = tokens.begin();
-    auto expr = Parser2::fromIter(begin, tokens.end());
+    // auto expr = Parser2::fromIter(begin, tokens.end());
+    Parser2 parser(begin, tokens.end());
+    auto const expr = parser.readExpr();
     std::ostringstream ss;
 
     if (expr) {
@@ -38,7 +42,25 @@ static void
 check(std::string input, std::string expect)
 {
     INFO("For: " << input);
-    auto actual = parseToString(input);
+    auto actual = parseExprToString(input);
+    CHECK(actual == expect);
+}
+
+static void
+checkStmt(std::string input, std::string expect)
+{
+    INFO("For: " << input);
+    auto tokens = tokenize(input, false);
+    auto begin = tokens.begin();
+    Parser2 parser(begin, tokens.end());
+    auto const stmt = parser.read();
+    std::ostringstream ss;
+
+    if (stmt) {
+        ss << *stmt;
+    }
+
+    std::string actual = ss.str();
     CHECK(actual == expect);
 }
 
@@ -164,5 +186,15 @@ TEST_CASE("Parser2", "[Parser2]") {
         check("(1 + 2) * 3", "((1i + 2i) * 3i)");
         check("(1 < 2) + 3", "((1i < 2i) + 3i)");
         check("1 + 2 * (3 + 4)", "(1i + (2i * (3i + 4i)))");
+    }
+
+    SECTION("Function definitions") {
+        checkStmt(
+                "def func():\n"
+                "    y = x + 1\n"
+                "    z = 9 + 2\n",
+                "def func():\n"
+                "  y = (x + 1i)\n"
+                "  z = (9i + 2i)\n");
     }
 }
