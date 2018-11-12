@@ -31,7 +31,7 @@ public:
 
     Expr *readExpr(int precedence, Expr *lhs);
     Expr *readSubExpr();
-    
+
     bool isEnd();
 
 protected:

@@ -260,3 +260,28 @@ TokenExpr::getTokenType() const
 {
     return tokenType;
 }
+
+UnaryExpr::UnaryExpr(TokenType op, std::unique_ptr<Expr> expr)
+: Expr(ASTType::ExprUnary), op(op), expr(std::move(expr))
+{
+}
+
+void
+UnaryExpr::toStream(std::ostream &s) const
+{
+    Token t(getOperator());
+    s << t;
+    s << getExpr();
+}
+
+TokenType
+UnaryExpr::getOperator() const
+{
+    return op;
+}
+
+Expr const &
+UnaryExpr::getExpr() const
+{
+    return *expr;
+}

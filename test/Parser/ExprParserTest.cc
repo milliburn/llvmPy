@@ -47,13 +47,13 @@ TEST_CASE("ExprParser", "[ExprParser]") {
         SECTION("Integers") {
             check("1", "1i");
             check("-1", "-1i");
-            check("+1", "1i");
+            check("+1", "+1i");
         }
 
         SECTION("Decimals") {
             check("1.0", "1d");
             check("-1.0", "-1d");
-            check("+1.0", "1d");
+            check("+1.0", "+1d");
             check("2.5", "2.5d");
         }
 

@@ -107,7 +107,8 @@ Expr *
 ExprParser::readExpr(int lastPrec, Expr *lhs)
 {
     Expr *rhs = nullptr;
-    TokenExpr *op = nullptr;
+    TokenExpr *binaryOp = nullptr;
+    TokenExpr *unaryOp = nullptr;
     int curPrec = 0;
 
     if (isEnd() || is(tok_rp)) {
@@ -122,13 +123,15 @@ ExprParser::readExpr(int lastPrec, Expr *lhs)
         // Comma is a delimiter (no binding) between expressions.
         // It is intentionally left un-consumed.
         return lhs;
-    } else if ((op = findOperator())) {
-        curPrec = getPrecedence(op);
+    } else if ((binaryOp = findOperator())) {
+        curPrec = getPrecedence(binaryOp);
 
         if (curPrec <= lastPrec) {
             back();
             return lhs;
         }
+
+        unaryOp = findOperator();
     }
 
     if (is(tok_lp)) {
@@ -142,51 +145,27 @@ ExprParser::readExpr(int lastPrec, Expr *lhs)
         rhs = readExpr(curPrec, rhs);
     }
 
-    if (lhs && op && rhs) {
+    if (unaryOp && rhs) {
+        rhs = new UnaryExpr(
+                unaryOp->getTokenType(),
+                std::unique_ptr<Expr>(rhs));
+    }
+
+    if (lhs && binaryOp && rhs) {
         // Apply binary operator to LHS and RHS.
-        Expr *binop = new BinaryExpr(lhs, op->getTokenType(), rhs);
+        Expr *binop = new BinaryExpr(lhs, binaryOp->getTokenType(), rhs);
         return readExpr(lastPrec, binop);
-    } else if (lhs && !op && rhs) {
+    } else if (lhs && !binaryOp && rhs) {
         // Function call (apply arguments in RHS to callee in LHS).
         return buildCall(lhs, rhs);
-    } else if (lhs && !op && !rhs) {
+    } else if (lhs && !binaryOp && !rhs) {
         // Independent expression (generally literal or identifier).
         return lhs;
-    } else if (!lhs && op && rhs) {
-        // Special case of an independent expression such as -1, which
-        // normally would be interpreted as a binary subtraction.
-        // TODO: This should be parsed as an unary operation instead.
-
-        int sign = 0;
-
-        switch (op->getTokenType()) {
-        case tok_sub:
-            sign = -1;
-            // FALLTHROUGH
-        case tok_add:
-            if (auto *literal = dyn_cast<IntLitExpr>(rhs)) {
-                if (sign < 0) {
-                    auto value = literal->getValue();
-                    delete literal;
-                    literal = new IntLitExpr(-value);
-                }
-
-                return literal;
-            } else if (auto *literal = dyn_cast<DecLitExpr>(rhs)) {
-                if (sign < 0) {
-                    auto value = literal->getValue();
-                    delete literal;
-                    literal = new DecLitExpr(-value);
-                }
-
-                return literal;
-            } else {
-                // FALLTHROUGH
-            }
-        default:
-            throw "Not implemented";
-        }
-    } else if (!lhs && !op) {
+    } else if (!lhs && binaryOp && rhs) {
+        return new UnaryExpr(
+                binaryOp->getTokenType(),
+                std::unique_ptr<Expr>(rhs));
+    } else if (!lhs && !binaryOp) {
         return rhs;
     } else {
         throw "Not implemented";
@@ -252,33 +231,18 @@ ExprParser::token() const
 Expr *
 ExprParser::findNumericLiteral()
 {
-    int sign = 0;
-
-    // TODO: Sign should be parsed as an unary operation instead.
-    if (is(tok_add)) {
-        next();
-        sign = 1;
-    } else if (is(tok_sub)) {
-        next();
-        sign = -1;
-    }
-
     if (is(tok_number)) {
         std::string const *text = token().str;
         next();
 
         if (text->find('.') != std::string::npos) {
             double value = atof(text->c_str());
-            return new DecLitExpr(sign < 0 ? -value : value);
+            return new DecLitExpr(value);
         } else {
             int64_t value = atol(text->c_str());
-            return new IntLitExpr(sign < 0 ? -value : value);
+            return new IntLitExpr(value);
         }
     } else {
-        if (sign != 0) {
-            back();
-        }
-
         return nullptr;
     }
 }

@@ -19,6 +19,7 @@ enum class ASTType {
     ExprDecLit,
     ExprIntLit,
     ExprLitAny,
+    ExprUnary,
     ExprBinary,
     ExprLambda,
     ExprCall,
@@ -154,6 +155,22 @@ public:
           args(std::move(args)),
           expr(*body) {}
     void toStream(std::ostream &) const override;
+};
+
+class UnaryExpr : public Expr {
+public:
+    static bool classof(AST const *ast) {
+        return ast->isType(ASTType::ExprUnary);
+    }
+
+    UnaryExpr(TokenType op, std::unique_ptr<Expr> expr);
+    void toStream(std::ostream &) const override;
+    TokenType getOperator() const;
+    Expr const &getExpr() const;
+
+private:
+    TokenType const op;
+    std::unique_ptr<Expr> const expr;
 };
 
 class BinaryExpr : public Expr {
