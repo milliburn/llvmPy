@@ -43,7 +43,7 @@ check(std::string input, std::string expect)
 }
 
 TEST_CASE("Parser2", "[Parser2]") {
-    SECTION("Literals") {
+    SECTION("Literal Expressions") {
         SECTION("Integers") {
             check("1", "1i");
             check("-1", "-1i");
@@ -76,13 +76,14 @@ TEST_CASE("Parser2", "[Parser2]") {
             check("\"\"", "\"\"");
             check("''", "\"\"");
         }
+    }
 
-        SECTION("Lambda expressions") {
-            check("lambda: None", "(lambda: None)");
-            check("lambda: x + 1", "(lambda: (x + 1i))");
-            check("lambda x: x + 1", "(lambda x: (x + 1i))");
-            check("lambda x, y: x + 1", "(lambda x, y: (x + 1i))");
-        }
+    SECTION("Lambda expressions") {
+        check("lambda: None", "(lambda: None)");
+        check("lambda: x + 1", "(lambda: (x + 1i))");
+        check("lambda x: x + 1", "(lambda x: (x + 1i))");
+        check("lambda (x): x + 1", "(lambda x: (x + 1i))");
+        check("lambda x, y: x + 1", "(lambda x, y: (x + 1i))");
     }
 
     SECTION("Tuples") {
@@ -110,7 +111,7 @@ TEST_CASE("Parser2", "[Parser2]") {
         }
     }
 
-    SECTION("Function call") {
+    SECTION("Function calls") {
         check("f()", "f()");
         check("f(1)", "f(1i)");
         check("f(1, 2)", "f(1i, 2i)");
