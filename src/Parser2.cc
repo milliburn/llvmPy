@@ -87,10 +87,10 @@ Parser2::readSubExpr()
         auto *expr = readExpr(0, nullptr);
         bool isTerminal = false;
 
-        if (isEnd() || is(tok_colon)) {
-            isTerminal = true;
-        } else if (term && is(term)) {
+        if (term && is(term)) {
             next();
+            isTerminal = true;
+        } else if (!expr || isEnd() || is(tok_colon)) {
             isTerminal = true;
         }
 
@@ -127,7 +127,7 @@ Parser2::readExpr(int lastPrec, Expr *lhs)
     TokenExpr *unaryOp = nullptr;
     int curPrec = 0;
 
-    if (isEnd() || is(tok_rp)) {
+    if (isEnd() || is(tok_rp) || is(tok_eol)) {
         // End of (sub)expression.
         // Terminator (if any) is intentionally left un-consumed.
         return lhs;
