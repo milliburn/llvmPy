@@ -36,7 +36,6 @@ main(int argc, char **argv)
     cl::ParseCommandLineOptions(argc, argv);
 
     std::vector<Token> tokens;
-    std::vector<Stmt *> stmts;
 
     if (Cmd.getPosition() && Filename.getPosition()) {
         cerr << "Only one of cmd or filename may be specified." << endl;
@@ -52,14 +51,12 @@ main(int argc, char **argv)
         lexer.tokenize(tokens);
     }
 
-    Parser parser(tokens);
-    parser.parse(stmts);
+    auto iter = tokens.begin();
+    Parser2 parser(iter, tokens.end());
+    auto stmt = parser.read();
 
     if (IsParser) {
-        for (auto const &stmt : stmts) {
-            std::cout << *stmt << std::endl;
-        }
-
+        std::cout << *stmt;
         return 0;
     }
 
@@ -67,7 +64,7 @@ main(int argc, char **argv)
     Emitter em(compiler);
     RT rt(compiler);
 
-    RTModule &mod = *em.createModule("__main__", stmts);
+    RTModule &mod = *em.createModule("__main__", *stmt);
 
     if (IsIR) {
         mod.getModule().print(llvm::outs(), nullptr);

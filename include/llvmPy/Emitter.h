@@ -32,14 +32,13 @@ public:
     llvm::Value *emit(RTScope &scope, StrLitExpr const &lit);
     llvm::Value *emit(RTScope &scope, BinaryExpr const &expr);
 
-    RTModule *createModule(
-            std::string const &name,
-            std::vector<Stmt *> const &stmts);
+    RTModule *createModule(std::string const &name, Stmt const &stmt);
+    RTModule *createModule(std::string const &name);
 
     RTFunc *createFunction(
             std::string const &name,
             RTScope &scope,
-            std::vector<Stmt *> const &stmts,
+            Stmt const &stmt,
             std::vector<std::string const> const &args);
 
 private:
