@@ -285,3 +285,28 @@ UnaryExpr::getExpr() const
 {
     return *expr;
 }
+
+CompoundStmt::CompoundStmt()
+: Stmt(ASTType::StmtCompound)
+{
+}
+
+void
+CompoundStmt::toStream(std::ostream &s) const
+{
+    for (auto const &stmt : getStatements()) {
+        s << *stmt << std::endl;
+    }
+}
+
+std::vector<std::unique_ptr<Stmt const>> const &
+CompoundStmt::getStatements() const
+{
+    return statements;
+}
+
+void
+CompoundStmt::addStatement(std::unique_ptr<Stmt> stmt)
+{
+    statements.push_back(std::move(stmt));
+}

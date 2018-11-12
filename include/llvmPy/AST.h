@@ -31,6 +31,7 @@ enum class ASTType {
     StmtImport,
     StmtDef,
     StmtReturn,
+    StmtCompound,
     StmtAny,
     Any,
 };
@@ -326,6 +327,21 @@ public:
         : Stmt(ASTType::StmtReturn),
           expr(expr) {}
     void toStream(std::ostream &) const override;
+};
+
+class CompoundStmt : public Stmt {
+public:
+    static bool classof(AST const *ast) {
+        return ast->isType(ASTType::StmtCompound);
+    }
+
+    CompoundStmt();
+    void toStream(std::ostream &) const override;
+    std::vector<std::unique_ptr<Stmt const>> const &getStatements() const;
+    void addStatement(std::unique_ptr<Stmt> stmt);
+
+private:
+    std::vector<std::unique_ptr<Stmt const>> statements;
 };
 
 } // namespace llvmPy
