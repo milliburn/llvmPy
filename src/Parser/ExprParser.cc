@@ -71,7 +71,7 @@ ExprParser::readSubExpr()
         auto *expr = readExpr(0, nullptr);
         bool isTerminal = false;
 
-        if (end() || is(tok_colon)) {
+        if (isEnd() || is(tok_colon)) {
             isTerminal = true;
         } else if (term && is(term)) {
             next();
@@ -110,7 +110,7 @@ ExprParser::readExpr(int lastPrec, Expr *lhs)
     TokenExpr *op = nullptr;
     int curPrec = 0;
 
-    if (end() || is(tok_rp)) {
+    if (isEnd() || is(tok_rp)) {
         // End of (sub)expression.
         // Terminator (if any) is intentionally left un-consumed.
         return lhs;
@@ -224,7 +224,7 @@ ExprParser::is_a(TokenType tokenType)
 }
 
 bool
-ExprParser::end()
+ExprParser::isEnd()
 {
     return iter == iter_end || (*iter).type == tok_eof;
 }
@@ -232,7 +232,7 @@ ExprParser::end()
 void
 ExprParser::next()
 {
-    if (!end()) {
+    if (!isEnd()) {
         iter++;
     }
 }

@@ -31,11 +31,12 @@ public:
 
     Expr *readExpr(int precedence, Expr *lhs);
     Expr *readSubExpr();
+    
+    bool isEnd();
 
 protected:
     bool is(TokenType tokenType);
     bool is_a(TokenType tokenType);
-    bool end();
     void next();
     void back();
 
