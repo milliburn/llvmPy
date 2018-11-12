@@ -33,7 +33,6 @@ add_library(
         include/llvmPy/Emitter.h
         include/llvmPy/Instr.h
         include/llvmPy/Lexer.h
-        include/llvmPy/Parser.h
         include/llvmPy/RT.h
         include/llvmPy/RT/Frame.h
         include/llvmPy/SyntaxError.h
@@ -45,7 +44,6 @@ add_library(
         src/Emitter.cc
         src/Instr.cc
         src/Lexer.cc
-        src/Parser.cc
         src/RT.cc
         src/SyntaxError.cc
         src/Token.cc
