@@ -38,7 +38,7 @@ enum class ASTType {
 
 class AST : public Typed<ASTType> {
 public:
-    virtual void toStream(std::ostream &) const;
+    virtual void toStream(std::ostream &s) const;
     virtual ~AST() = default;
 
     static bool classof(AST const *) {
@@ -58,7 +58,7 @@ public:
     }
 
     EmptyAST() : AST(ASTType::Empty) {}
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
 };
 
 class Expr : public AST {
@@ -90,7 +90,7 @@ public:
     }
 
     explicit StrLitExpr(std::unique_ptr<std::string const> value);
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
     std::string const &getValue() const;
 
 private:
@@ -107,7 +107,7 @@ public:
     explicit DecLitExpr(double v)
         : LitExpr(ASTType::ExprDecLit),
           value(v) {}
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
 
     double getValue() const { return value; }
 };
@@ -122,7 +122,7 @@ public:
     explicit IntLitExpr(long v)
         : LitExpr(ASTType::ExprIntLit),
           value(v) {}
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
 
     int64_t getValue() const { return value; }
 };
@@ -137,7 +137,7 @@ public:
     explicit IdentExpr(std::string const * str)
         : Expr(ASTType::ExprIdent),
           name(*str) {}
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
 
     std::string const &getName() const { return name; }
 };
@@ -155,7 +155,7 @@ public:
         : Expr(ASTType::ExprLambda),
           args(std::move(args)),
           expr(*body) {}
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
 };
 
 class UnaryExpr : public Expr {
@@ -165,7 +165,7 @@ public:
     }
 
     UnaryExpr(TokenType op, std::unique_ptr<Expr> expr);
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
     TokenType getOperator() const;
     Expr const &getExpr() const;
 
@@ -188,7 +188,7 @@ public:
           lhs(*lhs),
           op(op),
           rhs(*rhs) {}
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
 };
 
 class CallExpr : public Expr {
@@ -198,7 +198,7 @@ public:
     }
 
     explicit CallExpr(std::unique_ptr<Expr> callee);
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
 
 public:
     Expr const &getCallee() const;
@@ -217,7 +217,7 @@ public:
     }
 
     explicit TokenExpr(TokenType type);
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
 
 public:
     TokenType getTokenType() const;
@@ -234,7 +234,7 @@ public:
     }
 
     explicit TupleExpr();
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
 
 public:
     std::vector<std::unique_ptr<Expr const>> &getMembers();
@@ -264,7 +264,7 @@ public:
     explicit ExprStmt(Expr * expr)
         : Stmt(ASTType::StmtExpr),
           expr(*expr) {}
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
 };
 
 class AssignStmt : public Stmt {
@@ -279,7 +279,7 @@ public:
         : Stmt(ASTType::StmtAssign),
           lhs(*lhs),
           rhs(*rhs) {}
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
 };
 
 class ImportStmt : public Stmt {
@@ -292,7 +292,7 @@ public:
     explicit ImportStmt(std::string const * modname)
         : Stmt(ASTType::StmtImport),
           modname(*modname) {}
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
 };
 
 class CompoundStmt;
@@ -315,7 +315,7 @@ public:
               args(std::move(args)),
               body(std::move(body)) {}
 
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
 
 public:
     CompoundStmt const &getBody() const { return *body; }
@@ -331,7 +331,7 @@ public:
     explicit ReturnStmt(Expr const &expr)
         : Stmt(ASTType::StmtReturn),
           expr(expr) {}
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
 };
 
 class CompoundStmt : public Stmt {
@@ -341,7 +341,7 @@ public:
     }
 
     CompoundStmt();
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
     std::vector<std::unique_ptr<Stmt const>> const &getStatements() const;
     void addStatement(std::unique_ptr<Stmt> stmt);
 

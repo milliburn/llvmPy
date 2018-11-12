@@ -29,19 +29,13 @@ parseExprToString(std::string input)
     // auto expr = Parser2::fromIter(begin, tokens.end());
     Parser2 parser(begin, tokens.end());
     auto const expr = parser.readExpr();
-    std::ostringstream ss;
-
-    if (expr) {
-        ss << *expr;
-    }
-
-    return ss.str();
+    return expr->toString();
 }
 
 static void
 check(std::string input, std::string expect)
 {
-    INFO("For: " << input);
+    INFO("For:\n" << input);
     auto actual = parseExprToString(input);
     CHECK(actual == expect);
 }
@@ -54,13 +48,7 @@ checkStmt(std::string input, std::string expect)
     auto begin = tokens.begin();
     Parser2 parser(begin, tokens.end());
     auto const stmt = parser.read();
-    std::ostringstream ss;
-
-    if (stmt) {
-        ss << *stmt;
-    }
-
-    std::string actual = ss.str();
+    std::string actual = stmt->toString();
     CHECK(actual == expect);
 }
 

@@ -4,32 +4,29 @@ using namespace llvmPy;
 using std::ostream;
 using std::string;
 using std::stringstream;
-
-static constexpr char eof = (char) std::istream::traits_type::eof();
+using std::endl;
 
 static void
 indentToStream(ostream &s, Stmt const &stmt, int indent)
 {
-    stringstream ss;
+    std::stringstream ss;
     ss << stmt;
     ss.seekg(0, std::ios::beg);
+    std::string indents(indent, ' ');
 
-    bool indentNext = true;
-    while (true) {
-        if (ss.eof()) break;
-        if (indentNext) {
-            for (int i = 0; i < indent; ++i) {
-                s << ' ';
-            }
-            indentNext = false;
+    std::string _s = ss.str();
+
+    for (;;) {
+        std::string line;
+        std::getline(ss, line);
+
+        if (ss.fail() || ss.eof()) {
+            break;
         }
 
-        char ch = (char) ss.get();
-        if (ch == eof) break;
-        s << ch;
-        if (ch == '\n') {
-            indentNext = true;
-        }
+        s << indents;
+        s << line;
+        s << std::endl; // getline() discards the delimiter.
     }
 }
 
@@ -42,42 +39,42 @@ AST::toString() const
 }
 
 void
-AST::toStream(std::ostream &) const
+AST::toStream(std::ostream &s) const
 {
     throw std::runtime_error("Not Implemented");
 }
 
 void
-EmptyAST::toStream(std::ostream &) const
+EmptyAST::toStream(std::ostream &s) const
 {
 }
 
 void
-StrLitExpr::toStream(std::ostream & s) const
+StrLitExpr::toStream(std::ostream &s) const
 {
     s << '"' << getValue() << '"';
 }
 
 void
-DecLitExpr::toStream(std::ostream & s) const
+DecLitExpr::toStream(std::ostream &s) const
 {
     s << value << 'd';
 }
 
 void
-IntLitExpr::toStream(std::ostream & s) const
+IntLitExpr::toStream(std::ostream &s) const
 {
     s << value << 'i';
 }
 
 void
-IdentExpr::toStream(std::ostream & s) const
+IdentExpr::toStream(std::ostream &s) const
 {
     s << name;
 }
 
 void
-LambdaExpr::toStream(std::ostream & s) const
+LambdaExpr::toStream(std::ostream &s) const
 {
     s << "(lambda";
 
@@ -90,7 +87,7 @@ LambdaExpr::toStream(std::ostream & s) const
 }
 
 void
-BinaryExpr::toStream(std::ostream & s) const
+BinaryExpr::toStream(std::ostream &s) const
 {
     s << '(' << lhs << ' ' << Token(op) << ' ' << rhs << ')';
 }
@@ -111,19 +108,19 @@ CallExpr::toStream(std::ostream &s) const
 }
 
 void
-ExprStmt::toStream(std::ostream & s) const
+ExprStmt::toStream(std::ostream &s) const
 {
-    s << expr;
+    s << expr << endl;
 }
 
 void
-AssignStmt::toStream(std::ostream & s) const
+AssignStmt::toStream(std::ostream &s) const
 {
-    s << lhs << " = " << rhs;
+    s << lhs << " = " << rhs << endl;
 }
 
 void
-ImportStmt::toStream(std::ostream & s) const
+ImportStmt::toStream(std::ostream &s) const
 {
     s << modname;
 }
@@ -138,7 +135,7 @@ DefStmt::toStream(std::ostream &s) const
         s << args[i];
     }
 
-    s << "):\n";
+    s << "):" << endl;
 
     for (auto const &stmt : body->getStatements()) {
         indentToStream(s, *stmt, 2);
@@ -148,7 +145,7 @@ DefStmt::toStream(std::ostream &s) const
 void
 ReturnStmt::toStream(std::ostream &s) const
 {
-    s << "return " << expr << '\n';
+    s << "return " << expr << endl;
 }
 
 std::ostream &
@@ -293,8 +290,14 @@ CompoundStmt::CompoundStmt()
 void
 CompoundStmt::toStream(std::ostream &s) const
 {
+    int i = 0;
     for (auto const &stmt : getStatements()) {
-        s << *stmt << std::endl;
+        if (i > 0) {
+            s << endl;
+        }
+
+        s << *stmt;
+        i += 1;
     }
 }
 
