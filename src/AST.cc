@@ -4,67 +4,79 @@ using namespace llvmPy;
 using std::ostream;
 using std::string;
 using std::stringstream;
+using std::endl;
 
-static constexpr char eof = (char) std::istream::traits_type::eof();
+static constexpr int INDENT = 4;
 
 static void
 indentToStream(ostream &s, Stmt const &stmt, int indent)
 {
-    stringstream ss;
+    std::stringstream ss;
     ss << stmt;
     ss.seekg(0, std::ios::beg);
+    std::string indents(indent, ' ');
 
-    bool indentNext = true;
-    while (true) {
-        if (ss.eof()) break;
-        if (indentNext) {
-            for (int i = 0; i < indent; ++i) {
-                s << ' ';
-            }
-            indentNext = false;
+    std::string _s = ss.str();
+
+    for (;;) {
+        std::string line;
+        std::getline(ss, line);
+
+        if (ss.fail() || ss.eof()) {
+            break;
         }
 
-        char ch = (char) ss.get();
-        if (ch == eof) break;
-        s << ch;
-        if (ch == '\n') {
-            indentNext = true;
-        }
+        s << indents;
+        s << line;
+        s << std::endl; // getline() discards the delimiter.
     }
 }
 
+std::string
+AST::toString() const
+{
+    std::ostringstream ss;
+    toStream(ss);
+    return ss.str();
+}
+
 void
-AST::toStream(std::ostream &) const
+AST::toStream(std::ostream &s) const
 {
     throw std::runtime_error("Not Implemented");
 }
 
 void
-StrLitExpr::toStream(std::ostream & s) const
+EmptyAST::toStream(std::ostream &s) const
+{
+}
+
+void
+StrLitExpr::toStream(std::ostream &s) const
 {
     s << '"' << getValue() << '"';
 }
 
 void
-DecLitExpr::toStream(std::ostream & s) const
+DecLitExpr::toStream(std::ostream &s) const
 {
     s << value << 'd';
 }
 
 void
-IntLitExpr::toStream(std::ostream & s) const
+IntLitExpr::toStream(std::ostream &s) const
 {
     s << value << 'i';
 }
 
 void
-IdentExpr::toStream(std::ostream & s) const
+IdentExpr::toStream(std::ostream &s) const
 {
     s << name;
 }
 
 void
-LambdaExpr::toStream(std::ostream & s) const
+LambdaExpr::toStream(std::ostream &s) const
 {
     s << "(lambda";
 
@@ -77,7 +89,7 @@ LambdaExpr::toStream(std::ostream & s) const
 }
 
 void
-BinaryExpr::toStream(std::ostream & s) const
+BinaryExpr::toStream(std::ostream &s) const
 {
     s << '(' << lhs << ' ' << Token(op) << ' ' << rhs << ')';
 }
@@ -85,7 +97,9 @@ BinaryExpr::toStream(std::ostream & s) const
 void
 CallExpr::toStream(std::ostream &s) const
 {
-    s << lhs << '(';
+    s << getCallee() << '(';
+
+    auto &args = getArguments();
 
     for (int i = 0; i < args.size(); ++i) {
         if (i > 0) s << ", ";
@@ -96,19 +110,19 @@ CallExpr::toStream(std::ostream &s) const
 }
 
 void
-ExprStmt::toStream(std::ostream & s) const
+ExprStmt::toStream(std::ostream &s) const
 {
-    s << expr;
+    s << expr << endl;
 }
 
 void
-AssignStmt::toStream(std::ostream & s) const
+AssignStmt::toStream(std::ostream &s) const
 {
-    s << lhs << " = " << rhs;
+    s << lhs << " = " << rhs << endl;
 }
 
 void
-ImportStmt::toStream(std::ostream & s) const
+ImportStmt::toStream(std::ostream &s) const
 {
     s << modname;
 }
@@ -123,18 +137,17 @@ DefStmt::toStream(std::ostream &s) const
         s << args[i];
     }
 
-    s << "):\n";
+    s << "):" << endl;
 
-    for (int i = 0; i < stmts.size(); ++i) {
-        if (i > 0) s << '\n';
-        indentToStream(s, *stmts[i], 2);
+    for (auto const &stmt : body->getStatements()) {
+        indentToStream(s, *stmt, INDENT);
     }
 }
 
 void
 ReturnStmt::toStream(std::ostream &s) const
 {
-    s << "return " << expr << '\n';
+    s << "return " << expr << endl;
 }
 
 std::ostream &
@@ -161,4 +174,137 @@ std::string const &
 StrLitExpr::getValue() const
 {
     return *value;
+}
+
+CallExpr::CallExpr(std::unique_ptr<Expr> callee)
+: Expr(ASTType::ExprCall),
+  callee(std::move(callee))
+{
+}
+
+Expr const &
+CallExpr::getCallee() const
+{
+    return *callee;
+}
+
+std::vector<std::unique_ptr<Expr const>> const &
+CallExpr::getArguments() const
+{
+    return arguments;
+}
+
+void
+CallExpr::addArgument(std::unique_ptr<Expr const> arg)
+{
+    arguments.push_back(std::move(arg));
+}
+
+TupleExpr::TupleExpr()
+: Expr(ASTType::ExprTuple)
+{
+
+}
+
+void
+TupleExpr::toStream(std::ostream &s) const
+{
+    s << "(";
+
+    int i = 0;
+    for (auto const &member : members) {
+        if (i > 0) {
+            s << ", ";
+        }
+
+        s << *member;
+        i += 1;
+    }
+
+    if (members.size() == 1) {
+        s << ",";
+    }
+
+    s << ")";
+}
+
+std::vector<std::unique_ptr<Expr const>> &
+TupleExpr::getMembers()
+{
+    return members;
+}
+
+void
+TupleExpr::addMember(std::unique_ptr<Expr> member)
+{
+    members.push_back(std::move(member));
+    // members.insert(members.begin(), std::move(member));
+}
+
+TokenExpr::TokenExpr(TokenType type)
+: Expr(ASTType::ExprToken), tokenType(type)
+{
+
+}
+
+void
+TokenExpr::toStream(std::ostream &s) const
+{
+    AST::toStream(s);
+}
+
+TokenType
+TokenExpr::getTokenType() const
+{
+    return tokenType;
+}
+
+UnaryExpr::UnaryExpr(TokenType op, std::unique_ptr<Expr> expr)
+: Expr(ASTType::ExprUnary), op(op), expr(std::move(expr))
+{
+}
+
+void
+UnaryExpr::toStream(std::ostream &s) const
+{
+    Token t(getOperator());
+    s << t;
+    s << getExpr();
+}
+
+TokenType
+UnaryExpr::getOperator() const
+{
+    return op;
+}
+
+Expr const &
+UnaryExpr::getExpr() const
+{
+    return *expr;
+}
+
+CompoundStmt::CompoundStmt()
+: Stmt(ASTType::StmtCompound)
+{
+}
+
+void
+CompoundStmt::toStream(std::ostream &s) const
+{
+    for (auto const &stmt : getStatements()) {
+        s << *stmt;
+    }
+}
+
+std::vector<std::unique_ptr<Stmt const>> const &
+CompoundStmt::getStatements() const
+{
+    return statements;
+}
+
+void
+CompoundStmt::addStatement(std::unique_ptr<Stmt> stmt)
+{
+    statements.push_back(std::move(stmt));
 }

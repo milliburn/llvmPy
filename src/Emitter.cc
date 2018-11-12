@@ -47,15 +47,22 @@ Emitter::Emitter(Compiler &c) noexcept
 RTModule *
 Emitter::createModule(
         std::string const &name,
-        std::vector<Stmt *> const &stmts)
+        Stmt const &stmt)
 {
     auto *module = new llvm::Module(name, ctx);
     module->setDataLayout(dl);
     RTModule *rtModule = new RTModule(name, module, types);
-    RTFunc *body = createFunction("__body__", rtModule->getScope(), stmts, {});
+    RTFunc *body = createFunction("__body__", rtModule->getScope(), stmt, {});
     rtModule->setBody(body);
     llvm::verifyModule(*module);
     return rtModule;
+}
+
+RTModule *
+Emitter::createModule(std::string const &name)
+{
+    auto stmt = std::make_unique<CompoundStmt>();
+    return createModule(name, *stmt);
 }
 
 llvm::Value *
@@ -92,25 +99,27 @@ llvm::Value *
 Emitter::emit(RTScope &scope, CallExpr const &call)
 {
     RTModule &mod = scope.getModule();
+    auto &callee = call.getCallee();
+    auto &args = call.getArguments();
 
-    if (isa<IdentExpr>(call.lhs)) {
-        auto lhsIdent = cast<IdentExpr>(call.lhs);
+    if (isa<IdentExpr>(callee)) {
+        auto lhsIdent = cast<IdentExpr>(callee);
         if (lhsIdent.name == "print") {
-            llvm::Value *arg = emit(scope, *call.args[0]);
+            llvm::Value *arg = emit(scope, *args[0]);
             return ir.CreateCall(mod.llvmPy_print(), { arg });
         }
     }
 
-    llvm::Value *lhs = emit(scope, call.lhs);
+    llvm::Value *lhs = emit(scope, callee);
     lhs->setName(tags.FuncObj);
-    vector<llvm::Value *> args;
-    args.push_back(nullptr); // Placeholder for the callFrame.
+    vector<llvm::Value *> argSlots;
+    argSlots.push_back(nullptr); // Placeholder for the callFrame.
     int argCount = 0;
 
-    for (auto *arg : call.args) {
+    for (auto &arg : args) {
         llvm::Value *value = emit(scope, *arg);
         value->setName(tags.Arg);
-        args.push_back(value);
+        argSlots.push_back(value);
         argCount++;
     }
 
@@ -126,13 +135,13 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
             { callFrame, lhs, np },
             tags.FuncPtr);
 
-    args[0] = callFrame;
+    argSlots[0] = callFrame;
 
     llvm::Value *funcBitCast = ir.CreateBitCast(
             inst,
             llvm::PointerType::getUnqual(types.getFuncN(argCount)));
 
-    return ir.CreateCall(funcBitCast, args, tags.RetVal);
+    return ir.CreateCall(funcBitCast, argSlots, tags.RetVal);
 }
 
 llvm::Value *
@@ -204,11 +213,13 @@ Emitter::emit(RTScope &scope, LambdaExpr const &lambda)
 {
     RTModule &mod = scope.getModule();
 
+    auto stmt = std::make_unique<ReturnStmt>(lambda.expr);
+
     RTFunc *func =
             createFunction(
                     tags.Lambda,
                     scope,
-                    { new ReturnStmt(lambda.expr) },
+                    *stmt,
                     lambda.args);
 
     llvm::Value *innerFramePtrBitCast =
@@ -236,7 +247,7 @@ Emitter::emit(RTScope &scope, DefStmt const &def)
             createFunction(
                     tags.Def + "_" + def.name,
                     scope,
-                    def.stmts,
+                    def.getBody(),
                     def.args);
 
     llvm::Value *innerFramePtrBitCast =
@@ -279,6 +290,7 @@ Emitter::emit(RTScope &scope, BinaryExpr const &expr)
 
     switch (expr.op) {
     case tok_add: f = mod.llvmPy_add(); break;
+    case tok_mul: f = mod.llvmPy_mul(); break;
     case tok_lt: f = mod.llvmPy_lt(); break;
     case tok_lte: f = mod.llvmPy_le(); break;
     case tok_eq: f = mod.llvmPy_eq(); break;
@@ -295,9 +307,19 @@ RTFunc *
 Emitter::createFunction(
         std::string const &name,
         RTScope &outerScope,
-        std::vector<Stmt *> const &stmts,
+        Stmt const &stmt_,
         std::vector<std::string const> const &args)
 {
+    // TODO: Fix this temporary adapter.
+    std::vector<Stmt const *> stmts;
+    if (auto *compound = llvm::dyn_cast<CompoundStmt>(&stmt_)) {
+        for (auto const &stmt : compound->getStatements()) {
+            stmts.push_back(stmt.get());
+        }
+    } else {
+        stmts.push_back(&stmt_);
+    }
+
     RTModule &mod = outerScope.getModule();
     map<string, size_t> slots; // Names and indices of slots in the frame.
 
@@ -361,8 +383,8 @@ Emitter::createFunction(
                 slots[ident] = slots.size();
             }
         } else if (stmt->getType() == ASTType::StmtDef) {
-            auto defStmt = *cast<DefStmt>(stmt);
-            auto ident = defStmt.name;
+            auto *defStmt = cast<DefStmt>(stmt);
+            auto ident = defStmt->name;
             if (!slots.count(ident)) {
                 slots[ident] = slots.size();
             }

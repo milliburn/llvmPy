@@ -22,6 +22,10 @@ cl::opt<bool> IsIR(
         "ir",
         cl::desc("Print resulting LLVM IR and exit"));
 
+cl::opt<bool> IsParser(
+        "parser",
+        cl::desc("Print resulting parser tree and exit"));
+
 cl::opt<string> Filename(
         cl::Positional,
         cl::desc("file"));
@@ -32,7 +36,6 @@ main(int argc, char **argv)
     cl::ParseCommandLineOptions(argc, argv);
 
     std::vector<Token> tokens;
-    std::vector<Stmt *> stmts;
 
     if (Cmd.getPosition() && Filename.getPosition()) {
         cerr << "Only one of cmd or filename may be specified." << endl;
@@ -46,16 +49,25 @@ main(int argc, char **argv)
         input.open(Filename, std::ios::in);
         Lexer lexer(input);
         lexer.tokenize(tokens);
+    } else {
+        Lexer lexer(std::cin);
+        lexer.tokenize(tokens);
     }
 
-    Parser parser(tokens);
-    parser.parse(stmts);
+    auto iter = tokens.begin();
+    Parser2 parser(iter, tokens.end());
+    auto stmt = parser.read();
+
+    if (IsParser) {
+        std::cout << *stmt;
+        return 0;
+    }
 
     Compiler compiler;
     Emitter em(compiler);
     RT rt(compiler);
 
-    RTModule &mod = *em.createModule("__main__", stmts);
+    RTModule &mod = *em.createModule("__main__", *stmt);
 
     if (IsIR) {
         mod.getModule().print(llvm::outs(), nullptr);

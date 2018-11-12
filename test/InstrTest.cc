@@ -9,7 +9,7 @@ using llvm::cast;
 TEST_CASE("Instr", "[Instr]") {
     Compiler compiler;
     Emitter em(compiler);
-    RTModule *mod = em.createModule("", {});
+    RTModule *mod = em.createModule("");
 
     SECTION("llvmPy_add: adding two ints will return an int") {
         PyInt lhs(1);

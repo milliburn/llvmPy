@@ -9,16 +9,21 @@ namespace llvmPy {
 
 enum class ASTType {
     Ignore,
+    Empty,
     Expr,
+    ExprToken,
+    ExprTuple,
     ExprIdent,
     ExprLit,
     ExprStrLit,
     ExprDecLit,
     ExprIntLit,
     ExprLitAny,
+    ExprUnary,
     ExprBinary,
     ExprLambda,
     ExprCall,
+    ExprGroup,
     ExprAny,
     Stmt,
     StmtExpr,
@@ -26,21 +31,34 @@ enum class ASTType {
     StmtImport,
     StmtDef,
     StmtReturn,
+    StmtCompound,
     StmtAny,
     Any,
 };
 
 class AST : public Typed<ASTType> {
 public:
-    virtual void toStream(std::ostream &) const;
+    virtual void toStream(std::ostream &s) const;
     virtual ~AST() = default;
 
     static bool classof(AST const *) {
         return true;
     }
 
+    std::string toString() const;
+
 protected:
     explicit AST(ASTType type) : Typed(type) {};
+};
+
+class EmptyAST : public AST {
+public:
+    static bool classof(AST const *ast) {
+        return ast->isType(ASTType::Empty);
+    }
+
+    EmptyAST() : AST(ASTType::Empty) {}
+    void toStream(std::ostream &s) const override;
 };
 
 class Expr : public AST {
@@ -72,7 +90,7 @@ public:
     }
 
     explicit StrLitExpr(std::unique_ptr<std::string const> value);
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
     std::string const &getValue() const;
 
 private:
@@ -89,7 +107,9 @@ public:
     explicit DecLitExpr(double v)
         : LitExpr(ASTType::ExprDecLit),
           value(v) {}
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
+
+    double getValue() const { return value; }
 };
 
 class IntLitExpr : public LitExpr {
@@ -102,7 +122,9 @@ public:
     explicit IntLitExpr(long v)
         : LitExpr(ASTType::ExprIntLit),
           value(v) {}
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
+
+    int64_t getValue() const { return value; }
 };
 
 class IdentExpr : public Expr {
@@ -115,7 +137,9 @@ public:
     explicit IdentExpr(std::string const * str)
         : Expr(ASTType::ExprIdent),
           name(*str) {}
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
+
+    std::string const &getName() const { return name; }
 };
 
 class LambdaExpr : public Expr {
@@ -131,7 +155,23 @@ public:
         : Expr(ASTType::ExprLambda),
           args(std::move(args)),
           expr(*body) {}
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
+};
+
+class UnaryExpr : public Expr {
+public:
+    static bool classof(AST const *ast) {
+        return ast->isType(ASTType::ExprUnary);
+    }
+
+    UnaryExpr(TokenType op, std::unique_ptr<Expr> expr);
+    void toStream(std::ostream &s) const override;
+    TokenType getOperator() const;
+    Expr const &getExpr() const;
+
+private:
+    TokenType const op;
+    std::unique_ptr<Expr> const expr;
 };
 
 class BinaryExpr : public Expr {
@@ -148,7 +188,7 @@ public:
           lhs(*lhs),
           op(op),
           rhs(*rhs) {}
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
 };
 
 class CallExpr : public Expr {
@@ -157,13 +197,51 @@ public:
         return ast->isType(ASTType::ExprCall);
     }
 
-    Expr const &lhs;
-    std::vector<Expr const *> const args;
-    CallExpr(Expr *lhs, std::vector<Expr const *> args)
-        : Expr(ASTType::ExprCall),
-          lhs(*lhs),
-          args(std::move(args)) {}
-    void toStream(std::ostream &) const override;
+    explicit CallExpr(std::unique_ptr<Expr> callee);
+    void toStream(std::ostream &s) const override;
+
+public:
+    Expr const &getCallee() const;
+    std::vector<std::unique_ptr<Expr const>> const &getArguments() const;
+    void addArgument(std::unique_ptr<Expr const> arg);
+
+private:
+    std::unique_ptr<Expr const> callee;
+    std::vector<std::unique_ptr<Expr const>> arguments;
+};
+
+class TokenExpr : public Expr {
+public:
+    static bool classof(AST const *ast) {
+        return ast->isType(ASTType::ExprToken);
+    }
+
+    explicit TokenExpr(TokenType type);
+    void toStream(std::ostream &s) const override;
+
+public:
+    TokenType getTokenType() const;
+
+private:
+    TokenType tokenType;
+};
+
+/** A group consists of expressions separated by comma (a tuple). */
+class TupleExpr : public Expr {
+public:
+    static bool classof(AST const *ast) {
+        return ast->isType(ASTType::ExprTuple);
+    }
+
+    explicit TupleExpr();
+    void toStream(std::ostream &s) const override;
+
+public:
+    std::vector<std::unique_ptr<Expr const>> &getMembers();
+    void addMember(std::unique_ptr<Expr> member);
+
+private:
+    std::vector<std::unique_ptr<Expr const>> members;
 };
 
 class Stmt : public AST {
@@ -186,7 +264,7 @@ public:
     explicit ExprStmt(Expr * expr)
         : Stmt(ASTType::StmtExpr),
           expr(*expr) {}
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
 };
 
 class AssignStmt : public Stmt {
@@ -201,7 +279,7 @@ public:
         : Stmt(ASTType::StmtAssign),
           lhs(*lhs),
           rhs(*rhs) {}
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
 };
 
 class ImportStmt : public Stmt {
@@ -214,8 +292,10 @@ public:
     explicit ImportStmt(std::string const * modname)
         : Stmt(ASTType::StmtImport),
           modname(*modname) {}
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
 };
+
+class CompoundStmt;
 
 class DefStmt : public Stmt {
 public:
@@ -225,17 +305,22 @@ public:
 
     std::string const &name;
     std::vector<std::string const> args;
-    std::vector<Stmt *> const stmts;
+    std::unique_ptr<CompoundStmt> body;
 
     DefStmt(std::string const &name,
             std::vector<std::string const> args,
-            std::vector<Stmt *> stmts)
+            std::unique_ptr<CompoundStmt> body)
             : Stmt(ASTType::StmtDef),
               name(name),
               args(std::move(args)),
-              stmts(std::move(stmts)) {}
+              body(std::move(body)) {}
 
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
+
+public:
+    std::string const &getName() const { return name; }
+    std::vector<std::string const> const &getArguments() const { return args; }
+    CompoundStmt const &getBody() const { return *body; }
 };
 
 class ReturnStmt : public Stmt {
@@ -248,7 +333,22 @@ public:
     explicit ReturnStmt(Expr const &expr)
         : Stmt(ASTType::StmtReturn),
           expr(expr) {}
-    void toStream(std::ostream &) const override;
+    void toStream(std::ostream &s) const override;
+};
+
+class CompoundStmt : public Stmt {
+public:
+    static bool classof(AST const *ast) {
+        return ast->isType(ASTType::StmtCompound);
+    }
+
+    CompoundStmt();
+    void toStream(std::ostream &s) const override;
+    std::vector<std::unique_ptr<Stmt const>> const &getStatements() const;
+    void addStatement(std::unique_ptr<Stmt> stmt);
+
+private:
+    std::vector<std::unique_ptr<Stmt const>> statements;
 };
 
 } // namespace llvmPy

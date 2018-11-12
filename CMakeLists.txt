@@ -33,7 +33,6 @@ add_library(
         include/llvmPy/Emitter.h
         include/llvmPy/Instr.h
         include/llvmPy/Lexer.h
-        include/llvmPy/Parser.h
         include/llvmPy/RT.h
         include/llvmPy/RT/Frame.h
         include/llvmPy/SyntaxError.h
@@ -45,7 +44,6 @@ add_library(
         src/Emitter.cc
         src/Instr.cc
         src/Lexer.cc
-        src/Parser.cc
         src/RT.cc
         src/SyntaxError.cc
         src/Token.cc
@@ -59,7 +57,9 @@ add_library(
         src/PyObj/PyBool.cc
         src/PyObj/PyObj.cc
         src/PyObj/PyInt.cc
-        include/llvmPy/PyObj/PyInt.h)
+        include/llvmPy/PyObj/PyInt.h
+        include/llvmPy/Parser2.h
+        src/Parser2.cc)
 
 set_target_properties(
         lib${name}
@@ -95,10 +95,10 @@ add_executable(
         ${name}Test
         test/main.cc
         test/LexerTest.cc
-        test/ParserTest.cc
         test/InstrTest.cc
         test/TestSuite.cc
-        test/PyObjTest.cc)
+        test/PyObjTest.cc
+        test/Parser/Parser2Test.cc)
 
 # The test suites depend on an up-to-date llvmPy binary.
 add_dependencies(
