@@ -175,13 +175,15 @@ Parser2::readExpr(int lastPrec, Expr *lhs)
 Stmt *
 Parser2::readStatement()
 {
-    if (auto *stmt = findDefStatement(0)) {
-        return stmt;
-    } else if (auto *stmt = findReturnStatement()) {
-        return stmt;
-    } else {
-        return nullptr;
+    Stmt *stmt = nullptr;
+
+    if (
+            (stmt = findDefStatement(0)) ||
+            (stmt = findReturnStatement())) {
     }
+
+    assert(is(tok_semicolon) || is(tok_eol) || is(tok_eof));
+    return stmt;
 }
 
 CallExpr *
