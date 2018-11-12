@@ -290,14 +290,8 @@ CompoundStmt::CompoundStmt()
 void
 CompoundStmt::toStream(std::ostream &s) const
 {
-    int i = 0;
     for (auto const &stmt : getStatements()) {
-        if (i > 0) {
-            s << endl;
-        }
-
         s << *stmt;
-        i += 1;
     }
 }
 
