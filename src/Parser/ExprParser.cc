@@ -257,9 +257,9 @@ ExprParser::findStringLiteral()
                 str->substr(1, str->length() - 2));
         next();
         return new StrLitExpr(std::move(value));
+    } else {
+        return nullptr;
     }
-
-    return nullptr;
 }
 
 IdentExpr *
@@ -269,9 +269,9 @@ ExprParser::findIdentifier()
         auto *expr = new IdentExpr(token().str);
         next();
         return expr;
+    } else {
+        return nullptr;
     }
-
-    return nullptr;
 }
 
 TokenExpr *
@@ -281,9 +281,9 @@ ExprParser::findOperator()
         TokenType tokenType = token().type;
         next();
         return new TokenExpr(tokenType);
+    } else {
+        return nullptr;
     }
-
-    return nullptr;
 }
 
 LambdaExpr *
@@ -315,9 +315,9 @@ ExprParser::findLambdaExpr()
         Expr *lambdaBody = readSubExpr();
 
         return new LambdaExpr(argNames, lambdaBody);
+    } else {
+        return nullptr;
     }
-
-    return nullptr;
 }
 
 int
