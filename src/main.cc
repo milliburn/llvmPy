@@ -49,6 +49,9 @@ main(int argc, char **argv)
         input.open(Filename, std::ios::in);
         Lexer lexer(input);
         lexer.tokenize(tokens);
+    } else {
+        Lexer lexer(std::cin);
+        lexer.tokenize(tokens);
     }
 
     auto iter = tokens.begin();
