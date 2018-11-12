@@ -90,7 +90,7 @@ Parser2::readSubExpr()
         if (term && is(term)) {
             next();
             isTerminal = true;
-        } else if (!expr || isEnd() || is(tok_colon)) {
+        } else if (!expr || isEnd() || is(tok_colon) || is(tok_eol)) {
             isTerminal = true;
         }
 
