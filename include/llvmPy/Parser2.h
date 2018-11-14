@@ -31,7 +31,7 @@ public:
     AssignStmt *findAssignStatement();
     PassStmt *findPassStatement();
     DefStmt *findDefStatement(int indent);
-    ConditionalStmt *findConditionalStatement(int indent);
+    ConditionalStmt *findConditionalStatement(int indent, bool elif = false);
 
     CallExpr *buildCall(Expr *lhs, Expr *rhs);
 

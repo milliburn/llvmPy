@@ -307,7 +307,7 @@ Parser2::readBlockStatement(int indent)
 {
     if (auto *def = findDefStatement(indent)) {
         return def;
-    } else if (auto *cond = findConditionalStatement(indent)) {
+    } else if (auto *cond = findConditionalStatement(indent, false)) {
         return cond;
     } else {
         return nullptr;
@@ -626,9 +626,9 @@ Parser2::expectIndent(int indent)
 }
 
 ConditionalStmt *
-Parser2::findConditionalStatement(int outerIndent)
+Parser2::findConditionalStatement(int outerIndent, bool elif)
 {
-    if (is(kw_if)) {
+    if (is(elif ? kw_elif : kw_if)) {
         next();
 
         auto *condition = readExpr();
@@ -657,10 +657,13 @@ Parser2::findConditionalStatement(int outerIndent)
             next();
 
             elseBranch = readCompoundStatement(outerIndent);
-            assert(elseBranch);
+        } else if (isAtIndent(kw_elif, outerIndent)) {
+            elseBranch = findConditionalStatement(outerIndent, true);
         } else {
             elseBranch = new PassStmt();
         }
+
+        assert(elseBranch);
 
         auto *condStmt = new ConditionalStmt(
                 std::unique_ptr<Expr>(condition),
