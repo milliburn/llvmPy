@@ -61,7 +61,9 @@ main(int argc, char **argv)
     if (IsLexer) {
         int iTokenOnLine = 0;
         for (auto const &token : tokens) {
-            if (iTokenOnLine > 0) {
+            if (iTokenOnLine > 0
+                    && token.type != tok_eol
+                    && token.type != tok_eof) {
                 cout << ' ';
             }
 
