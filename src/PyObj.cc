@@ -4,21 +4,6 @@
 #include <sstream>
 using namespace llvmPy;
 
-static PyNone PY_NONE;
-
-PyNone *
-PyNone::get()
-{
-    return &PY_NONE;
-}
-
-
-std::string
-PyNone::py__str__()
-{
-    return "None";
-}
-
 std::string
 PyFunc::py__str__()
 {

@@ -148,7 +148,7 @@ llvmPy_int(int64_t value)
 extern "C" llvmPy::PyNone * __used
 llvmPy_none()
 {
-    return PyNone::get();
+    return llvmPy_None;
 }
 
 extern "C" PyFunc * __used
@@ -181,7 +181,7 @@ llvmPy_print(llvmPy::PyObj &obj)
 {
     std::string str = obj.py__str__();
     std::cout << str << std::endl;
-    return PyNone::get();
+    return llvmPy_None;
 }
 
 /**
@@ -200,7 +200,7 @@ llvmPy_str(uint8_t const *string)
 extern "C" llvmPy::PyBool * __used
 llvmPy_bool(uint64_t value)
 {
-    return &PyBool::get(value != 0);
+    return value != 0 ? llvmPy_True : llvmPy_False;
 }
 
 extern "C" llvmPy::PyBool * __used

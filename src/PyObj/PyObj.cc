@@ -23,13 +23,13 @@ PyObj::py__bool__()
 PyObj &
 PyObj::py__add__(PyObj &rhs)
 {
-    return *PyNone::get();
+    return PyNone::get();
 }
 
 PyObj &
 PyObj::py__mul__(PyObj &rhs)
 {
-    return *PyNone::get();
+    return PyNone::get();
 }
 
 bool

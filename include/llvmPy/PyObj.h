@@ -7,23 +7,12 @@
 #include <llvmPy/PyObj/PyStr.h>
 #include <llvmPy/PyObj/PyBool.h>
 #include <llvmPy/PyObj/PyInt.h>
+#include <llvmPy/PyObj/PyNone.h>
 
 #ifdef __cplusplus
 namespace llvmPy {
 
 class RTFunc;
-
-class PyNone : public PyObj {
-public:
-    static bool classof(Typed const *x) {
-        return x->isType(PyObjType::None);
-    }
-
-    PyNone() : PyObj(PyObjType::None) {}
-    virtual std::string py__str__() override;
-
-    static PyNone *get();
-};
 
 class PyFunc : public PyObj {
 public:
