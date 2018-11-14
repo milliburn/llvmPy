@@ -1,4 +1,4 @@
-# RUN: %S/test.sh %s
+# RUN: %S/../test.sh %s
 
 
 def func(x):            # CHECK-LABEL:def func(x):
