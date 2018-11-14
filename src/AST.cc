@@ -1,4 +1,5 @@
 #include <llvmPy/AST.h>
+#include <llvm/Support/Casting.h>
 #include <stdexcept>
 using namespace llvmPy;
 using std::ostream;
@@ -329,17 +330,26 @@ ConditionalStmt::ConditionalStmt(
   thenBranch(std::move(thenBranch)),
   elseBranch(std::move(elseBranch))
 {
-    assert(condition && thenBranch && elseBranch);
+    assert(this->condition);
+    assert(this->thenBranch);
+    assert(this->elseBranch);
 }
 
 void
 ConditionalStmt::toStream(std::ostream &s) const
 {
-    // TODO: Pretty-printing elifs.
     s << "if " << *condition << ":" << endl;
     indentToStream(s, *thenBranch, INDENT);
-    s << "else:" << endl;
-    indentToStream(s, *elseBranch, INDENT);
+    
+    if (llvm::isa<ConditionalStmt>(*elseBranch)) {
+        // XXX: This relies on toStream() not prepending anything, i.e. we get
+        // XXX: the "el" from here and the "if" from the next toStream().
+        s << "el";
+        s << *elseBranch;
+    } else if (!llvm::isa<PassStmt>(*elseBranch)) {
+        s << "else:" << endl;
+        indentToStream(s, *elseBranch, INDENT);
+    }
 }
 
 Expr const &

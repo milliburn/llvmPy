@@ -221,6 +221,8 @@ Parser2::readStatement(int indent)
             }
         } else if (is(tok_eof)) {
             return nullptr;
+        } else {
+            break;
         }
     }
 
@@ -305,6 +307,8 @@ Parser2::readBlockStatement(int indent)
 {
     if (auto *def = findDefStatement(indent)) {
         return def;
+    } else if (auto *cond = findConditionalStatement(indent)) {
+        return cond;
     } else {
         return nullptr;
     }
@@ -532,6 +536,7 @@ Parser2::readCompoundStatement(int outerIndent)
 
         assert(is(tok_indent));
         auto const indent = static_cast<int>(token().depth);
+        next();
 
         if (is(tok_eol)) {
             // Ignore indents if the line is otherwise empty.
@@ -619,6 +624,55 @@ Parser2::expectIndent(int indent)
     assert(indent == actual && "Unexpected indent");
     next();
 }
+
+ConditionalStmt *
+Parser2::findConditionalStatement(int outerIndent)
+{
+    if (is(kw_if)) {
+        next();
+
+        auto *condition = readExpr();
+        assert(condition);
+
+        assert(is(tok_colon));
+        next();
+
+        assert(is(tok_eol));
+        next();
+
+        Stmt *thenBranch = nullptr;
+        Stmt *elseBranch = nullptr;
+
+        thenBranch = readCompoundStatement(outerIndent);
+        assert(thenBranch);
+
+        // TODO: This doesn't regard for indentation.
+        if (isAtIndent(kw_else, outerIndent)) {
+            next();
+
+            assert(is(tok_colon));
+            next();
+
+            assert(is(tok_eol));
+            next();
+
+            elseBranch = readCompoundStatement(outerIndent);
+            assert(elseBranch);
+        } else {
+            elseBranch = new PassStmt();
+        }
+
+        auto *condStmt = new ConditionalStmt(
+                std::unique_ptr<Expr>(condition),
+                std::unique_ptr<Stmt>(thenBranch),
+                std::unique_ptr<Stmt>(elseBranch));
+
+        return condStmt;
+    } else {
+        return nullptr;
+    }
+}
+
 PassStmt *
 Parser2::findPassStatement()
 {
@@ -627,5 +681,21 @@ Parser2::findPassStatement()
         return new PassStmt();
     } else {
         return nullptr;
+    }
+}
+
+bool
+Parser2::isAtIndent(TokenType tokenType, int indent)
+{
+    if (is(tok_indent)) {
+        next();
+        if (token().depth == indent && is(tokenType)) {
+            return true;
+        } else {
+            back();
+            return false;
+        }
+    } else {
+        return false;
     }
 }
