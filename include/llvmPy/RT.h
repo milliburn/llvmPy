@@ -91,6 +91,8 @@ private:
     Types const &types;
     RTFunc *func;
     RTScope scope;
+
+    llvm::GlobalVariable *getOrCreateGlobalExtern(std::string const &name) const;
 };
 
 class RTFunc {

@@ -148,7 +148,25 @@ RTModule::llvmPy_gt() const
 llvm::GlobalVariable *
 RTModule::llvmPy_None() const
 {
-    if (auto *var = ir.getGlobalVariable("llvmPy_None")) {
+    return getOrCreateGlobalExtern("llvmPy_None");
+}
+
+llvm::GlobalVariable *
+RTModule::llvmPy_True() const
+{
+    return getOrCreateGlobalExtern("llvmPy_True");
+}
+
+llvm::GlobalVariable *
+RTModule::llvmPy_False() const
+{
+    return getOrCreateGlobalExtern("llvmPy_False");
+}
+
+llvm::GlobalVariable *
+RTModule::getOrCreateGlobalExtern(std::string const &name) const
+{
+    if (auto *var = ir.getGlobalVariable(name)) {
         return var;
     } else {
         return new llvm::GlobalVariable(
@@ -157,7 +175,7 @@ RTModule::llvmPy_None() const
                 true,
                 llvm::GlobalVariable::LinkageTypes::ExternalLinkage,
                 nullptr,
-                "llvmPy_None");
+                name);
     }
 }
 

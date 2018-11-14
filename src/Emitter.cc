@@ -165,20 +165,9 @@ Emitter::emit(RTScope &scope, IdentExpr const &ident)
     if (ident.name == "None") {
         return mod.llvmPy_None();
     } else if (ident.name == "True") {
-
-        llvm::ConstantInt *value =
-                llvm::ConstantInt::get(
-                        types.PyIntValue,
-                        static_cast<uint64_t>(1));
-
-        return ir.CreateCall(mod.llvmPy_bool(), { value });
+        return mod.llvmPy_True();
     } else if (ident.name == "False") {
-        llvm::ConstantInt *value =
-                llvm::ConstantInt::get(
-                        types.PyIntValue,
-                        static_cast<uint64_t>(0));
-
-        return ir.CreateCall(mod.llvmPy_bool(), { value });
+        return mod.llvmPy_False();
     }
 
     llvm::Value *slot = scope.slots[ident.name];
