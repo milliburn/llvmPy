@@ -163,7 +163,7 @@ Emitter::emit(RTScope &scope, IdentExpr const &ident)
     RTModule &mod = scope.getModule();
 
     if (ident.name == "None") {
-        return ir.CreateCall(mod.llvmPy_none(), {});
+        return mod.llvmPy_None();
     } else if (ident.name == "True") {
 
         llvm::ConstantInt *value =

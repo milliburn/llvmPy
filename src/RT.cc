@@ -2,6 +2,7 @@
 #include <llvm/IR/Module.h>
 #include <llvmPy/Instr.h>
 #include <llvmPy/Compiler.h>
+#include <llvm/IR/GlobalVariable.h>
 #include <string>
 using namespace llvmPy;
 
@@ -142,6 +143,22 @@ llvm::Value *
 RTModule::llvmPy_gt() const
 {
     return ir.getOrInsertFunction("llvmPy_gt", types.llvmPy_gt);
+}
+
+llvm::GlobalVariable *
+RTModule::llvmPy_None() const
+{
+    if (auto *var = ir.getGlobalVariable("llvmPy_None")) {
+        return var;
+    } else {
+        return new llvm::GlobalVariable(
+                ir,
+                types.PyObj,
+                true,
+                llvm::GlobalVariable::LinkageTypes::ExternalLinkage,
+                nullptr,
+                "llvmPy_None");
+    }
 }
 
 RTFunc::RTFunc(
