@@ -13,6 +13,8 @@ using llvm::cast;
 using std::cerr;
 using std::endl;
 
+#define __used __attribute__((used))
+
 Types::Types(
         llvm::LLVMContext &ctx,
         llvm::DataLayout const &dl)
@@ -125,31 +127,31 @@ Types::getFuncN(int N) const
     return ft;
 }
 
-extern "C" PyObj *
+extern "C" PyObj * __used
 llvmPy_add(PyObj &l, PyObj &r)
 {
     return &l.py__add__(r);
 }
 
-extern "C" llvmPy::PyObj *
+extern "C" llvmPy::PyObj * __used
 llvmPy_mul(llvmPy::PyObj &l, llvmPy::PyObj &r)
 {
     return &l.py__mul__(r);
 }
 
-extern "C" PyInt *
+extern "C" PyInt * __used
 llvmPy_int(int64_t value)
 {
     return new PyInt(value);
 }
 
-extern "C" llvmPy::PyNone *
+extern "C" llvmPy::PyNone * __used
 llvmPy_none()
 {
     return PyNone::get();
 }
 
-extern "C" PyFunc *
+extern "C" PyFunc * __used
 llvmPy_func(FrameN *frame, void *label)
 {
     uint64_t prefix = ((uint64_t *) label)[-1];
@@ -162,7 +164,7 @@ llvmPy_func(FrameN *frame, void *label)
  * @param np Count of positional arguments passed by the caller.
  * @return Pointer to the function's IR.
  */
-extern "C" void *
+extern "C" void * __used
 llvmPy_fchk(FrameN **callframe, llvmPy::PyFunc &pyfunc, int np)
 {
     *callframe = &pyfunc.getFrame();
@@ -174,7 +176,7 @@ llvmPy_fchk(FrameN **callframe, llvmPy::PyFunc &pyfunc, int np)
  * divergence from Python's print() behaviour.
  * @param obj The object to print.
  */
-extern "C" llvmPy::PyObj *
+extern "C" llvmPy::PyObj * __used
 llvmPy_print(llvmPy::PyObj &obj)
 {
     std::string str = obj.py__str__();
@@ -185,7 +187,7 @@ llvmPy_print(llvmPy::PyObj &obj)
 /**
  * @brief Return a PyStr representing the underlying string given.
  */
-extern "C" llvmPy::PyStr *
+extern "C" llvmPy::PyStr * __used
 llvmPy_str(uint8_t const *string)
 {
     auto copy = std::make_unique<std::string const>((char const *) string);
@@ -195,43 +197,43 @@ llvmPy_str(uint8_t const *string)
 /**
  * TODO: Stop using methods for generating constants.
  */
-extern "C" llvmPy::PyBool *
+extern "C" llvmPy::PyBool * __used
 llvmPy_bool(uint64_t value)
 {
     return &PyBool::get(value != 0);
 }
 
-extern "C" llvmPy::PyBool *
+extern "C" llvmPy::PyBool * __used
 llvmPy_lt(llvmPy::PyObj &l, llvmPy::PyObj &r)
 {
     return &PyBool::get(l.py__lt__(r));
 }
 
-extern "C" llvmPy::PyBool *
+extern "C" llvmPy::PyBool * __used
 llvmPy_le(llvmPy::PyObj &l, llvmPy::PyObj &r)
 {
     return &PyBool::get(l.py__le__(r));
 }
 
-extern "C" llvmPy::PyBool *
+extern "C" llvmPy::PyBool * __used
 llvmPy_eq(llvmPy::PyObj &l, llvmPy::PyObj &r)
 {
     return &PyBool::get(l.py__eq__(r));
 }
 
-extern "C" llvmPy::PyBool *
+extern "C" llvmPy::PyBool * __used
 llvmPy_ne(llvmPy::PyObj &l, llvmPy::PyObj &r)
 {
     return &PyBool::get(l.py__ne__(r));
 }
 
-extern "C" llvmPy::PyBool *
+extern "C" llvmPy::PyBool * __used
 llvmPy_ge(llvmPy::PyObj &l, llvmPy::PyObj &r)
 {
     return &PyBool::get(l.py__ge__(r));
 }
 
-extern "C" llvmPy::PyBool *
+extern "C" llvmPy::PyBool * __used
 llvmPy_gt(llvmPy::PyObj &l, llvmPy::PyObj &r)
 {
     return &PyBool::get(l.py__gt__(r));
@@ -242,7 +244,7 @@ llvmPy_gt(llvmPy::PyObj &l, llvmPy::PyObj &r)
  * but the result is immediately converted into a i1 value of 1 or 0 for
  * branching instructions.
  */
-extern "C" uint8_t
+extern "C" uint8_t __used
 llvmPy_truthy(llvmPy::PyObj &obj)
 {
     return static_cast<uint8_t>(obj.py__bool__() ? 1 : 0);
