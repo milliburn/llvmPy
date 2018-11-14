@@ -75,9 +75,9 @@ private:
 
 extern "C" {
 
-extern llvmPy::PyNone * const llvmPy_None;
-extern llvmPy::PyBool * const llvmPy_True;
-extern llvmPy::PyBool * const llvmPy_False;
+extern llvmPy::PyNone llvmPy_None;
+extern llvmPy::PyBool llvmPy_True;
+extern llvmPy::PyBool llvmPy_False;
 
 llvmPy::PyObj *llvmPy_add(llvmPy::PyObj &, llvmPy::PyObj &);
 llvmPy::PyObj *llvmPy_mul(llvmPy::PyObj &, llvmPy::PyObj &);

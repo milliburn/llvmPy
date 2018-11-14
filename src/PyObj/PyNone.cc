@@ -1,8 +1,7 @@
 #include <llvmPy/PyObj/PyNone.h>
 using namespace llvmPy;
 
-static PyNone instance;
-extern "C" PyNone * const llvmPy_None = &instance;
+PyNone llvmPy_None;
 
 PyNone::PyNone() noexcept
 : PyObj(PyObjType::None)
@@ -18,7 +17,7 @@ PyNone::py__str__()
 PyNone &
 PyNone::get()
 {
-    return *llvmPy_None;
+    return llvmPy_None;
 }
 
 bool

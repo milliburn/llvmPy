@@ -66,9 +66,9 @@ TEST_CASE("Instr", "[Instr]") {
     }
 
     SECTION("llvmPy_truthy: will return the truth value of an object") {
-        CHECK(llvmPy_truthy(*llvmPy_True) == 1);
-        CHECK(llvmPy_truthy(*llvmPy_False) == 0);
-        CHECK(llvmPy_truthy(*llvmPy_None) == 0);
+        CHECK(llvmPy_truthy(llvmPy_True) == 1);
+        CHECK(llvmPy_truthy(llvmPy_False) == 0);
+        CHECK(llvmPy_truthy(llvmPy_None) == 0);
 
         PyStr a(""), b("test");
 

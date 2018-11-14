@@ -148,7 +148,7 @@ llvmPy_int(int64_t value)
 extern "C" llvmPy::PyNone * __used
 llvmPy_none()
 {
-    return llvmPy_None;
+    return &PyNone::get();
 }
 
 extern "C" PyFunc * __used
@@ -173,7 +173,8 @@ llvmPy_fchk(FrameN **callframe, llvmPy::PyFunc &pyfunc, int np)
 
 /**
  * @brief Print the str() of `obj` to stdout. The current implementation is a
- * divergence from Python's print() behaviour.
+ * divergence from Python's print() behaviour, which requires that the object
+ * be a string.
  * @param obj The object to print.
  */
 extern "C" llvmPy::PyObj * __used
@@ -181,7 +182,7 @@ llvmPy_print(llvmPy::PyObj &obj)
 {
     std::string str = obj.py__str__();
     std::cout << str << std::endl;
-    return llvmPy_None;
+    return &PyNone::get();
 }
 
 /**
@@ -200,7 +201,7 @@ llvmPy_str(uint8_t const *string)
 extern "C" llvmPy::PyBool * __used
 llvmPy_bool(uint64_t value)
 {
-    return value != 0 ? llvmPy_True : llvmPy_False;
+    return &PyBool::get(value != 0);
 }
 
 extern "C" llvmPy::PyBool * __used

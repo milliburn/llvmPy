@@ -1,11 +1,8 @@
 #include <llvmPy/PyObj/PyBool.h>
 using namespace llvmPy;
 
-static PyBool trueInstance(true);
-static PyBool falseInstance(false);
-
-extern "C" PyBool * const llvmPy_True = &trueInstance;
-extern "C" PyBool * const llvmPy_False = &falseInstance;
+PyBool llvmPy_True(true);
+PyBool llvmPy_False(false);
 
 PyBool::PyBool(bool value) noexcept
 : PyObj(PyObjType::Bool), value(value)
@@ -28,7 +25,7 @@ PyBool::py__str__()
 PyBool &
 PyBool::get(bool value)
 {
-    return value ? *llvmPy_True : *llvmPy_False;
+    return value ? llvmPy_True : llvmPy_False;
 }
 
 bool
