@@ -100,3 +100,9 @@ PyInt::py__gt__(PyObj &rhs)
 {
     return cmp(rhs, true) > 0;
 }
+
+bool
+PyInt::py__bool__()
+{
+    return value != 0;
+}

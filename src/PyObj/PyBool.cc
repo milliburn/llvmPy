@@ -30,3 +30,9 @@ PyBool::get(bool value)
 {
     return value ? *llvmPy_True : *llvmPy_False;
 }
+
+bool
+PyBool::py__bool__()
+{
+    return value;
+}

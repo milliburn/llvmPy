@@ -12,10 +12,13 @@ public:
         return x->isType(PyObjType::None);
     }
 
+    static PyNone &get();
+
     PyNone() noexcept;
+
     std::string py__str__() override;
 
-    static PyNone &get();
+    bool py__bool__() override;
 };
 
 } // namespace llvmPy

@@ -20,3 +20,9 @@ PyNone::get()
 {
     return *llvmPy_None;
 }
+
+bool
+PyNone::py__bool__()
+{
+    return false;
+}

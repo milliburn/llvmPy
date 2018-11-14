@@ -11,10 +11,15 @@ public:
         return x->isType(PyObjType::Bool);
     }
 
-    explicit PyBool(bool value) noexcept;
     static PyBool &get(bool value);
+
+    explicit PyBool(bool value) noexcept;
+
     bool getValue() const;
-    virtual std::string py__str__() override;
+
+    std::string py__str__() override;
+
+    bool py__bool__() override;
 
 private:
     bool const value;
