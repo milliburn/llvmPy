@@ -30,6 +30,7 @@ public:
     DefStmt *findDefStatement(int indent);
     ReturnStmt *findReturnStatement();
     AssignStmt *findAssignStatement();
+    PassStmt *findPassStatement();
 
     CallExpr *buildCall(Expr *lhs, Expr *rhs);
 

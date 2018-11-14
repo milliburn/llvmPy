@@ -266,10 +266,9 @@ Parser2::readSimpleStatement(int indent)
             break;
         }
 
-        if (auto *ret = findReturnStatement()) {
-            stmt = ret;
-        } else if (auto *assign = findAssignStatement()) {
-            stmt = assign;
+        if ((stmt = findReturnStatement()) ||
+            (stmt = findAssignStatement()) ||
+            (stmt = findPassStatement())) {
         } else if (auto *expr = readExpr()) {
             stmt = new ExprStmt(expr);
         } else {
@@ -619,4 +618,14 @@ Parser2::expectIndent(int indent)
     int const actual = static_cast<int>(token().depth);
     assert(indent == actual && "Unexpected indent");
     next();
+}
+PassStmt *
+Parser2::findPassStatement()
+{
+    if (is(kw_pass)) {
+        next();
+        return new PassStmt();
+    } else {
+        return nullptr;
+    }
 }
