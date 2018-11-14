@@ -192,6 +192,9 @@ llvmPy_str(uint8_t const *string)
     return new PyStr(std::move(copy));
 }
 
+/**
+ * TODO: Stop using methods for generating constants.
+ */
 extern "C" llvmPy::PyBool *
 llvmPy_bool(uint64_t value)
 {
@@ -232,4 +235,15 @@ extern "C" llvmPy::PyBool *
 llvmPy_gt(llvmPy::PyObj &l, llvmPy::PyObj &r)
 {
     return &PyBool::get(l.py__gt__(r));
+}
+
+/**
+ * Return the truthiness of `obj`. This operation is much like llvmPy_bool(),
+ * but the result is immediately converted into a i1 value of 1 or 0 for
+ * branching instructions.
+ */
+extern "C" uint8_t
+llvmPy_truthy(llvmPy::PyObj &obj)
+{
+    return static_cast<uint8_t>(obj.py__bool__() ? 1 : 0);
 }

@@ -92,6 +92,8 @@ llvmPy::PyBool *llvmPy_ne(llvmPy::PyObj &l, llvmPy::PyObj &r);
 llvmPy::PyBool *llvmPy_ge(llvmPy::PyObj &l, llvmPy::PyObj &r);
 llvmPy::PyBool *llvmPy_gt(llvmPy::PyObj &l, llvmPy::PyObj &r);
 
+uint8_t llvmPy_truthy(llvmPy::PyObj &);
+
 } // extern "C"
 
 #endif // __cplusplus

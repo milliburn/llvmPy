@@ -1,5 +1,7 @@
 #include <llvmPy/PyObj.h>
 #include <sstream>
+#include <llvmPy/PyObj/PyObj.h>
+
 using namespace llvmPy;
 
 std::string
@@ -10,6 +12,12 @@ PyObj::py__str__()
     ss << std::hex << std::uppercase << (uint64_t) this;
     ss << ">";
     return ss.str();
+}
+
+bool
+PyObj::py__bool__()
+{
+    return true;
 }
 
 PyObj &
