@@ -14,6 +14,7 @@ public:
     }
 
     explicit PyStr(std::unique_ptr<std::string const> value) noexcept;
+    explicit PyStr(std::string const &value) noexcept;
 
     std::string const &getValue() const;
 

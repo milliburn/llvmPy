@@ -6,6 +6,11 @@ PyStr::PyStr(std::unique_ptr<std::string const> value) noexcept
 {
 }
 
+PyStr::PyStr(std::string const &value) noexcept
+: PyStr(std::unique_ptr<std::string const>(new std::string(value)))
+{
+}
+
 std::string const &
 PyStr::getValue() const
 {

@@ -64,4 +64,15 @@ TEST_CASE("Instr", "[Instr]") {
         CHECK(rv == label);
         CHECK(callframe == frame);
     }
+
+    SECTION("llvmPy_truthy: will return the truth value of an object") {
+        CHECK(llvmPy_truthy(*llvmPy_True) == 1);
+        CHECK(llvmPy_truthy(*llvmPy_False) == 0);
+        CHECK(llvmPy_truthy(*llvmPy_None) == 0);
+
+        PyStr a(""), b("test");
+
+        CHECK(llvmPy_truthy(a) == 0);
+        CHECK(llvmPy_truthy(b) == 1);
+    }
 }

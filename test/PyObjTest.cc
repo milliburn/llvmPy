@@ -4,22 +4,27 @@ using namespace llvmPy;
 
 TEST_CASE("PyObj") {
     SECTION("PyBool") {
-        PyBool &a = PyBool::get(true);
-        PyBool &b = PyBool::get(false);
+        PyBool &t = PyBool::get(true);
+        PyBool &f = PyBool::get(false);
 
         SECTION("Accessors match the constructor") {
-            CHECK(a.getValue() == true);
-            CHECK(b.getValue() == false);
+            CHECK(t.getValue() == true);
+            CHECK(f.getValue() == false);
         }
 
         SECTION("py__str__()") {
-            CHECK(a.py__str__() == "True");
-            CHECK(b.py__str__() == "False");
+            CHECK(t.py__str__() == "True");
+            CHECK(f.py__str__() == "False");
+        }
+
+        SECTION("py__bool__()") {
+            CHECK(t.py__bool__() == true);
+            CHECK(f.py__bool__() == false);
         }
 
         SECTION("Booleans are singleton") {
-            CHECK(&PyBool::get(true) == &a);
-            CHECK(&PyBool::get(false) == &b);
+            CHECK(&PyBool::get(true) == &t);
+            CHECK(&PyBool::get(false) == &f);
             CHECK(&PyBool::get(true) != &PyBool::get(false));
         }
     }
@@ -38,6 +43,13 @@ TEST_CASE("PyObj") {
         SECTION("py__str__()") {
             CHECK(one.py__str__() == "1");
             CHECK(two1.py__str__() == "2");
+        }
+
+        SECTION("py__bool__()") {
+            CHECK(PyInt(-1).py__bool__());
+            CHECK(!PyInt(0).py__bool__());
+            CHECK(PyInt(1).py__bool__());
+            CHECK(PyInt(30).py__bool__());
         }
 
         SECTION("py__lt__()") {
@@ -79,6 +91,26 @@ TEST_CASE("PyObj") {
             CHECK(!two1.py__gt__(two2));
             CHECK(!one.py__gt__(three));
             CHECK(three.py__gt__(one));
+        }
+    }
+
+    SECTION("PyNone") {
+        PyNone &a = PyNone::get();
+        PyNone &b = PyNone::get();
+
+        SECTION("PyNone is singleton") {
+            CHECK(&a == &b);
+        }
+
+        SECTION("py__bool__()") {
+            CHECK(!PyNone::get().py__bool__());
+        }
+    }
+
+    SECTION("PyStr") {
+        SECTION("py__bool__()") {
+            CHECK(!PyStr("").py__bool__());
+            CHECK(PyStr("a").py__bool__());
         }
     }
 }
