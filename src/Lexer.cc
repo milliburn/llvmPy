@@ -5,8 +5,21 @@ using namespace std;
 
 static constexpr int eof = std::istream::traits_type::eof();
 
+static std::map<std::string const, TokenType>
+buildKeywordMap()
+{
+    std::map<std::string const, TokenType> kws;
+    kws["lambda"] = kw_lambda;
+    kws["def"] = kw_def;
+    kws["return"] = kw_return;
+    kws["if"] = kw_if;
+    kws["elif"] = kw_elif;
+    kws["else"] = kw_else;
+    return kws;
+}
+
 Lexer::Lexer(std::istream & stream)
-: stream(stream)
+: stream(stream), keywords(buildKeywordMap())
 {
     ibuf = 0;
     ilast = -1;
@@ -314,14 +327,8 @@ Lexer::ident()
 
     string s(&buf[start], ibuf - start);
 
-    if (s == "def") {
-        add(Token(kw_def));
-    } else if (s == "lambda") {
-        add(Token(kw_lambda));
-    } else if (s == "import") {
-        add(Token(kw_import));
-    } else if (s == "return") {
-        add(Token(kw_return));
+    if (auto kw = getKeyword(s)) {
+        add(Token(kw));
     } else {
         add(Token(tok_ident, new string(move(s))));
     }
@@ -382,4 +389,14 @@ Lexer::syntax()
     }
 
     return false;
+}
+
+TokenType
+Lexer::getKeyword(std::string const &kw)
+{
+    if (keywords.count(kw)) {
+        return keywords.at(kw);
+    } else {
+        return tok_unknown;
+    }
 }

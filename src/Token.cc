@@ -40,6 +40,10 @@ operator<< (std::ostream & s, Token const &t)
     case kw_def: s << ">def"; break;
     case kw_lambda: s << ">lambda"; break;
     case kw_import: s << ">import"; break;
+    case kw_return: s << ">return"; break;
+    case kw_if: s << ">if"; break;
+    case kw_elif: s << ">elif"; break;
+    case kw_else: s << ">else"; break;
     default: s << "?"; break;
     }
 

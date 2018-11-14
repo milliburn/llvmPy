@@ -61,6 +61,9 @@ enum TokenType {
     kw_lambda,
     kw_import,
     kw_return,
+    kw_if,
+    kw_elif,
+    kw_else,
 };
 
 class Token {
