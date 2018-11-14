@@ -15,16 +15,20 @@ using std::string;
 
 cl::opt<string> Cmd(
         "c",
-        cl::desc("Program passed as input"),
+        cl::desc("Program passed as string."),
         cl::value_desc("cmd"));
 
 cl::opt<bool> IsIR(
         "ir",
-        cl::desc("Print resulting LLVM IR and exit"));
+        cl::desc("Print resulting LLVM IR and exit."));
 
 cl::opt<bool> IsParser(
         "parser",
-        cl::desc("Print resulting parser tree and exit"));
+        cl::desc("Print resulting parser tree and exit."));
+
+cl::opt<bool> IsLexer(
+        "lexer",
+        cl::desc("Print tokens output by the lexer and exit."));
 
 cl::opt<string> Filename(
         cl::Positional,
@@ -52,6 +56,31 @@ main(int argc, char **argv)
     } else {
         Lexer lexer(std::cin);
         lexer.tokenize(tokens);
+    }
+
+    if (IsLexer) {
+        int iTokenOnLine = 0;
+        for (auto const &token : tokens) {
+            if (iTokenOnLine > 0) {
+                cout << ' ';
+            }
+
+            if (token.type == tok_eof) {
+                // Right now EOF doesn't have a canonical representation.
+                cout << endl;
+                cout << ">EOF";
+            } else {
+                cout << token;
+            }
+
+            iTokenOnLine += 1;
+
+            if (token.type == tok_eol) {
+                iTokenOnLine = 0;
+            }
+        }
+
+        return 0;
     }
 
     auto iter = tokens.begin();
