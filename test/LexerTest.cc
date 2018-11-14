@@ -69,7 +69,7 @@ TEST_CASE("Lexer", "[Lexer]") {
         CHECK(tokenize("False") == ">0 False");
         CHECK(tokenize("None") == ">0 None");
         CHECK(tokenize("_under_score_123") == ">0 _under_score_123");
-        CHECK(tokenize("def") == ">0 def");
+        CHECK(tokenize("def") == ">0 >def");
     }
 
     SECTION("Operators and syntax") {
@@ -87,7 +87,7 @@ TEST_CASE("Lexer", "[Lexer]") {
 
     SECTION("Function definitions") {
         CHECK(tokenize("def f():\n  x = y + 1\n") ==
-                ">0 def f ( ) :\n>2 x = y + 1n");
+                ">0 >def f ( ) :\n>2 x = y + 1n");
     }
 
     SECTION("Comments") {
