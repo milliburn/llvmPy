@@ -32,6 +32,8 @@ enum class ASTType {
     StmtDef,
     StmtReturn,
     StmtCompound,
+    StmtConditional,
+    StmtPass,
     StmtAny,
     Any,
 };
@@ -349,6 +351,41 @@ public:
 
 private:
     std::vector<std::unique_ptr<Stmt const>> statements;
+};
+
+class PassStmt : public Stmt {
+public:
+    static bool classof(AST const *ast) {
+        return ast->isType(ASTType::StmtPass);
+    }
+
+    PassStmt();
+
+    void toStream(std::ostream &s) const override;
+};
+
+class ConditionalStmt : public Stmt {
+public:
+    static bool classof(AST const *ast) {
+        return ast->isType(ASTType::StmtConditional);
+    }
+
+    ConditionalStmt(
+            std::unique_ptr<Expr> condition,
+            std::unique_ptr<Stmt> thenBranch,
+            std::unique_ptr<Stmt> elseBranch);
+
+    void toStream(std::ostream &s) const override;
+
+public:
+    Expr const &getCondition() const;
+    Stmt const &getThenBranch() const;
+    Stmt const &getElseBranch() const;
+
+private:
+    std::unique_ptr<Expr const> condition;
+    std::unique_ptr<Stmt const> thenBranch;
+    std::unique_ptr<Stmt const> elseBranch;
 };
 
 } // namespace llvmPy

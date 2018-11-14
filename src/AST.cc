@@ -308,3 +308,54 @@ CompoundStmt::addStatement(std::unique_ptr<Stmt> stmt)
 {
     statements.push_back(std::move(stmt));
 }
+
+PassStmt::PassStmt()
+: Stmt(ASTType::StmtPass)
+{
+}
+
+void
+PassStmt::toStream(std::ostream &s) const
+{
+    s << "pass" << endl;
+}
+
+ConditionalStmt::ConditionalStmt(
+        std::unique_ptr<Expr> condition,
+        std::unique_ptr<Stmt> thenBranch,
+        std::unique_ptr<Stmt> elseBranch)
+: Stmt(ASTType::StmtConditional),
+  condition(std::move(condition)),
+  thenBranch(std::move(thenBranch)),
+  elseBranch(std::move(elseBranch))
+{
+    assert(condition && thenBranch && elseBranch);
+}
+
+void
+ConditionalStmt::toStream(std::ostream &s) const
+{
+    // TODO: Pretty-printing elifs.
+    s << "if " << *condition << ":" << endl;
+    indentToStream(s, *thenBranch, INDENT);
+    s << "else:" << endl;
+    indentToStream(s, *elseBranch, INDENT);
+}
+
+Expr const &
+ConditionalStmt::getCondition() const
+{
+    return *condition;
+}
+
+Stmt const &
+ConditionalStmt::getThenBranch() const
+{
+    return *thenBranch;
+}
+
+Stmt const &
+ConditionalStmt::getElseBranch() const
+{
+    return *elseBranch;
+}
