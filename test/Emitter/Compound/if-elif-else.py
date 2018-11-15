@@ -12,26 +12,25 @@ x = 0
 if x == 1:
     x = 10
 # CHECK-LABEL: else:
-# CHECK-LABEL: endif:
 # CHECK: [[RESULT1:%[a-z_0-9]+]] = call %PyObj* @llvmPy_ge
 # CHECK-NEXT: [[TRUTHY1:%[a-z_0-9]+]] = call i1 @llvmPy_truthy(%PyObj* [[RESULT1]])
-# CHECK-NEXT: br i1 [[TRUTHY1]], label %then1, label %else1
+# CHECK-NEXT: br i1 [[TRUTHY1]], label %then1, label %else2
 # CHECK-LABEL: then1:
 elif x >= 2:
     x = 11
-# CHECK-LABEL: else1:
+# CHECK-LABEL: else2:
 # CHECK: [[RESULT2:%[a-z_0-9]+]] = call %PyObj* @llvmPy_ne
 # CHECK-NEXT: [[TRUTHY2:%[a-z_0-9]+]] = call i1 @llvmPy_truthy(%PyObj* [[RESULT2]])
-# CHECK-NEXT: br i1 [[TRUTHY2]], label %then2, label %else2
+# CHECK-NEXT: br i1 [[TRUTHY2]], label %then3, label %else4
 elif x != 3:
-    # CHECK-LABEL: then2:
+    # CHECK-LABEL: then3:
     x = 12
-# CHECK-LABEL: else2:
+# CHECK-LABEL: else4:
 else:
     x = 13
 
 print(x)
 
-# CHECK-LABEL: endif2
+# CHECK-LABEL: endif:
 # CHECK: @llvmPy_print(
 # CHECK-NEXT: ret %PyObj* @llvmPy_None
