@@ -10,9 +10,6 @@
 #include <map>
 #include <stdlib.h>
 using namespace llvmPy;
-using llvm::cast;
-using llvm::isa;
-using llvm::dyn_cast;
 using std::make_pair;
 using std::string;
 using std::to_string;
@@ -73,17 +70,22 @@ Emitter::createModule(std::string const &name)
 llvm::Value *
 Emitter::emit(RTScope &scope, AST const &ast)
 {
-    switch (ast.getType()) {
-    case ASTType::ExprIntLit: return emit(scope, cast<IntLitExpr>(ast));
-    case ASTType::ExprIdent: return emit(scope, cast<IdentExpr>(ast));
-    case ASTType::ExprCall: return emit(scope, cast<CallExpr>(ast));
-    case ASTType::ExprLambda: return emit(scope, cast<LambdaExpr>(ast));
-    case ASTType::StmtDef: return emit(scope, cast<DefStmt>(ast));
-    case ASTType::ExprStrLit: return emit(scope, cast<StrLitExpr>(ast));
-    case ASTType::ExprBinary: return emit(scope, cast<BinaryExpr>(ast));
-
-    default:
-        assert(false && "Statements not allowed");
+    if (auto *intLit = ast.cast<IntLitExpr>()) {
+        return emit(scope, *intLit);
+    } else if (auto *ident = ast.cast<IdentExpr>()) {
+        return emit(scope, *ident);
+    } else if (auto *call = ast.cast<CallExpr>()) {
+        return emit(scope, *call);
+    } else if (auto *lambda = ast.cast<LambdaExpr>()) {
+        return emit(scope, *lambda);
+    } else if (auto *def = ast.cast<DefStmt>()) {
+        return emit(scope, *def);
+    } else if (auto *strLit = ast.cast<StrLitExpr>()) {
+        return emit(scope, *strLit);
+    } else if (auto *binop = ast.cast<BinaryExpr>()) {
+        return emit(scope, *binop);
+    } else {
+        assert(false && "Unrecognised AST");
         return nullptr;
     }
 }
@@ -95,9 +97,8 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
     auto &callee = call.getCallee();
     auto &args = call.getArguments();
 
-    if (isa<IdentExpr>(callee)) {
-        auto lhsIdent = cast<IdentExpr>(callee);
-        if (lhsIdent.name == "print") {
+    if (auto *lhsIdent = callee.cast<IdentExpr>()) {
+        if (lhsIdent->name == "print") {
             llvm::Value *arg = emit(scope, *args[0]);
             return ir.CreateCall(mod.llvmPy_print(), { arg });
         }
@@ -145,7 +146,7 @@ Emitter::emit(RTScope &scope, IntLitExpr const &expr)
     llvm::ConstantInt *value =
             llvm::ConstantInt::get(
                     types.PyIntValue,
-                    static_cast<uint64_t>(expr.value));
+                    static_cast<uint64_t>(expr.getValue()));
 
     return ir.CreateCall(mod.llvmPy_int(), { value });
 }
@@ -294,7 +295,7 @@ Emitter::createFunction(
 {
     // TODO: Fix this temporary adapter.
     std::vector<Stmt const *> stmts;
-    if (auto *compound = llvm::dyn_cast<CompoundStmt>(&stmt_)) {
+    if (auto *compound = stmt_.cast<CompoundStmt>()) {
         for (auto const &stmt : compound->getStatements()) {
             stmts.push_back(stmt.get());
         }
@@ -358,14 +359,12 @@ Emitter::createFunction(
 
     // Add slots that originate from assignments.
     for (auto *stmt : stmts) {
-        if (stmt->getType() == ASTType::StmtAssign) {
-            auto assignStmt = *cast<AssignStmt>(stmt);
-            auto ident = assignStmt.lhs;
+        if (auto *assignStmt = stmt->cast<AssignStmt>()) {
+            auto ident = assignStmt->lhs;
             if (!slots.count(ident)) {
                 slots[ident] = slots.size();
             }
-        } else if (stmt->getType() == ASTType::StmtDef) {
-            auto *defStmt = cast<DefStmt>(stmt);
+        } else if (auto *defStmt = stmt->cast<DefStmt>()) {
             auto ident = defStmt->name;
             if (!slots.count(ident)) {
                 slots[ident] = slots.size();
@@ -445,10 +444,9 @@ Emitter::createFunction(
     // as a sentinel to detect use before set.
     for (auto *stmt : stmts) {
         // TODO: Remove code duplication.
-        if (stmt->getType() == ASTType::StmtAssign) {
+        if (auto *assign = stmt->cast<AssignStmt>()) {
             ir.SetInsertPoint(init);
-            auto &assign = *cast<AssignStmt>(stmt);
-            auto &ident = assign.lhs;
+            auto &ident = assign->lhs;
             assert(slots.count(ident));
             auto slotIndex = slots[ident];
             llvm::Value *assignGEP = ir.CreateGEP(
@@ -464,10 +462,9 @@ Emitter::createFunction(
             // TODO: (i.e. if the callee's chain ends up lifting the frame
             // TODO: to heap).
             innerScope->slots[ident] = assignGEP;
-        } else if (stmt->getType() == ASTType::StmtDef) {
+        } else if (auto *def = stmt->cast<DefStmt>()) {
             ir.SetInsertPoint(init);
-            auto &def = *cast<DefStmt>(stmt);
-            auto &ident = def.name;
+            auto &ident = def->name;
             assert(slots.count(ident));
             auto slotIndex = slots[ident];
             llvm::Value *assignGEP = ir.CreateGEP(
@@ -494,7 +491,7 @@ Emitter::createFunction(
         emitStatement(*function, *innerScope, *stmt);
     }
 
-    if (!isa<llvm::ReturnInst>(ir.GetInsertBlock()->back())) {
+    if (!llvm::isa<llvm::ReturnInst>(ir.GetInsertBlock()->back())) {
         // Provide a default return value for functions that don't provide one.
         // The optimizer should eliminate this if it's unreachable.
         // TODO: Apparently having some functions end with two rets causes
@@ -556,23 +553,23 @@ Emitter::emitStatement(
         RTScope &scope,
         Stmt const &stmt)
 {
-    if (auto *compound = dyn_cast<CompoundStmt>(&stmt)) {
+    if (auto *compound = stmt.cast<CompoundStmt>()) {
         for (auto const &innerStmt : compound->getStatements()) {
             emitStatement(function, scope, *innerStmt);
         }
-    } else if (auto *expr = dyn_cast<ExprStmt>(&stmt)) {
+    } else if (auto *expr = stmt.cast<ExprStmt>()) {
         emit(scope, expr->expr);
-    } else if (auto *ret = dyn_cast<ReturnStmt>(&stmt)) {
+    } else if (auto *ret = stmt.cast<ReturnStmt>()) {
         auto *value = emit(scope, ret->expr);
         ir.CreateRet(value);
-    } else if (auto *def = dyn_cast<DefStmt>(&stmt)) {
+    } else if (auto *def = stmt.cast<DefStmt>()) {
         auto *value = emit(scope, *def);
         ir.CreateStore(value, scope.slots[def->getName()]);
-    } else if (isa<PassStmt>(&stmt)) {
+    } else if (stmt.isa<PassStmt>()) {
         // Ignore.
-    } else if (auto *cond = dyn_cast<ConditionalStmt>(&stmt)) {
+    } else if (auto *cond = stmt.cast<ConditionalStmt>()) {
         emitCondStmt(function, scope, *cond, 0);
-    } else if (auto *assign = dyn_cast<AssignStmt>(&stmt)) {
+    } else if (auto *assign = stmt.cast<AssignStmt>()) {
         auto *slot = scope.slots[assign->lhs];
         auto *value = emit(scope, assign->rhs);
         ir.CreateStore(value, slot);

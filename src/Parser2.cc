@@ -1,7 +1,5 @@
 #include <llvmPy/Parser2.h>
-#include <llvm/Support/Casting.h>
 using namespace llvmPy;
-using llvm::dyn_cast;
 
 static std::map<TokenType, int>
 initPrecedence()
@@ -319,7 +317,7 @@ Parser2::buildCall(Expr *lhs, Expr *rhs)
 {
     auto *call = new CallExpr(std::unique_ptr<Expr>(lhs));
 
-    if (auto *tuple = dyn_cast<TupleExpr>(rhs)) {
+    if (auto *tuple = rhs->cast<TupleExpr>()) {
         for (auto &member : tuple->getMembers()) {
             call->addArgument(std::move(member));
         }
@@ -438,12 +436,12 @@ Parser2::findLambdaExpression()
 
         Expr *argsSubExpr = readSubExpr();
 
-        if (auto *tuple = dyn_cast<TupleExpr>(argsSubExpr)) {
+        if (auto *tuple = argsSubExpr->cast<TupleExpr>()) {
             for (auto const &member : tuple->getMembers()) {
-                auto const &ident = llvm::cast<IdentExpr>(*member);
+                auto const &ident = member->as<IdentExpr>();
                 argNames.push_back(ident.getName());
             }
-        } else if (auto *ident = dyn_cast<IdentExpr>(argsSubExpr)) {
+        } else if (auto *ident = argsSubExpr->cast<IdentExpr>()) {
             argNames.push_back(ident->getName());
         } else {
             assert(false && "Invalid argument subexpression");
@@ -473,17 +471,17 @@ Parser2::findDefStatement(int outerIndent)
         // TODO: a "call expression", which is then deconstructed.
 
         auto *fnSignatureExpr = readExpr();
-        auto *fnSignature = llvm::cast<CallExpr>(fnSignatureExpr);
+        auto *fnSignature = fnSignatureExpr->cast<CallExpr>();
         auto &fnNameExpr = fnSignature->getCallee();
-        auto &fnName = llvm::cast<IdentExpr>(fnNameExpr);
+        auto &fnName = fnNameExpr.as<IdentExpr>();
         std::vector<std::string const> argNames;
 
         assert(is(tok_colon));
         next();
 
         for (auto &arg : fnSignature->getArguments()) {
-            auto *ident = llvm::cast<IdentExpr>(arg.get());
-            argNames.push_back(ident->getName());
+            auto const &ident = arg->as<IdentExpr>();
+            argNames.push_back(ident.getName());
         }
 
         // TODO: Right now this kills the underlying string.

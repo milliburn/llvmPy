@@ -7,168 +7,89 @@
 #ifdef __cplusplus
 namespace llvmPy {
 
-enum class ASTType {
-    Ignore,
-    Empty,
-    Expr,
-    ExprToken,
-    ExprTuple,
-    ExprIdent,
-    ExprLit,
-    ExprStrLit,
-    ExprDecLit,
-    ExprIntLit,
-    ExprLitAny,
-    ExprUnary,
-    ExprBinary,
-    ExprLambda,
-    ExprCall,
-    ExprGroup,
-    ExprAny,
-    Stmt,
-    StmtExpr,
-    StmtAssign,
-    StmtImport,
-    StmtDef,
-    StmtReturn,
-    StmtCompound,
-    StmtConditional,
-    StmtPass,
-    StmtAny,
-    Any,
-};
-
-class AST : public Typed<ASTType> {
+class AST : public Typed {
 public:
-    virtual void toStream(std::ostream &s) const;
     virtual ~AST() = default;
 
-    static bool classof(AST const *) {
-        return true;
-    }
+    virtual void toStream(std::ostream &s) const;
 
     std::string toString() const;
-
-protected:
-    explicit AST(ASTType type) : Typed(type) {};
-};
-
-class EmptyAST : public AST {
-public:
-    static bool classof(AST const *ast) {
-        return ast->isType(ASTType::Empty);
-    }
-
-    EmptyAST() : AST(ASTType::Empty) {}
-    void toStream(std::ostream &s) const override;
 };
 
 class Expr : public AST {
-public:
-    static bool classof(AST const *ast) {
-        return ast->isTypeBetween(ASTType::Expr, ASTType::ExprAny);
-    }
-
 protected:
-    explicit Expr(ASTType type) : AST(type) {}
+    Expr();
 };
 
-class LitExpr : public Expr {
+class StrLitExpr final : public Expr {
 public:
-    static bool classof(AST const *ast) {
-        return ast->isTypeBetween(
-                ASTType::ExprLit,
-                ASTType::ExprLitAny);
-    }
-
-protected:
-    explicit LitExpr(ASTType type) : Expr(type) {}
-};
-
-class StrLitExpr : public LitExpr {
-public:
-    static bool classof(AST const *ast) {
-        return ast->isType(ASTType::ExprStrLit);
-    }
-
     explicit StrLitExpr(std::unique_ptr<std::string const> value);
+
     void toStream(std::ostream &s) const override;
+
     std::string const &getValue() const;
 
 private:
     std::unique_ptr<std::string const> const value;
 };
 
-class DecLitExpr : public LitExpr {
+class DecLitExpr final : public Expr {
 public:
-    static bool classof(AST const *ast) {
-        return ast->isType(ASTType::ExprDecLit);
-    }
+    explicit DecLitExpr(double v);
 
+    void toStream(std::ostream &s) const override;
+
+    double getValue() const;
+
+private:
     double const value;
-    explicit DecLitExpr(double v)
-        : LitExpr(ASTType::ExprDecLit),
-          value(v) {}
-    void toStream(std::ostream &s) const override;
-
-    double getValue() const { return value; }
 };
 
-class IntLitExpr : public LitExpr {
+class IntLitExpr final : public Expr {
 public:
-    static bool classof(AST const *ast) {
-        return ast->isType(ASTType::ExprIntLit);
-    }
+    explicit IntLitExpr(long v);
 
+    void toStream(std::ostream &s) const override;
+
+    int64_t getValue() const;
+
+private:
     long const value;
-    explicit IntLitExpr(long v)
-        : LitExpr(ASTType::ExprIntLit),
-          value(v) {}
-    void toStream(std::ostream &s) const override;
-
-    int64_t getValue() const { return value; }
 };
 
-class IdentExpr : public Expr {
+class IdentExpr final : public Expr {
 public:
-    static bool classof(AST const *ast) {
-        return ast->isType(ASTType::ExprIdent);
-    }
-
     std::string const & name;
-    explicit IdentExpr(std::string const * str)
-        : Expr(ASTType::ExprIdent),
-          name(*str) {}
+
+    explicit IdentExpr(std::string const * str);
+
     void toStream(std::ostream &s) const override;
 
-    std::string const &getName() const { return name; }
+    std::string const &getName() const;
 };
 
-class LambdaExpr : public Expr {
+class LambdaExpr final : public Expr {
 public:
-    static bool classof(AST const *ast) {
-        return ast->isType(ASTType::ExprLambda);
-    }
-
     std::vector<std::string const> const args;
+
     Expr const & expr;
 
-    explicit LambdaExpr(decltype(args) args, Expr * body)
-        : Expr(ASTType::ExprLambda),
-          args(std::move(args)),
-          expr(*body) {}
+    explicit
+    LambdaExpr(
+            std::vector<std::string const> const args,
+            Expr * body);
+
     void toStream(std::ostream &s) const override;
 };
 
-class UnaryExpr : public Expr {
+class UnaryExpr final : public Expr {
 public:
-    static bool classof(AST const *ast) {
-        return ast->isType(ASTType::ExprUnary);
-    }
-
     UnaryExpr(TokenType op, std::unique_ptr<Expr> expr);
+
     void toStream(std::ostream &s) const override;
+
     TokenType getOperator() const;
+
     Expr const &getExpr() const;
 
 private:
@@ -176,35 +97,28 @@ private:
     std::unique_ptr<Expr> const expr;
 };
 
-class BinaryExpr : public Expr {
+class BinaryExpr final : public Expr {
 public:
-    static bool classof(AST const *ast) {
-        return ast->isType(ASTType::ExprBinary);
-    }
-
     Expr const & lhs;
     TokenType const op;
     Expr const & rhs;
-    BinaryExpr(Expr * lhs, TokenType op, Expr * rhs)
-        : Expr(ASTType::ExprBinary),
-          lhs(*lhs),
-          op(op),
-          rhs(*rhs) {}
+
+    BinaryExpr(Expr * lhs, TokenType op, Expr * rhs);
+
     void toStream(std::ostream &s) const override;
 };
 
-class CallExpr : public Expr {
+class CallExpr final : public Expr {
 public:
-    static bool classof(AST const *ast) {
-        return ast->isType(ASTType::ExprCall);
-    }
-
     explicit CallExpr(std::unique_ptr<Expr> callee);
+
     void toStream(std::ostream &s) const override;
 
 public:
     Expr const &getCallee() const;
+
     std::vector<std::unique_ptr<Expr const>> const &getArguments() const;
+
     void addArgument(std::unique_ptr<Expr const> arg);
 
 private:
@@ -212,16 +126,12 @@ private:
     std::vector<std::unique_ptr<Expr const>> arguments;
 };
 
-class TokenExpr : public Expr {
+class TokenExpr final : public Expr {
 public:
-    static bool classof(AST const *ast) {
-        return ast->isType(ASTType::ExprToken);
-    }
-
     explicit TokenExpr(TokenType type);
+
     void toStream(std::ostream &s) const override;
 
-public:
     TokenType getTokenType() const;
 
 private:
@@ -229,17 +139,15 @@ private:
 };
 
 /** A group consists of expressions separated by comma (a tuple). */
-class TupleExpr : public Expr {
+class TupleExpr final : public Expr {
 public:
-    static bool classof(AST const *ast) {
-        return ast->isType(ASTType::ExprTuple);
-    }
-
     explicit TupleExpr();
+
     void toStream(std::ostream &s) const override;
 
 public:
     std::vector<std::unique_ptr<Expr const>> &getMembers();
+
     void addMember(std::unique_ptr<Expr> member);
 
 private:
@@ -247,75 +155,41 @@ private:
 };
 
 class Stmt : public AST {
-public:
-    static bool classof(AST const *ast) {
-        return ast->isTypeBetween(ASTType::Stmt, ASTType::StmtAny);
-    }
-
 protected:
-    explicit Stmt(ASTType type) : AST(type) {}
+    Stmt();
 };
 
-class ExprStmt : public Stmt {
+class ExprStmt final : public Stmt {
 public:
-    static bool classof(AST const *ast) {
-        return ast->isType(ASTType::StmtExpr);
-    }
-
     Expr const & expr;
-    explicit ExprStmt(Expr * expr)
-        : Stmt(ASTType::StmtExpr),
-          expr(*expr) {}
+
+    explicit ExprStmt(Expr * expr);
+
     void toStream(std::ostream &s) const override;
 };
 
-class AssignStmt : public Stmt {
+class AssignStmt final : public Stmt {
 public:
-    static bool classof(AST const *ast) {
-        return ast->isType(ASTType::StmtAssign);
-    }
-
     std::string const & lhs;
+
     Expr const & rhs;
-    AssignStmt(std::string const * lhs, Expr * rhs)
-        : Stmt(ASTType::StmtAssign),
-          lhs(*lhs),
-          rhs(*rhs) {}
-    void toStream(std::ostream &s) const override;
-};
 
-class ImportStmt : public Stmt {
-public:
-    static bool classof(AST const *ast) {
-        return ast->isType(ASTType::StmtImport);
-    }
+    AssignStmt(std::string const * lhs, Expr * rhs);
 
-    std::string const & modname;
-    explicit ImportStmt(std::string const * modname)
-        : Stmt(ASTType::StmtImport),
-          modname(*modname) {}
     void toStream(std::ostream &s) const override;
 };
 
 class CompoundStmt;
 
-class DefStmt : public Stmt {
+class DefStmt final : public Stmt {
 public:
-    static bool classof(AST const *ast) {
-        return ast->isType(ASTType::StmtDef);
-    }
-
     std::string const &name;
     std::vector<std::string const> args;
     std::unique_ptr<CompoundStmt> body;
 
     DefStmt(std::string const &name,
             std::vector<std::string const> args,
-            std::unique_ptr<CompoundStmt> body)
-            : Stmt(ASTType::StmtDef),
-              name(name),
-              args(std::move(args)),
-              body(std::move(body)) {}
+            std::unique_ptr<CompoundStmt> body);
 
     void toStream(std::ostream &s) const override;
 
@@ -325,25 +199,17 @@ public:
     CompoundStmt const &getBody() const { return *body; }
 };
 
-class ReturnStmt : public Stmt {
+class ReturnStmt final : public Stmt {
 public:
-    static bool classof(AST const *ast) {
-        return ast->isType(ASTType::StmtReturn);
-    }
-
     Expr const &expr;
-    explicit ReturnStmt(Expr const &expr)
-        : Stmt(ASTType::StmtReturn),
-          expr(expr) {}
+
+    explicit ReturnStmt(Expr const &expr);
+
     void toStream(std::ostream &s) const override;
 };
 
-class CompoundStmt : public Stmt {
+class CompoundStmt final : public Stmt {
 public:
-    static bool classof(AST const *ast) {
-        return ast->isType(ASTType::StmtCompound);
-    }
-
     CompoundStmt();
     void toStream(std::ostream &s) const override;
     std::vector<std::unique_ptr<Stmt const>> const &getStatements() const;
@@ -353,23 +219,15 @@ private:
     std::vector<std::unique_ptr<Stmt const>> statements;
 };
 
-class PassStmt : public Stmt {
+class PassStmt final : public Stmt {
 public:
-    static bool classof(AST const *ast) {
-        return ast->isType(ASTType::StmtPass);
-    }
-
     PassStmt();
 
     void toStream(std::ostream &s) const override;
 };
 
-class ConditionalStmt : public Stmt {
+class ConditionalStmt final : public Stmt {
 public:
-    static bool classof(AST const *ast) {
-        return ast->isType(ASTType::StmtConditional);
-    }
-
     ConditionalStmt(
             std::unique_ptr<Expr> condition,
             std::unique_ptr<Stmt> thenBranch,

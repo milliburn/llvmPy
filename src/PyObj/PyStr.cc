@@ -2,7 +2,7 @@
 using namespace llvmPy;
 
 PyStr::PyStr(std::unique_ptr<std::string const> value) noexcept
-: PyObj(PyObjType::Str), value(std::move(value))
+: value(std::move(value))
 {
 }
 

@@ -7,10 +7,6 @@ namespace llvmPy {
 
 class PyBool : public PyObj {
 public:
-    static bool classof(Typed const *x) {
-        return x->isType(PyObjType::Bool);
-    }
-
     static PyBool &get(bool value);
 
     explicit PyBool(bool value) noexcept;

@@ -8,10 +8,6 @@ namespace llvmPy {
 
 class PyNone : public PyObj {
 public:
-    static bool classof(Typed const *x) {
-        return x->isType(PyObjType::None);
-    }
-
     static PyNone &get();
 
     PyNone() noexcept;

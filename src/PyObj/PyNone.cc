@@ -4,7 +4,6 @@ using namespace llvmPy;
 PyNone llvmPy_None;
 
 PyNone::PyNone() noexcept
-: PyObj(PyObjType::None)
 {
 }
 

@@ -4,6 +4,8 @@
 
 using namespace llvmPy;
 
+PyObj::PyObj() = default;
+
 std::string
 PyObj::py__str__()
 {
