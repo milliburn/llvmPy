@@ -646,7 +646,6 @@ Parser2::findConditionalStatement(int outerIndent, bool elif)
         thenBranch = readCompoundStatement(outerIndent);
         assert(thenBranch);
 
-        // TODO: This doesn't regard for indentation.
         if (isAtIndent(kw_else, outerIndent)) {
             next();
 
@@ -688,11 +687,12 @@ Parser2::findPassStatement()
 }
 
 bool
-Parser2::isAtIndent(TokenType tokenType, int indent)
+Parser2::isAtIndent(TokenType const tokenType, int const indent)
 {
     if (is(tok_indent)) {
+        int const nextIndent = static_cast<int>(token().depth);
         next();
-        if (token().depth == indent && is(tokenType)) {
+        if (nextIndent == indent && is(tokenType)) {
             return true;
         } else {
             back();
