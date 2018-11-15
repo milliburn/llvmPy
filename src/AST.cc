@@ -1,4 +1,5 @@
 #include <llvmPy/AST.h>
+#include <llvm/Support/Casting.h>
 #include <stdexcept>
 using namespace llvmPy;
 using std::ostream;
@@ -307,4 +308,64 @@ void
 CompoundStmt::addStatement(std::unique_ptr<Stmt> stmt)
 {
     statements.push_back(std::move(stmt));
+}
+
+PassStmt::PassStmt()
+: Stmt(ASTType::StmtPass)
+{
+}
+
+void
+PassStmt::toStream(std::ostream &s) const
+{
+    s << "pass" << endl;
+}
+
+ConditionalStmt::ConditionalStmt(
+        std::unique_ptr<Expr> condition,
+        std::unique_ptr<Stmt> thenBranch,
+        std::unique_ptr<Stmt> elseBranch)
+: Stmt(ASTType::StmtConditional),
+  condition(std::move(condition)),
+  thenBranch(std::move(thenBranch)),
+  elseBranch(std::move(elseBranch))
+{
+    assert(this->condition);
+    assert(this->thenBranch);
+    assert(this->elseBranch);
+}
+
+void
+ConditionalStmt::toStream(std::ostream &s) const
+{
+    s << "if " << *condition << ":" << endl;
+    indentToStream(s, *thenBranch, INDENT);
+    
+    if (llvm::isa<ConditionalStmt>(*elseBranch)) {
+        // XXX: This relies on toStream() not prepending anything, i.e. we get
+        // XXX: the "el" from here and the "if" from the next toStream().
+        s << "el";
+        s << *elseBranch;
+    } else if (!llvm::isa<PassStmt>(*elseBranch)) {
+        s << "else:" << endl;
+        indentToStream(s, *elseBranch, INDENT);
+    }
+}
+
+Expr const &
+ConditionalStmt::getCondition() const
+{
+    return *condition;
+}
+
+Stmt const &
+ConditionalStmt::getThenBranch() const
+{
+    return *thenBranch;
+}
+
+Stmt const &
+ConditionalStmt::getElseBranch() const
+{
+    return *elseBranch;
 }

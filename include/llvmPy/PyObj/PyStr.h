@@ -13,12 +13,14 @@ public:
         return x->isType(PyObjType::Str);
     }
 
-    explicit PyStr(std::unique_ptr<std::string const> value)
-    : PyObj(PyObjType::Str), value(std::move(value))
-    {}
+    explicit PyStr(std::unique_ptr<std::string const> value) noexcept;
+    explicit PyStr(std::string const &value) noexcept;
 
-    std::string const &getValue() const { return *value; }
-    virtual std::string py__str__() override;
+    std::string const &getValue() const;
+
+    std::string py__str__() override;
+
+    bool py__bool__() override;
 
 private:
     std::unique_ptr<std::string const> value;

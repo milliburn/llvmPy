@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <map>
 
 #ifdef __cplusplus
 namespace llvmPy {
@@ -22,6 +23,7 @@ public:
 private:
     std::istream & stream;
     std::vector<Token> tokens;
+    std::map<std::string const, TokenType> const keywords;
     char ch;
     char buf[BUFFER_SIZE];
     long ibuf;
@@ -50,6 +52,8 @@ private:
     bool strlit();
     bool ident();
     bool syntax();
+
+    TokenType getKeyword(std::string const &kw);
 };
 
 } // namespace llvmPy

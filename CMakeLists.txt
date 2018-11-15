@@ -28,38 +28,41 @@ add_subdirectory(library)
 
 add_library(
         lib${name}
+        include/llvmPy/PyObj/PyBool.h
+        include/llvmPy/PyObj/PyInt.h
+        include/llvmPy/PyObj/PyNone.h
+        include/llvmPy/PyObj/PyObj.h
+        include/llvmPy/PyObj/PyStr.h
+        include/llvmPy/RT/Frame.h
         include/llvmPy/AST.h
         include/llvmPy/Compiler.h
         include/llvmPy/Emitter.h
         include/llvmPy/Instr.h
         include/llvmPy/Lexer.h
+        include/llvmPy/Parser2.h
+        include/llvmPy/PyObj.h
         include/llvmPy/RT.h
-        include/llvmPy/RT/Frame.h
         include/llvmPy/SyntaxError.h
         include/llvmPy/Token.h
         include/llvmPy/Typed.h
         include/llvmPy.h
+        src/PyObj/PyBool.cc
+        src/PyObj/PyInt.cc
+        src/PyObj/PyNone.cc
+        src/PyObj/PyObj.cc
+        src/PyObj/PyStr.cc
         src/AST.cc
         src/Compiler.cc
+        src/CompilerImpl.h
+        src/CompilerImpl.cc
         src/Emitter.cc
         src/Instr.cc
         src/Lexer.cc
+        src/Parser2.cc
         src/RT.cc
         src/SyntaxError.cc
         src/Token.cc
-        include/llvmPy/PyObj.h
-        src/PyObj.cc
-        src/CompilerImpl.h
-        src/CompilerImpl.cc
-        include/llvmPy/PyObj/PyObj.h
-        src/PyObj/PyStr.cc
-        include/llvmPy/PyObj/PyBool.h
-        src/PyObj/PyBool.cc
-        src/PyObj/PyObj.cc
-        src/PyObj/PyInt.cc
-        include/llvmPy/PyObj/PyInt.h
-        include/llvmPy/Parser2.h
-        src/Parser2.cc)
+        src/PyObj.cc)
 
 set_target_properties(
         lib${name}

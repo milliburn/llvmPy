@@ -10,6 +10,7 @@ class Function;
 class LLVMContext;
 class Module;
 class Value;
+class GlobalVariable;
 } // namespace llvm
 
 namespace llvmPy {
@@ -80,12 +81,19 @@ public:
     llvm::Value *llvmPy_ne() const;
     llvm::Value *llvmPy_ge() const;
     llvm::Value *llvmPy_gt() const;
+    llvm::Value *llvmPy_truthy() const;
+
+    llvm::GlobalVariable *llvmPy_None() const;
+    llvm::GlobalVariable *llvmPy_True() const;
+    llvm::GlobalVariable *llvmPy_False() const;
 
 private:
     llvm::Module &ir;
     Types const &types;
     RTFunc *func;
     RTScope scope;
+
+    llvm::GlobalVariable *getOrCreateGlobalExtern(std::string const &name) const;
 };
 
 class RTFunc {

@@ -1,5 +1,7 @@
 #include <llvmPy/PyObj.h>
 #include <sstream>
+#include <llvmPy/PyObj/PyObj.h>
+
 using namespace llvmPy;
 
 std::string
@@ -12,16 +14,22 @@ PyObj::py__str__()
     return ss.str();
 }
 
+bool
+PyObj::py__bool__()
+{
+    return true;
+}
+
 PyObj &
 PyObj::py__add__(PyObj &rhs)
 {
-    return *PyNone::get();
+    return PyNone::get();
 }
 
 PyObj &
 PyObj::py__mul__(PyObj &rhs)
 {
-    return *PyNone::get();
+    return PyNone::get();
 }
 
 bool

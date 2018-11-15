@@ -27,9 +27,11 @@ public:
     IdentExpr *findIdentifier();
     TokenExpr *findOperator();
     LambdaExpr *findLambdaExpression();
-    DefStmt *findDefStatement(int indent);
     ReturnStmt *findReturnStatement();
     AssignStmt *findAssignStatement();
+    PassStmt *findPassStatement();
+    DefStmt *findDefStatement(int indent);
+    ConditionalStmt *findConditionalStatement(int indent, bool elif = false);
 
     CallExpr *buildCall(Expr *lhs, Expr *rhs);
 
@@ -46,6 +48,7 @@ public:
 protected:
     bool is(TokenType tokenType);
     bool is_a(TokenType tokenType);
+    bool isAtIndent(TokenType tokenType, int indent);
     void next();
     void back();
 

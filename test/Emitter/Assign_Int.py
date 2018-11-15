@@ -14,6 +14,6 @@ x = 1
 # CHECK: %[[ret:[0-9]+]] = call %PyObj* @llvmPy_int(i64 1)
 # CHECK-NEXT: store %PyObj* %[[ret]], %PyObj** %[[op]]
 
-# CHECK: ret %PyObj* null
+# CHECK: ret %PyObj* @llvmPy_None
 
 # CHECK-DAG: declare %PyObj* @llvmPy_int(i64)

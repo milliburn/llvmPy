@@ -21,6 +21,7 @@ class PyObj : public Typed<PyObjType> {
 public:
     PyObj(PyObjType type) : Typed(type) {}
     virtual std::string py__str__();
+    virtual bool py__bool__();
 
     virtual PyObj &py__add__(PyObj &rhs);
     virtual PyObj &py__mul__(PyObj &rhs);

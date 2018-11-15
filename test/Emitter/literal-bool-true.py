@@ -2,11 +2,13 @@
 # RUN: cat -n %t1 >&2
 # RUN: llvm-as < %t1 | llvm-dis | FileCheck %s
 
-True
+# Check that the global isn't defined multiple times.
+# The `print()` is necessary, as otherwise the value would be discarded.
 
-# CHECK: define
-# CHECK-SAME: @__body__
-
-# CHECK: %{{[0-9]}} = call %PyObj* @llvmPy_bool(i64 1)
-
-# CHECK-DAG: declare %PyObj* @llvmPy_bool(i64)
+# CHECK: @llvmPy_True = external constant %PyObj
+# CHECK-NOT: @llvmPy_True
+# CHECK-LABEL: define %PyObj* @__body__
+print(True)
+# CHECK: {{%[0-9]+}} = call %PyObj* @llvmPy_print(%PyObj* @llvmPy_True)
+print(True)
+# CHECK-NEXT: {{%[0-9]+}} = call %PyObj* @llvmPy_print(%PyObj* @llvmPy_True)

@@ -221,6 +221,8 @@ Parser2::readStatement(int indent)
             }
         } else if (is(tok_eof)) {
             return nullptr;
+        } else {
+            break;
         }
     }
 
@@ -266,10 +268,9 @@ Parser2::readSimpleStatement(int indent)
             break;
         }
 
-        if (auto *ret = findReturnStatement()) {
-            stmt = ret;
-        } else if (auto *assign = findAssignStatement()) {
-            stmt = assign;
+        if ((stmt = findReturnStatement()) ||
+            (stmt = findAssignStatement()) ||
+            (stmt = findPassStatement())) {
         } else if (auto *expr = readExpr()) {
             stmt = new ExprStmt(expr);
         } else {
@@ -306,6 +307,8 @@ Parser2::readBlockStatement(int indent)
 {
     if (auto *def = findDefStatement(indent)) {
         return def;
+    } else if (auto *cond = findConditionalStatement(indent, false)) {
+        return cond;
     } else {
         return nullptr;
     }
@@ -533,6 +536,7 @@ Parser2::readCompoundStatement(int outerIndent)
 
         assert(is(tok_indent));
         auto const indent = static_cast<int>(token().depth);
+        next();
 
         if (is(tok_eol)) {
             // Ignore indents if the line is otherwise empty.
@@ -619,4 +623,82 @@ Parser2::expectIndent(int indent)
     int const actual = static_cast<int>(token().depth);
     assert(indent == actual && "Unexpected indent");
     next();
+}
+
+ConditionalStmt *
+Parser2::findConditionalStatement(int outerIndent, bool elif)
+{
+    if (is(elif ? kw_elif : kw_if)) {
+        next();
+
+        auto *condition = readExpr();
+        assert(condition);
+
+        assert(is(tok_colon));
+        next();
+
+        assert(is(tok_eol));
+        next();
+
+        Stmt *thenBranch = nullptr;
+        Stmt *elseBranch = nullptr;
+
+        thenBranch = readCompoundStatement(outerIndent);
+        assert(thenBranch);
+
+        if (isAtIndent(kw_else, outerIndent)) {
+            next();
+
+            assert(is(tok_colon));
+            next();
+
+            assert(is(tok_eol));
+            next();
+
+            elseBranch = readCompoundStatement(outerIndent);
+        } else if (isAtIndent(kw_elif, outerIndent)) {
+            elseBranch = findConditionalStatement(outerIndent, true);
+        } else {
+            elseBranch = new PassStmt();
+        }
+
+        assert(elseBranch);
+
+        auto *condStmt = new ConditionalStmt(
+                std::unique_ptr<Expr>(condition),
+                std::unique_ptr<Stmt>(thenBranch),
+                std::unique_ptr<Stmt>(elseBranch));
+
+        return condStmt;
+    } else {
+        return nullptr;
+    }
+}
+
+PassStmt *
+Parser2::findPassStatement()
+{
+    if (is(kw_pass)) {
+        next();
+        return new PassStmt();
+    } else {
+        return nullptr;
+    }
+}
+
+bool
+Parser2::isAtIndent(TokenType const tokenType, int const indent)
+{
+    if (is(tok_indent)) {
+        int const nextIndent = static_cast<int>(token().depth);
+        next();
+        if (nextIndent == indent && is(tokenType)) {
+            return true;
+        } else {
+            back();
+            return false;
+        }
+    } else {
+        return false;
+    }
 }

@@ -2,6 +2,7 @@
 #include <llvm/IR/Module.h>
 #include <llvmPy/Instr.h>
 #include <llvmPy/Compiler.h>
+#include <llvm/IR/GlobalVariable.h>
 #include <string>
 using namespace llvmPy;
 
@@ -142,6 +143,46 @@ llvm::Value *
 RTModule::llvmPy_gt() const
 {
     return ir.getOrInsertFunction("llvmPy_gt", types.llvmPy_gt);
+}
+
+llvm::GlobalVariable *
+RTModule::llvmPy_None() const
+{
+    return getOrCreateGlobalExtern("llvmPy_None");
+}
+
+llvm::GlobalVariable *
+RTModule::llvmPy_True() const
+{
+    return getOrCreateGlobalExtern("llvmPy_True");
+}
+
+llvm::GlobalVariable *
+RTModule::llvmPy_False() const
+{
+    return getOrCreateGlobalExtern("llvmPy_False");
+}
+
+llvm::Value *
+RTModule::llvmPy_truthy() const
+{
+    return ir.getOrInsertFunction("llvmPy_truthy", types.llvmPy_truthy);
+}
+
+llvm::GlobalVariable *
+RTModule::getOrCreateGlobalExtern(std::string const &name) const
+{
+    if (auto *var = ir.getGlobalVariable(name)) {
+        return var;
+    } else {
+        return new llvm::GlobalVariable(
+                ir,
+                types.PyObj,
+                true,
+                llvm::GlobalVariable::LinkageTypes::ExternalLinkage,
+                nullptr,
+                name);
+    }
 }
 
 RTFunc::RTFunc(

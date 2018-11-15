@@ -147,7 +147,7 @@ TEST_CASE("Parser2", "[Parser2]") {
         check("1 < 2 + 3", "(1i < (2i + 3i))");
     }
 
-    SECTION("Expressions with embedded negatives") {
+    SECTION("Expressions with unary negatives") {
         check("1 + - 2", "(1i + -2i)");
         check("1 + -2", "(1i + -2i)");
         check("1 +- 2", "(1i + -2i)");

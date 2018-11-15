@@ -23,6 +23,8 @@ public:
     bool py__ge__(PyObj &rhs) override;
     bool py__gt__(PyObj &rhs) override;
 
+    bool py__bool__() override;
+
 private:
     static constexpr int InvalidCmp = ~0;
 

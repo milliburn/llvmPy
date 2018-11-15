@@ -12,6 +12,7 @@
 using namespace llvmPy;
 using llvm::cast;
 using llvm::isa;
+using llvm::dyn_cast;
 using std::make_pair;
 using std::string;
 using std::to_string;
@@ -34,6 +35,10 @@ static struct {
     string Def = "def";
     string Var = "var";
     string String = "str";
+    string If = "if";
+    string Then = "then";
+    string Else = "else";
+    string Endif = "endif";
 } tags;
 
 Emitter::Emitter(Compiler &c) noexcept
@@ -77,20 +82,8 @@ Emitter::emit(RTScope &scope, AST const &ast)
     case ASTType::ExprStrLit: return emit(scope, cast<StrLitExpr>(ast));
     case ASTType::ExprBinary: return emit(scope, cast<BinaryExpr>(ast));
 
-    case ASTType::StmtAssign: {
-        auto &stmt = cast<AssignStmt>(ast);
-        auto &ident = stmt.lhs;
-        auto *slot = scope.slots[ident];
-        auto *rhs = emit(scope, stmt.rhs);
-        return ir.CreateStore(rhs, slot);
-    }
-
-    case ASTType::StmtExpr: {
-        auto &expr = cast<ExprStmt>(ast);
-        return emit(scope, expr.expr);
-    }
-
     default:
+        assert(false && "Statements not allowed");
         return nullptr;
     }
 }
@@ -163,22 +156,11 @@ Emitter::emit(RTScope &scope, IdentExpr const &ident)
     RTModule &mod = scope.getModule();
 
     if (ident.name == "None") {
-        return ir.CreateCall(mod.llvmPy_none(), {});
+        return mod.llvmPy_None();
     } else if (ident.name == "True") {
-
-        llvm::ConstantInt *value =
-                llvm::ConstantInt::get(
-                        types.PyIntValue,
-                        static_cast<uint64_t>(1));
-
-        return ir.CreateCall(mod.llvmPy_bool(), { value });
+        return mod.llvmPy_True();
     } else if (ident.name == "False") {
-        llvm::ConstantInt *value =
-                llvm::ConstantInt::get(
-                        types.PyIntValue,
-                        static_cast<uint64_t>(0));
-
-        return ir.CreateCall(mod.llvmPy_bool(), { value });
+        return mod.llvmPy_False();
     }
 
     llvm::Value *slot = scope.slots[ident.name];
@@ -372,7 +354,7 @@ Emitter::createFunction(
     // Create function body.
     llvm::BasicBlock::Create(ctx, "", function);
     llvm::BasicBlock *init = &function->getEntryBlock();
-    llvm::BasicBlock *prog = &function->back();
+    llvm::BasicBlock *prog = init;
 
     // Add slots that originate from assignments.
     for (auto *stmt : stmts) {
@@ -504,30 +486,20 @@ Emitter::createFunction(
         }
     }
 
-    bool lastIsRet = false;
+    // Successive statements may leave the emitter at a different insert point.
+
+    ir.SetInsertPoint(prog);
 
     for (auto *stmt : stmts) {
-        ir.SetInsertPoint(prog);
-
-        if (isa<ReturnStmt>(stmt)) {
-            auto &ret = *cast<ReturnStmt>(stmt);
-            llvm::Value *value = emit(*innerScope, ret.expr);
-            ir.CreateRet(value);
-            lastIsRet = true;
-        } else if (isa<DefStmt>(stmt)) {
-            auto &def = *cast<DefStmt>(stmt);
-            llvm::Value *value = emit(*innerScope, def);
-            ir.CreateStore(value, innerScope->slots[def.name]);
-            lastIsRet = false;
-        } else {
-            emit(*innerScope, *stmt);
-            lastIsRet = false;
-        }
+        emitStatement(*function, *innerScope, *stmt);
     }
 
-    if (!lastIsRet) {
-        // Return None if no explicit return.
-        ir.CreateRet(llvm::ConstantPointerNull::get(types.Ptr));
+    if (!isa<llvm::ReturnInst>(ir.GetInsertBlock()->back())) {
+        // Provide a default return value for functions that don't provide one.
+        // The optimizer should eliminate this if it's unreachable.
+        // TODO: Apparently having some functions end with two rets causes
+        // TODO: issues at runtime; hence the instruction check.
+        ir.CreateRet(mod.llvmPy_None());
     }
 
     llvm::verifyFunction(*function);
@@ -541,4 +513,70 @@ Emitter::createFunction(
                     (uint64_t) rtFunc));
 
     return rtFunc;
+}
+
+void
+Emitter::emitCondStmt(
+        llvm::Function &function,
+        RTScope &scope,
+        ConditionalStmt const &cond,
+        int number)
+{
+    RTModule &mod = scope.getModule();
+
+    // If the BBs were immediately linked, the function would end up with
+    // a non-linear BBs as any compound statement might itself create more.
+
+    auto *thenBB = llvm::BasicBlock::Create(ctx, tags.Then);
+    auto *elseBB = llvm::BasicBlock::Create(ctx, tags.Else);
+    auto *endifBB = llvm::BasicBlock::Create(ctx, tags.Endif);
+
+    auto *ifExprValue = emit(scope, cond.getCondition());
+    auto *truthyValue = ir.CreateCall(mod.llvmPy_truthy(), { ifExprValue });
+
+    ir.CreateCondBr(truthyValue, thenBB, elseBB);
+
+    thenBB->insertInto(&function);
+    ir.SetInsertPoint(thenBB);
+    emitStatement(function, scope, cond.getThenBranch());
+    ir.CreateBr(endifBB);
+
+    elseBB->insertInto(&function);
+    ir.SetInsertPoint(elseBB);
+    emitStatement(function, scope, cond.getElseBranch());
+    ir.CreateBr(endifBB);
+
+    endifBB->insertInto(&function);
+    ir.SetInsertPoint(endifBB);
+}
+
+void
+Emitter::emitStatement(
+        llvm::Function &function,
+        RTScope &scope,
+        Stmt const &stmt)
+{
+    if (auto *compound = dyn_cast<CompoundStmt>(&stmt)) {
+        for (auto const &innerStmt : compound->getStatements()) {
+            emitStatement(function, scope, *innerStmt);
+        }
+    } else if (auto *expr = dyn_cast<ExprStmt>(&stmt)) {
+        emit(scope, expr->expr);
+    } else if (auto *ret = dyn_cast<ReturnStmt>(&stmt)) {
+        auto *value = emit(scope, ret->expr);
+        ir.CreateRet(value);
+    } else if (auto *def = dyn_cast<DefStmt>(&stmt)) {
+        auto *value = emit(scope, *def);
+        ir.CreateStore(value, scope.slots[def->getName()]);
+    } else if (isa<PassStmt>(&stmt)) {
+        // Ignore.
+    } else if (auto *cond = dyn_cast<ConditionalStmt>(&stmt)) {
+        emitCondStmt(function, scope, *cond, 0);
+    } else if (auto *assign = dyn_cast<AssignStmt>(&stmt)) {
+        auto *slot = scope.slots[assign->lhs];
+        auto *value = emit(scope, assign->rhs);
+        ir.CreateStore(value, slot);
+    } else {
+        assert(false);
+    }
 }
