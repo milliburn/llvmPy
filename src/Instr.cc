@@ -43,7 +43,7 @@ Types::Types(
     llvmPy_print = llvm::FunctionType::get(Ptr, { Ptr }, false);
     llvmPy_str = llvm::FunctionType::get(
             Ptr, { llvm::Type::getInt8PtrTy(ctx) }, false);
-    llvmPy_bool = llvm::FunctionType::get(Ptr, { PyIntValue }, false);
+    llvmPy_bool = llvm::FunctionType::get(Ptr, { Ptr }, false);
     llvmPy_truthy = llvm::FunctionType::get(
             llvm::Type::getInt1Ty(ctx), { Ptr }, false);
 
@@ -199,9 +199,9 @@ llvmPy_str(uint8_t const *string)
  * TODO: Stop using methods for generating constants.
  */
 extern "C" llvmPy::PyBool * __used
-llvmPy_bool(uint64_t value)
+llvmPy_bool(llvmPy::PyObj &obj)
 {
-    return &PyBool::get(value != 0);
+    return &PyBool::get(obj.py__bool__());
 }
 
 extern "C" llvmPy::PyBool * __used

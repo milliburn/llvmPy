@@ -88,7 +88,7 @@ llvmPy::PyFunc *llvmPy_func(llvmPy::FrameN *frame, void *label);
 void *llvmPy_fchk(llvmPy::FrameN **callframe, llvmPy::PyFunc &pyfunc, int np);
 llvmPy::PyObj *llvmPy_print(llvmPy::PyObj &);
 llvmPy::PyStr *llvmPy_str(uint8_t const *string);
-llvmPy::PyBool *llvmPy_bool(uint64_t value);
+llvmPy::PyBool *llvmPy_bool(llvmPy::PyObj &);
 
 llvmPy::PyBool *llvmPy_lt(llvmPy::PyObj &l, llvmPy::PyObj &r);
 llvmPy::PyBool *llvmPy_le(llvmPy::PyObj &l, llvmPy::PyObj &r);

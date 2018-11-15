@@ -75,4 +75,25 @@ TEST_CASE("Instr", "[Instr]") {
         CHECK(llvmPy_truthy(a) == 0);
         CHECK(llvmPy_truthy(b) == 1);
     }
+
+    SECTION("llvmPy_bool: will return the __bool__ of the object") {
+        auto const *t = &PyBool::get(true);
+        auto const *f = &PyBool::get(false);
+
+        CHECK(llvmPy_bool(llvmPy_True) == t);
+        CHECK(llvmPy_bool(llvmPy_False) == f);
+        CHECK(llvmPy_bool(llvmPy_None) == f);
+
+        PyInt i1(-1), i2(0), i3(1), i4(30);
+
+        CHECK(llvmPy_bool(i1) == t);
+        CHECK(llvmPy_bool(i2) == f);
+        CHECK(llvmPy_bool(i3) == t);
+        CHECK(llvmPy_bool(i4) == t);
+
+        PyStr s1(""), s2("test");
+
+        CHECK(llvmPy_bool(s1) == f);
+        CHECK(llvmPy_bool(s2) == t);
+    }
 }
