@@ -38,6 +38,7 @@ static struct {
     string If = "if";
     string Then = "then";
     string Else = "else";
+    string Endif = "endif";
 } tags;
 
 Emitter::Emitter(Compiler &c) noexcept
@@ -353,7 +354,7 @@ Emitter::createFunction(
     // Create function body.
     llvm::BasicBlock::Create(ctx, "", function);
     llvm::BasicBlock *init = &function->getEntryBlock();
-    llvm::BasicBlock *prog = &function->back();
+    llvm::BasicBlock *prog = init;
 
     // Add slots that originate from assignments.
     for (auto *stmt : stmts) {
@@ -523,36 +524,32 @@ Emitter::emitCondStmt(
 {
     RTModule &mod = scope.getModule();
 
-    auto *ifBB = llvm::BasicBlock::Create(
-            ctx, tags.If + to_string(number), &function);
+    // If the BBs were immediately linked, the function would end up with
+    // a non-linear BBs as any compound statement might itself create more.
 
-    auto *thenBB = llvm::BasicBlock::Create(
-            ctx, tags.If + to_string(number) + "_" + tags.Then, &function);
-
-    auto *elseBB = llvm::BasicBlock::Create(
-            ctx, tags.If + to_string(number) + "_" + tags.Else, &function);
-
-    auto *afterBB = llvm::BasicBlock::Create(
-            ctx, "", &function);
-
-    ir.SetInsertPoint(ifBB);
+    auto *thenBB = llvm::BasicBlock::Create(ctx, tags.Then);
+    auto *elseBB = llvm::BasicBlock::Create(ctx, tags.Else);
+    auto *endifBB = llvm::BasicBlock::Create(ctx, tags.Endif);
 
     auto *ifExprValue = emit(scope, cond.getCondition());
     auto *truthyValue = ir.CreateCall(mod.llvmPy_truthy(), { ifExprValue });
 
     ir.CreateCondBr(truthyValue, thenBB, elseBB);
 
+    thenBB->insertInto(&function);
     ir.SetInsertPoint(thenBB);
+    emitStatement(function, scope, cond.getThenBranch());
+    ir.CreateBr(endifBB);
 
-    emit(scope, cond.getThenBranch());
-    ir.CreateBr(afterBB);
-
+    elseBB->insertInto(&function);
     ir.SetInsertPoint(elseBB);
+    emitStatement(function, scope, cond.getElseBranch());
+    ir.CreateBr(endifBB);
 
-    emit(scope, cond.getElseBranch());
-    ir.CreateBr(afterBB);
+    endifBB->insertInto(&function);
+    ir.SetInsertPoint(endifBB);
+}
 
-    ir.SetInsertPoint(afterBB);
 }
 
 void
