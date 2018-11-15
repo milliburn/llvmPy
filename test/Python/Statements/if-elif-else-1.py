@@ -3,10 +3,13 @@
 x = 2
 
 if x == 1:
-    print("A")
+    print("A1")
 elif x == 2:
-    print("B")
+    print("B1")
+    print("B2")
 else:
     print("C")
+    print("C")
 
-# CHECK: B
+# CHECK-LABEL: B1
+# CHECK-NEXT: B2
