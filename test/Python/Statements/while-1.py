@@ -1,7 +1,7 @@
 # RUN: %S/../test.sh %s
 
 
-print("test1:")
+print("Start")
 x = 0
 while x < 3:
     print("Loop")
@@ -10,7 +10,7 @@ while x < 3:
 print("End")
 print(x)
 
-# CHECK-LABEL: test1:
+# CHECK-LABEL: Start
 # CHECK-NEXT: Loop
 # CHECK-NEXT: 0
 # CHECK-NEXT: Loop
@@ -19,4 +19,3 @@ print(x)
 # CHECK-NEXT: 2
 # CHECK-NEXT: End
 # CHECK-NEXT: 3
-
