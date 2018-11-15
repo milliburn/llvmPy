@@ -493,9 +493,13 @@ Emitter::createFunction(
         emitStatement(*function, *innerScope, *stmt);
     }
 
-    // Provide a default return value for functions that don't provide one.
-    // The optimizer should eliminate this if it's unreachable.
-    ir.CreateRet(mod.llvmPy_None());
+    if (!isa<llvm::ReturnInst>(ir.GetInsertBlock()->back())) {
+        // Provide a default return value for functions that don't provide one.
+        // The optimizer should eliminate this if it's unreachable.
+        // TODO: Apparently having some functions end with two rets causes
+        // TODO: issues at runtime; hence the instruction check.
+        ir.CreateRet(mod.llvmPy_None());
+    }
 
     llvm::verifyFunction(*function);
     ir.SetInsertPoint(insertPoint);

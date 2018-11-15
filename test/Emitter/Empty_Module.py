@@ -13,5 +13,5 @@
 # CHECK-NEXT: store %Frame0* %frame, %Frame0** %1
 # CHECK-NEXT: %2 = getelementptr %Frame0, %Frame0* %frame, i64 0, i32 1
 # CHECK-NEXT: store %FrameN* %outer, %FrameN** %2
-# CHECK-NEXT: ret %PyObj* null
+# CHECK-NEXT: ret %PyObj* @llvmPy_None
 # CHECK-NEXT: }
