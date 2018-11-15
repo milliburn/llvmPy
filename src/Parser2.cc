@@ -307,6 +307,8 @@ Parser2::readBlockStatement(int indent)
         return def;
     } else if (auto *cond = findConditionalStatement(indent, false)) {
         return cond;
+    } else if (auto *while_ = findWhileStmt(indent)) {
+        return while_;
     } else {
         return nullptr;
     }
@@ -698,5 +700,30 @@ Parser2::isAtIndent(TokenType const tokenType, int const indent)
         }
     } else {
         return false;
+    }
+}
+
+WhileStmt *
+Parser2::findWhileStmt(int outerIndent)
+{
+    if (is(kw_while)) {
+        next();
+        auto *condition = readExpr();
+        assert(condition);
+
+        assert(is(tok_colon));
+        next();
+
+        assert(is(tok_eol));
+        next();
+
+        Stmt *body = readCompoundStatement(outerIndent);
+        assert(body);
+
+        return new WhileStmt(
+                std::unique_ptr<Expr>(condition),
+                std::unique_ptr<Stmt>(body));
+    } else {
+        return nullptr;
     }
 }
