@@ -550,8 +550,6 @@ Emitter::emitCondStmt(
     ir.SetInsertPoint(endifBB);
 }
 
-}
-
 void
 Emitter::emitStatement(
         llvm::Function &function,
