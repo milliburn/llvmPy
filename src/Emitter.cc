@@ -491,7 +491,7 @@ Emitter::createFunction(
     ir.SetInsertPoint(prog);
 
     for (auto *stmt : stmts) {
-        emitStatement(*function, *innerScope, *stmt);
+        emitStatement(*function, *innerScope, *stmt, nullptr);
     }
 
     if (!llvm::isa<llvm::ReturnInst>(ir.GetInsertBlock()->back())) {
@@ -520,7 +520,7 @@ Emitter::emitCondStmt(
         llvm::Function &function,
         RTScope &scope,
         ConditionalStmt const &cond,
-        int number)
+        Loop const *loop)
 {
     RTModule &mod = scope.getModule();
 
@@ -538,12 +538,12 @@ Emitter::emitCondStmt(
 
     thenBB->insertInto(&function);
     ir.SetInsertPoint(thenBB);
-    emitStatement(function, scope, cond.getThenBranch());
+    emitStatement(function, scope, cond.getThenBranch(), loop);
     ir.CreateBr(endifBB);
 
     elseBB->insertInto(&function);
     ir.SetInsertPoint(elseBB);
-    emitStatement(function, scope, cond.getElseBranch());
+    emitStatement(function, scope, cond.getElseBranch(), loop);
     ir.CreateBr(endifBB);
 
     endifBB->insertInto(&function);
@@ -554,11 +554,12 @@ void
 Emitter::emitStatement(
         llvm::Function &function,
         RTScope &scope,
-        Stmt const &stmt)
+        Stmt const &stmt,
+        Loop const *loop)
 {
     if (auto *compound = stmt.cast<CompoundStmt>()) {
         for (auto const &innerStmt : compound->getStatements()) {
-            emitStatement(function, scope, *innerStmt);
+            emitStatement(function, scope, *innerStmt, loop);
         }
     } else if (auto *expr = stmt.cast<ExprStmt>()) {
         emit(scope, expr->expr);
@@ -571,7 +572,7 @@ Emitter::emitStatement(
     } else if (stmt.isa<PassStmt>()) {
         // Ignore.
     } else if (auto *cond = stmt.cast<ConditionalStmt>()) {
-        emitCondStmt(function, scope, *cond, 0);
+        emitCondStmt(function, scope, *cond, loop);
     } else if (auto *assign = stmt.cast<AssignStmt>()) {
         auto *slot = scope.slots[assign->lhs];
         auto *value = emit(scope, assign->rhs);
@@ -595,6 +596,8 @@ Emitter::emitWhileStmt(
     auto *loopBB = llvm::BasicBlock::Create(ctx, tags.Loop);
     auto *endwhileBB = llvm::BasicBlock::Create(ctx, tags.Endwhile);
 
+    Loop loop = { .cond = condBB, .end = endwhileBB };
+
     ir.CreateBr(condBB);
 
     condBB->insertInto(&function);
@@ -607,7 +610,7 @@ Emitter::emitWhileStmt(
 
     loopBB->insertInto(&function);
     ir.SetInsertPoint(loopBB);
-    emitStatement(function, scope, stmt.getBody());
+    emitStatement(function, scope, stmt.getBody(), &loop);
     ir.CreateBr(condBB);
 
     endwhileBB->insertInto(&function);
