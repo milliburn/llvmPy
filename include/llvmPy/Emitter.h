@@ -43,6 +43,11 @@ public:
             RTScope &scope,
             Stmt const &stmt);
 
+    void emitWhileStmt(
+            llvm::Function &function,
+            RTScope &scope,
+            WhileStmt const &stmt);
+
     RTModule *createModule(std::string const &name, Stmt const &stmt);
     RTModule *createModule(std::string const &name);
 

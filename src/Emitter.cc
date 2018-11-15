@@ -36,6 +36,9 @@ static struct {
     string Then = "then";
     string Else = "else";
     string Endif = "endif";
+    string While = "while";
+    string Loop = "loop";
+    string Endwhile = "endwhile";
 } tags;
 
 Emitter::Emitter(Compiler &c) noexcept
@@ -573,7 +576,40 @@ Emitter::emitStatement(
         auto *slot = scope.slots[assign->lhs];
         auto *value = emit(scope, assign->rhs);
         ir.CreateStore(value, slot);
+    } else if (auto *while_ = stmt.cast<WhileStmt>()) {
+        emitWhileStmt(function, scope, *while_);
     } else {
         assert(false);
     }
+}
+
+void
+Emitter::emitWhileStmt(
+        llvm::Function &function,
+        RTScope &scope,
+        WhileStmt const &stmt)
+{
+    RTModule &mod = scope.getModule();
+
+    auto *condBB = llvm::BasicBlock::Create(ctx, tags.While);
+    auto *loopBB = llvm::BasicBlock::Create(ctx, tags.Loop);
+    auto *endwhileBB = llvm::BasicBlock::Create(ctx, tags.Endwhile);
+
+    ir.CreateBr(condBB);
+
+    condBB->insertInto(&function);
+    ir.SetInsertPoint(condBB);
+
+    auto *condExprValue = emit(scope, stmt.getCondition());
+    auto *truthyValue = ir.CreateCall(mod.llvmPy_truthy(), { condExprValue });
+
+    ir.CreateCondBr(truthyValue, loopBB, endwhileBB);
+
+    loopBB->insertInto(&function);
+    ir.SetInsertPoint(loopBB);
+    emitStatement(function, scope, stmt.getBody());
+    ir.CreateBr(condBB);
+
+    endwhileBB->insertInto(&function);
+    ir.SetInsertPoint(endwhileBB);
 }
