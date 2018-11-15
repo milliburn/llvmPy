@@ -8,10 +8,6 @@ namespace llvmPy {
 
 class PyInt : public PyObj {
 public:
-    static bool classof(Typed const *x) {
-        return x->isType(PyObjType::Int);
-    }
-
     explicit PyInt(int64_t value);
     int64_t getValue() const;
     std::string py__str__() override;

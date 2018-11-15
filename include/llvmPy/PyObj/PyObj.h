@@ -17,9 +17,10 @@ enum class PyObjType : long {
 /**
  * The base class for all objects accessible on the heap at runtime.
  */
-class PyObj : public Typed<PyObjType> {
+class PyObj : public Typed {
 public:
-    PyObj(PyObjType type) : Typed(type) {}
+    PyObj();
+
     virtual std::string py__str__();
     virtual bool py__bool__();
 

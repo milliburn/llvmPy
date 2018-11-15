@@ -1,11 +1,9 @@
 #include <llvmPy/PyObj/PyInt.h>
-#include <llvm/Support/Casting.h>
 #include <sstream>
 using namespace llvmPy;
-using llvm::cast;
 
 PyInt::PyInt(int64_t value)
-: PyObj(PyObjType::Int), value(value)
+: value(value)
 {
 }
 
@@ -25,14 +23,7 @@ PyObj &
 PyInt::py__add__(PyObj &rhs)
 {
     int64_t lv = getValue();
-    int64_t rv;
-
-    if (rhs.getType() == PyObjType::Int) {
-        rv = cast<PyInt>(rhs).getValue();
-    } else {
-        throw "Invalid right-hand operator";
-    }
-
+    int64_t rv = rhs.as<PyInt>().getValue();
     return *new PyInt(lv + rv);
 }
 
@@ -40,14 +31,7 @@ PyObj &
 PyInt::py__mul__(PyObj &rhs)
 {
     int64_t lv = getValue();
-    int64_t rv;
-
-    if (rhs.getType() == PyObjType::Int) {
-        rv = cast<PyInt>(rhs).getValue();
-    } else {
-        throw "Invalid right-hand operator";
-    }
-
+    int64_t rv = rhs.as<PyInt>().getValue();
     return *new PyInt(lv * rv);
 }
 
@@ -57,8 +41,8 @@ PyInt::cmp(PyObj &rhs, bool throwIfInvalid)
     int64_t lv = getValue();
     int64_t rv;
 
-    if (rhs.getType() == PyObjType::Int) {
-        rv = cast<PyInt>(rhs).getValue();
+    if (auto *pyInt = rhs.cast<PyInt>()) {
+        rv = pyInt->getValue();
     } else {
         if (throwIfInvalid) {
             throw "Invalid comparison!";

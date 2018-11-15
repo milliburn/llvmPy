@@ -146,7 +146,7 @@ Emitter::emit(RTScope &scope, IntLitExpr const &expr)
     llvm::ConstantInt *value =
             llvm::ConstantInt::get(
                     types.PyIntValue,
-                    static_cast<uint64_t>(expr.value));
+                    static_cast<uint64_t>(expr.getValue()));
 
     return ir.CreateCall(mod.llvmPy_int(), { value });
 }
