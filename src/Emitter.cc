@@ -76,6 +76,9 @@ Emitter::emit(RTScope &scope, AST const &ast)
     case ASTType::StmtDef: return emit(scope, cast<DefStmt>(ast));
     case ASTType::ExprStrLit: return emit(scope, cast<StrLitExpr>(ast));
     case ASTType::ExprBinary: return emit(scope, cast<BinaryExpr>(ast));
+    case ASTType::StmtPass:
+        assert(false && "Pass statements should not be emitted");
+        return nullptr;
 
     case ASTType::StmtAssign: {
         auto &stmt = cast<AssignStmt>(ast);
@@ -508,6 +511,8 @@ Emitter::createFunction(
             llvm::Value *value = emit(*innerScope, def);
             ir.CreateStore(value, innerScope->slots[def.name]);
             lastIsRet = false;
+        } else if (isa<PassStmt>(stmt)) {
+            // Ignore.
         } else {
             emit(*innerScope, *stmt);
             lastIsRet = false;
