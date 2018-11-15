@@ -1,5 +1,4 @@
 #include <llvmPy/AST.h>
-#include <llvm/Support/Casting.h>
 #include <stdexcept>
 using namespace llvmPy;
 using std::ostream;
@@ -48,14 +47,20 @@ AST::toStream(std::ostream &s) const
 }
 
 void
-EmptyAST::toStream(std::ostream &s) const
-{
-}
-
-void
 StrLitExpr::toStream(std::ostream &s) const
 {
     s << '"' << getValue() << '"';
+}
+
+DecLitExpr::DecLitExpr(double v)
+: value(v)
+{
+}
+
+double
+DecLitExpr::getValue() const
+{
+    return value;
 }
 
 void
@@ -64,16 +69,43 @@ DecLitExpr::toStream(std::ostream &s) const
     s << value << 'd';
 }
 
+IntLitExpr::IntLitExpr(long v)
+: value(v)
+{
+}
+
+int64_t
+IntLitExpr::getValue() const
+{
+    return value;
+}
+
 void
 IntLitExpr::toStream(std::ostream &s) const
 {
     s << value << 'i';
 }
 
+IdentExpr::IdentExpr(std::string const *str)
+: name(*str)
+{
+}
+
+std::string const &
+IdentExpr::getName() const
+{
+    return name;
+}
+
 void
 IdentExpr::toStream(std::ostream &s) const
 {
     s << name;
+}
+
+LambdaExpr::LambdaExpr(std::vector<std::string const> const args, Expr *body)
+: args(std::move(args)), expr(*body)
+{
 }
 
 void
@@ -87,6 +119,11 @@ LambdaExpr::toStream(std::ostream &s) const
     }
 
     s << ": " << expr << ')';
+}
+
+BinaryExpr::BinaryExpr(Expr *lhs, TokenType op, Expr *rhs)
+: lhs(*lhs), op(op), rhs(*rhs)
+{
 }
 
 void
@@ -120,12 +157,6 @@ void
 AssignStmt::toStream(std::ostream &s) const
 {
     s << lhs << " = " << rhs << endl;
-}
-
-void
-ImportStmt::toStream(std::ostream &s) const
-{
-    s << modname;
 }
 
 void
@@ -166,8 +197,7 @@ operator<< (std::ostream & s, Stmt const & stmt)
 }
 
 StrLitExpr::StrLitExpr(std::unique_ptr<std::string const> value)
-: LitExpr(ASTType::ExprStrLit),
-  value(std::move(value))
+: value(std::move(value))
 {
 }
 
@@ -178,8 +208,7 @@ StrLitExpr::getValue() const
 }
 
 CallExpr::CallExpr(std::unique_ptr<Expr> callee)
-: Expr(ASTType::ExprCall),
-  callee(std::move(callee))
+: callee(std::move(callee))
 {
 }
 
@@ -202,9 +231,7 @@ CallExpr::addArgument(std::unique_ptr<Expr const> arg)
 }
 
 TupleExpr::TupleExpr()
-: Expr(ASTType::ExprTuple)
 {
-
 }
 
 void
@@ -243,7 +270,7 @@ TupleExpr::addMember(std::unique_ptr<Expr> member)
 }
 
 TokenExpr::TokenExpr(TokenType type)
-: Expr(ASTType::ExprToken), tokenType(type)
+: tokenType(type)
 {
 
 }
@@ -261,7 +288,7 @@ TokenExpr::getTokenType() const
 }
 
 UnaryExpr::UnaryExpr(TokenType op, std::unique_ptr<Expr> expr)
-: Expr(ASTType::ExprUnary), op(op), expr(std::move(expr))
+: op(op), expr(std::move(expr))
 {
 }
 
@@ -286,7 +313,6 @@ UnaryExpr::getExpr() const
 }
 
 CompoundStmt::CompoundStmt()
-: Stmt(ASTType::StmtCompound)
 {
 }
 
@@ -311,7 +337,6 @@ CompoundStmt::addStatement(std::unique_ptr<Stmt> stmt)
 }
 
 PassStmt::PassStmt()
-: Stmt(ASTType::StmtPass)
 {
 }
 
@@ -325,8 +350,7 @@ ConditionalStmt::ConditionalStmt(
         std::unique_ptr<Expr> condition,
         std::unique_ptr<Stmt> thenBranch,
         std::unique_ptr<Stmt> elseBranch)
-: Stmt(ASTType::StmtConditional),
-  condition(std::move(condition)),
+: condition(std::move(condition)),
   thenBranch(std::move(thenBranch)),
   elseBranch(std::move(elseBranch))
 {
@@ -340,13 +364,13 @@ ConditionalStmt::toStream(std::ostream &s) const
 {
     s << "if " << *condition << ":" << endl;
     indentToStream(s, *thenBranch, INDENT);
-    
-    if (llvm::isa<ConditionalStmt>(*elseBranch)) {
+
+    if (elseBranch->isa<ConditionalStmt>()) {
         // XXX: This relies on toStream() not prepending anything, i.e. we get
         // XXX: the "el" from here and the "if" from the next toStream().
         s << "el";
         s << *elseBranch;
-    } else if (!llvm::isa<PassStmt>(*elseBranch)) {
+    } else if (!elseBranch->isa<PassStmt>()) {
         s << "else:" << endl;
         indentToStream(s, *elseBranch, INDENT);
     }
@@ -369,3 +393,31 @@ ConditionalStmt::getElseBranch() const
 {
     return *elseBranch;
 }
+
+ExprStmt::ExprStmt(Expr *expr)
+: expr(*expr)
+{
+}
+
+AssignStmt::AssignStmt(std::string const *lhs, Expr *rhs)
+: lhs(*lhs), rhs(*rhs)
+{
+}
+
+DefStmt::DefStmt(
+        std::string const &name,
+        std::vector<std::string const> args,
+        std::unique_ptr<CompoundStmt> body)
+: name(name), args(std::move(args)), body(std::move(body))
+{
+}
+
+ReturnStmt::ReturnStmt(Expr const &expr)
+: expr(expr)
+{
+}
+
+Expr::Expr() = default;
+
+Stmt::Stmt() = default;
+

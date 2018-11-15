@@ -9,10 +9,6 @@ namespace llvmPy {
 
 class PyStr : public PyObj {
 public:
-    static bool classof(Typed const *x) {
-        return x->isType(PyObjType::Str);
-    }
-
     explicit PyStr(std::unique_ptr<std::string const> value) noexcept;
     explicit PyStr(std::string const &value) noexcept;
 

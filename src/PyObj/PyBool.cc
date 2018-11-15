@@ -5,7 +5,7 @@ PyBool llvmPy_True(true);
 PyBool llvmPy_False(false);
 
 PyBool::PyBool(bool value) noexcept
-: PyObj(PyObjType::Bool), value(value)
+: value(value)
 {
 
 }
