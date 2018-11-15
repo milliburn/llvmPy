@@ -174,9 +174,7 @@ llvmPy_fchk(FrameN **callframe, llvmPy::PyFunc &pyfunc, int np)
 }
 
 /**
- * @brief Print the str() of `obj` to stdout. The current implementation is a
- * divergence from Python's print() behaviour, which requires that the object
- * be a string.
+ * @brief Print the str() of `obj` to stdout.
  * @param obj The object to print.
  */
 extern "C" llvmPy::PyObj * __used
