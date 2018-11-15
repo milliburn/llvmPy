@@ -501,40 +501,17 @@ Emitter::createFunction(
         }
     }
 
-    bool lastIsRet = false;
-    int condStmtIndex = 0;
+    // Successive statements may leave the emitter at a different insert point.
+
+    ir.SetInsertPoint(prog);
 
     for (auto *stmt : stmts) {
-        ir.SetInsertPoint(prog);
-
-        if (auto *ret = dyn_cast<ReturnStmt>(stmt)) {
-            llvm::Value *value = emit(*innerScope, ret->expr);
-            ir.CreateRet(value);
-            lastIsRet = true;
-        } else if (auto *def = dyn_cast<DefStmt>(stmt)) {
-            llvm::Value *value = emit(*innerScope, *def);
-            ir.CreateStore(value, innerScope->slots[def->name]);
-            lastIsRet = false;
-        } else if (isa<PassStmt>(stmt)) {
-            // Ignore.
-            lastIsRet = false;
-        } else if (auto *cond = dyn_cast<ConditionalStmt>(stmt)) {
-            prog = emitCondStmt(
-                    *function,
-                    *innerScope,
-                    *cond,
-                    condStmtIndex++);
-            lastIsRet = false;
-        } else {
-            emit(*innerScope, *stmt);
-            lastIsRet = false;
-        }
+        emitStatement(*function, *innerScope, *stmt);
     }
 
-    if (!lastIsRet) {
-        // Return None if no explicit return.
-        ir.CreateRet(llvm::ConstantPointerNull::get(types.Ptr));
-    }
+    // Provide a default return value for functions that don't provide one.
+    // The optimizer should eliminate this if it's unreachable.
+    ir.CreateRet(mod.llvmPy_None());
 
     llvm::verifyFunction(*function);
     ir.SetInsertPoint(insertPoint);
@@ -549,7 +526,7 @@ Emitter::createFunction(
     return rtFunc;
 }
 
-llvm::BasicBlock *
+void
 Emitter::emitCondStmt(
         llvm::Function &function,
         RTScope &scope,
@@ -588,5 +565,35 @@ Emitter::emitCondStmt(
     ir.CreateBr(afterBB);
 
     ir.SetInsertPoint(afterBB);
-    return afterBB;
+}
+
+void
+Emitter::emitStatement(
+        llvm::Function &function,
+        RTScope &scope,
+        Stmt const &stmt)
+{
+    if (auto *compound = dyn_cast<CompoundStmt>(&stmt)) {
+        for (auto const &innerStmt : compound->getStatements()) {
+            emitStatement(function, scope, *innerStmt);
+        }
+    } else if (auto *expr = dyn_cast<ExprStmt>(&stmt)) {
+        emit(scope, *expr);
+    } else if (auto *ret = dyn_cast<ReturnStmt>(&stmt)) {
+        auto *value = emit(scope, ret->expr);
+        ir.CreateRet(value);
+    } else if (auto *def = dyn_cast<DefStmt>(&stmt)) {
+        auto *value = emit(scope, *def);
+        ir.CreateStore(value, scope.slots[def->getName()]);
+    } else if (isa<PassStmt>(&stmt)) {
+        // Ignore.
+    } else if (auto *cond = dyn_cast<ConditionalStmt>(&stmt)) {
+        emitCondStmt(function, scope, *cond, 0);
+    } else if (auto *assign = dyn_cast<AssignStmt>(&stmt)) {
+        auto *slot = scope.slots[assign->lhs];
+        auto *value = emit(scope, assign->rhs);
+        ir.CreateStore(value, slot);
+    } else {
+        assert(false);
+    }
 }

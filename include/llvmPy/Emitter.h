@@ -32,11 +32,16 @@ public:
     llvm::Value *emit(RTScope &scope, StrLitExpr const &lit);
     llvm::Value *emit(RTScope &scope, BinaryExpr const &expr);
 
-    llvm::BasicBlock * emitCondStmt(
+    void emitCondStmt(
             llvm::Function &function,
             RTScope &scope,
             ConditionalStmt const &cond,
             int number);
+
+    void emitStatement(
+            llvm::Function &function,
+            RTScope &scope,
+            Stmt const &stmt);
 
     RTModule *createModule(std::string const &name, Stmt const &stmt);
     RTModule *createModule(std::string const &name);
