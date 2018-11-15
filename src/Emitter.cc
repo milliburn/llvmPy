@@ -81,24 +81,8 @@ Emitter::emit(RTScope &scope, AST const &ast)
     case ASTType::ExprStrLit: return emit(scope, cast<StrLitExpr>(ast));
     case ASTType::ExprBinary: return emit(scope, cast<BinaryExpr>(ast));
 
-    case ASTType::StmtPass:
-        assert(false && "Pass statements should not be emitted");
-        return nullptr;
-
-    case ASTType::StmtAssign: {
-        auto &stmt = cast<AssignStmt>(ast);
-        auto &ident = stmt.lhs;
-        auto *slot = scope.slots[ident];
-        auto *rhs = emit(scope, stmt.rhs);
-        return ir.CreateStore(rhs, slot);
-    }
-
-    case ASTType::StmtExpr: {
-        auto &expr = cast<ExprStmt>(ast);
-        return emit(scope, expr.expr);
-    }
-
     default:
+        assert(false && "Statements not allowed");
         return nullptr;
     }
 }
@@ -578,7 +562,7 @@ Emitter::emitStatement(
             emitStatement(function, scope, *innerStmt);
         }
     } else if (auto *expr = dyn_cast<ExprStmt>(&stmt)) {
-        emit(scope, *expr);
+        emit(scope, expr->expr);
     } else if (auto *ret = dyn_cast<ReturnStmt>(&stmt)) {
         auto *value = emit(scope, ret->expr);
         ir.CreateRet(value);
