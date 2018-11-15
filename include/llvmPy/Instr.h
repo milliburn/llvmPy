@@ -52,6 +52,7 @@ public:
     llvm::FunctionType *llvmPy_print;
     llvm::FunctionType *llvmPy_str;
     llvm::FunctionType *llvmPy_bool;
+    llvm::FunctionType *llvmPy_truthy;
 
     llvm::FunctionType *llvmPy_lt;
     llvm::FunctionType *llvmPy_le;

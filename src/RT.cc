@@ -163,6 +163,12 @@ RTModule::llvmPy_False() const
     return getOrCreateGlobalExtern("llvmPy_False");
 }
 
+llvm::Value *
+RTModule::llvmPy_truthy() const
+{
+    return ir.getOrInsertFunction("llvmPy_truthy", types.llvmPy_truthy);
+}
+
 llvm::GlobalVariable *
 RTModule::getOrCreateGlobalExtern(std::string const &name) const
 {

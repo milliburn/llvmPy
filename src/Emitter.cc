@@ -12,6 +12,7 @@
 using namespace llvmPy;
 using llvm::cast;
 using llvm::isa;
+using llvm::dyn_cast;
 using std::make_pair;
 using std::string;
 using std::to_string;
@@ -34,6 +35,9 @@ static struct {
     string Def = "def";
     string Var = "var";
     string String = "str";
+    string If = "if";
+    string Then = "then";
+    string Else = "else";
 } tags;
 
 Emitter::Emitter(Compiler &c) noexcept
@@ -76,6 +80,7 @@ Emitter::emit(RTScope &scope, AST const &ast)
     case ASTType::StmtDef: return emit(scope, cast<DefStmt>(ast));
     case ASTType::ExprStrLit: return emit(scope, cast<StrLitExpr>(ast));
     case ASTType::ExprBinary: return emit(scope, cast<BinaryExpr>(ast));
+
     case ASTType::StmtPass:
         assert(false && "Pass statements should not be emitted");
         return nullptr;
@@ -497,22 +502,29 @@ Emitter::createFunction(
     }
 
     bool lastIsRet = false;
+    int condStmtIndex = 0;
 
     for (auto *stmt : stmts) {
         ir.SetInsertPoint(prog);
 
-        if (isa<ReturnStmt>(stmt)) {
-            auto &ret = *cast<ReturnStmt>(stmt);
-            llvm::Value *value = emit(*innerScope, ret.expr);
+        if (auto *ret = dyn_cast<ReturnStmt>(stmt)) {
+            llvm::Value *value = emit(*innerScope, ret->expr);
             ir.CreateRet(value);
             lastIsRet = true;
-        } else if (isa<DefStmt>(stmt)) {
-            auto &def = *cast<DefStmt>(stmt);
-            llvm::Value *value = emit(*innerScope, def);
-            ir.CreateStore(value, innerScope->slots[def.name]);
+        } else if (auto *def = dyn_cast<DefStmt>(stmt)) {
+            llvm::Value *value = emit(*innerScope, *def);
+            ir.CreateStore(value, innerScope->slots[def->name]);
             lastIsRet = false;
         } else if (isa<PassStmt>(stmt)) {
             // Ignore.
+            lastIsRet = false;
+        } else if (auto *cond = dyn_cast<ConditionalStmt>(stmt)) {
+            prog = emitCondStmt(
+                    *function,
+                    *innerScope,
+                    *cond,
+                    condStmtIndex++);
+            lastIsRet = false;
         } else {
             emit(*innerScope, *stmt);
             lastIsRet = false;
@@ -535,4 +547,46 @@ Emitter::createFunction(
                     (uint64_t) rtFunc));
 
     return rtFunc;
+}
+
+llvm::BasicBlock *
+Emitter::emitCondStmt(
+        llvm::Function &function,
+        RTScope &scope,
+        ConditionalStmt const &cond,
+        int number)
+{
+    RTModule &mod = scope.getModule();
+
+    auto *ifBB = llvm::BasicBlock::Create(
+            ctx, tags.If + to_string(number), &function);
+
+    auto *thenBB = llvm::BasicBlock::Create(
+            ctx, tags.If + to_string(number) + "_" + tags.Then, &function);
+
+    auto *elseBB = llvm::BasicBlock::Create(
+            ctx, tags.If + to_string(number) + "_" + tags.Else, &function);
+
+    auto *afterBB = llvm::BasicBlock::Create(
+            ctx, "", &function);
+
+    ir.SetInsertPoint(ifBB);
+
+    auto *ifExprValue = emit(scope, cond.getCondition());
+    auto *truthyValue = ir.CreateCall(mod.llvmPy_truthy(), { ifExprValue });
+
+    ir.CreateCondBr(truthyValue, thenBB, elseBB);
+
+    ir.SetInsertPoint(thenBB);
+
+    emit(scope, cond.getThenBranch());
+    ir.CreateBr(afterBB);
+
+    ir.SetInsertPoint(elseBB);
+
+    emit(scope, cond.getElseBranch());
+    ir.CreateBr(afterBB);
+
+    ir.SetInsertPoint(afterBB);
+    return afterBB;
 }

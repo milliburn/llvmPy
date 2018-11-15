@@ -44,6 +44,8 @@ Types::Types(
     llvmPy_str = llvm::FunctionType::get(
             Ptr, { llvm::Type::getInt8PtrTy(ctx) }, false);
     llvmPy_bool = llvm::FunctionType::get(Ptr, { PyIntValue }, false);
+    llvmPy_truthy = llvm::FunctionType::get(
+            llvm::Type::getInt1Ty(ctx), { Ptr }, false);
 
     llvm::FunctionType *cmp = llvmPy_binop;
     llvmPy_lt = cmp;
