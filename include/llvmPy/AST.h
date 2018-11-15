@@ -262,6 +262,16 @@ private:
     std::unique_ptr<Stmt const> body;
 };
 
+class BreakStmt final : public Stmt {
+public:
+    void toStream(std::ostream &s) const override;
+};
+
+class ContinueStmt final : public Stmt {
+public:
+    void toStream(std::ostream &s) const override;
+};
+
 } // namespace llvmPy
 
 std::ostream & operator<< (std::ostream &, llvmPy::Expr const &);

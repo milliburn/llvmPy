@@ -447,3 +447,15 @@ WhileStmt::getBody() const
 {
     return *body;
 }
+
+void
+BreakStmt::toStream(std::ostream &s) const
+{
+    s << "break" << endl;
+}
+
+void
+ContinueStmt::toStream(std::ostream &s) const
+{
+    s << "continue" << endl;
+}
