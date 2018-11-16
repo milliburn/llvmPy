@@ -197,20 +197,14 @@ Emitter::emit(RTScope &scope, LambdaExpr const &lambda)
 {
     RTModule &mod = scope.getModule();
 
-    auto stmt = std::make_unique<ReturnStmt>(
-            std::unique_ptr<Expr const>(
-                    &lambda.getExpr()));
+    ReturnStmt returnStmt(lambda.getExprPtr());
 
     RTFunc *func =
             createFunction(
                     tags.Lambda,
                     scope,
-                    *stmt,
+                    returnStmt,
                     lambda.getArguments());
-
-    // Ensure that the ReturnStmt going out of scope will not delete memory
-    // owned by the LambdaExpr.
-    stmt->releaseExpr();
 
     llvm::Value *innerFramePtrBitCast =
             ir.CreateBitCast(
@@ -547,8 +541,8 @@ Emitter::emitStatement(
     } else if (auto *cond = stmt.cast<ConditionalStmt>()) {
         emitCondStmt(function, scope, *cond, loop);
     } else if (auto *assign = stmt.cast<AssignStmt>()) {
-        auto *slot = scope.getSlotValue(assign->lhs);
-        auto *value = emit(scope, assign->rhs);
+        auto *slot = scope.getSlotValue(assign->getName());
+        auto *value = emit(scope, assign->getValue());
         ir.CreateStore(value, slot);
     } else if (auto *while_ = stmt.cast<WhileStmt>()) {
         emitWhileStmt(function, scope, *while_);
@@ -621,7 +615,7 @@ void
 Emitter::gatherSlotNames(Stmt const &stmt, std::set<std::string const> &names)
 {
     if (auto *assign = stmt.cast<AssignStmt>()) {
-        names.insert(assign->lhs);
+        names.insert(assign->getName());
     } else if (auto *def = stmt.cast<DefStmt>()) {
         names.insert(def->getName());
     } else if (auto *compound = stmt.cast<CompoundStmt>()) {
@@ -652,7 +646,7 @@ Emitter::zeroInitialiseSlots(
         || body.isa<ReturnStmt>()) {
         // Ignore.
     } else if (auto *assign = body.cast<AssignStmt>()) {
-        zeroInitialiseSlot(assign->lhs, scope, frameType, frameAlloca);
+        zeroInitialiseSlot(assign->getName(), scope, frameType, frameAlloca);
     } else if (auto *def = body.cast<DefStmt>()) {
         zeroInitialiseSlot(def->getName(), scope, frameType, frameAlloca);
     } else if (auto *compound = body.cast<CompoundStmt>()) {

@@ -32,13 +32,6 @@ Token::getString() const
     return *str;
 }
 
-std::unique_ptr<std::string const>
-Token::releaseString()
-{
-    assert(str);
-    return std::move(str);
-}
-
 size_t
 Token::getDepth() const
 {

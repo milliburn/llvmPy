@@ -83,8 +83,6 @@ public:
 
     std::string const &getString() const;
 
-    std::unique_ptr<std::string const> releaseString();
-
     size_t getDepth() const;
 
 private:

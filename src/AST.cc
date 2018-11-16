@@ -103,7 +103,7 @@ IdentExpr::toStream(std::ostream &s) const
     s << getName();
 }
 
-LambdaExpr::LambdaExpr(std::shared_ptr<Expr> expr)
+LambdaExpr::LambdaExpr(std::shared_ptr<Expr> const &expr)
 : expr(expr)
 {
 }
@@ -182,7 +182,7 @@ ExprStmt::toStream(std::ostream &s) const
 void
 AssignStmt::toStream(std::ostream &s) const
 {
-    s << *name << " = " << *value << endl;
+    s << getName() << " = " << getValue() << endl;
 }
 
 void
@@ -210,7 +210,7 @@ DefStmt::toStream(std::ostream &s) const
 void
 ReturnStmt::toStream(std::ostream &s) const
 {
-    s << "return " << *expr << endl;
+    s << "return " << getExpr() << endl;
 }
 
 std::ostream &
@@ -436,8 +436,8 @@ DefStmt::DefStmt(
 {
 }
 
-ReturnStmt::ReturnStmt(std::unique_ptr<Expr const> expr)
-: expr(std::move(expr))
+ReturnStmt::ReturnStmt(std::shared_ptr<Expr const> const &expr)
+: expr(expr)
 {
 }
 
@@ -447,10 +447,10 @@ ReturnStmt::getExpr() const
     return *expr;
 }
 
-std::unique_ptr<Expr const>
-ReturnStmt::releaseExpr()
+std::shared_ptr<Expr const> const &
+ReturnStmt::getExprPtr() const
 {
-    return std::move(expr);
+    return expr;
 }
 
 Expr::Expr() = default;
@@ -497,25 +497,29 @@ ContinueStmt::toStream(std::ostream &s) const
 }
 
 AssignStmt::AssignStmt(
-        std::unique_ptr<std::string const> name,
-        std::unique_ptr<Expr const> value)
-: name(std::move(name)),
-  value(std::move(value)),
-  lhs(getName()),
-  rhs(getValue())
+        std::string const &name,
+        std::shared_ptr<Expr const> const &value)
+: name(name),
+  value(value)
 {
 }
 
 std::string const &
 AssignStmt::getName() const
 {
-    return *name;
+    return name;
 }
 
 Expr const &
 AssignStmt::getValue() const
 {
     return *value;
+}
+
+std::shared_ptr<Expr const> const &
+AssignStmt::getValuePtr() const
+{
+    return value;
 }
 
 std::string const &
@@ -540,4 +544,10 @@ void
 DefStmt::addArgument(std::string const &name)
 {
     args.emplace_back(name);
+}
+
+std::shared_ptr<Expr const> const &
+LambdaExpr::getExprPtr() const
+{
+    return expr;
 }

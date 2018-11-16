@@ -71,13 +71,15 @@ private:
 
 class LambdaExpr final : public Expr {
 public:
-    explicit LambdaExpr(std::shared_ptr<Expr> expr);
+    explicit LambdaExpr(std::shared_ptr<Expr> const &expr);
 
     void toStream(std::ostream &s) const override;
 
     std::vector<std::string const> const &getArguments() const;
 
     Expr const &getExpr() const;
+
+    std::shared_ptr<Expr const> const &getExprPtr() const;
 
     void addArgument(std::string const &argument);
 
@@ -177,8 +179,8 @@ public:
 class AssignStmt final : public Stmt {
 public:
     AssignStmt(
-            std::unique_ptr<std::string const> name,
-            std::unique_ptr<Expr const> value);
+            std::string const &name,
+            std::shared_ptr<Expr const> const &value);
 
     void toStream(std::ostream &s) const override;
 
@@ -186,14 +188,11 @@ public:
 
     Expr const &getValue() const;
 
+    std::shared_ptr<Expr const> const &getValuePtr() const;
+
 private:
-    std::unique_ptr<std::string const> name;
-    std::unique_ptr<Expr const> value;
-
-public:
-    std::string const & lhs;
-
-    Expr const & rhs;
+    std::string const name;
+    std::shared_ptr<Expr const> value;
 };
 
 class CompoundStmt;
@@ -222,16 +221,16 @@ private:
 
 class ReturnStmt final : public Stmt {
 public:
-    explicit ReturnStmt(std::unique_ptr<Expr const> expr);
+    explicit ReturnStmt(std::shared_ptr<Expr const> const &expr);
 
     void toStream(std::ostream &s) const override;
 
     Expr const &getExpr() const;
 
-    std::unique_ptr<Expr const> releaseExpr();
+    std::shared_ptr<Expr const> const &getExprPtr() const;
 
 private:
-    std::unique_ptr<Expr const> expr;
+    std::shared_ptr<Expr const> expr;
 };
 
 class CompoundStmt final : public Stmt {

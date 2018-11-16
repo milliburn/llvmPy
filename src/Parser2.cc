@@ -624,10 +624,9 @@ Parser2::findAssignStatement()
             next();
             auto *expr = readExpr();
             assert(expr);
-            auto name = nameToken.releaseString();
             return new AssignStmt(
-                    std::move(name),
-                    std::unique_ptr<Expr const>(expr));
+                    nameToken.getString(),
+                    std::shared_ptr<Expr const>(expr));
         } else {
             back();
             return nullptr;
