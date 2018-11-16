@@ -365,7 +365,7 @@ Parser2::buildCall(Expr *lhs, Expr *rhs)
     auto *call = new CallExpr(std::unique_ptr<Expr>(lhs));
 
     if (auto *tuple = rhs->cast<TupleExpr>()) {
-        for (auto &member : tuple->getMembers()) {
+        for (auto &member : tuple->releaseMembers()) {
             call->addArgument(std::move(member));
         }
 
@@ -480,29 +480,29 @@ Parser2::findLambdaExpression()
     if (is(kw_lambda)) {
         next();
 
-        std::vector<std::string const> argNames;
+        auto *argsSubExpr = readSubExpr();
 
-        Expr *argsSubExpr = readSubExpr();
+        assert(is(tok_colon));
+        next();
 
-        if (auto *tuple = argsSubExpr->cast<TupleExpr>()) {
+        auto *lambdaBody = readSubExpr();
+
+        auto *lambda = new LambdaExpr(std::unique_ptr<Expr>(lambdaBody));
+
+        if (auto const *tuple = argsSubExpr->cast<TupleExpr>()) {
             for (auto const &member : tuple->getMembers()) {
                 auto const &ident = member->as<IdentExpr>();
-                argNames.push_back(ident.getName());
+                lambda->addArgument(ident.getName());
             }
         } else if (auto *ident = argsSubExpr->cast<IdentExpr>()) {
-            argNames.push_back(ident->getName());
+            lambda->addArgument(ident->getName());
         } else {
             assert(false && "Invalid argument subexpression");
         }
 
         delete(argsSubExpr);
 
-        assert(is(tok_colon));
-        next();
-
-        Expr *lambdaBody = readSubExpr();
-
-        return new LambdaExpr(argNames, lambdaBody);
+        return lambda;
     } else {
         return nullptr;
     }
@@ -626,7 +626,7 @@ Parser2::findReturnStatement()
         next();
         auto *expr = readExpr();
         assert(expr);
-        return new ReturnStmt(*expr);
+        return new ReturnStmt(std::unique_ptr<Expr>(expr));
     } else {
         return nullptr;
     }

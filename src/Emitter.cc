@@ -197,14 +197,20 @@ Emitter::emit(RTScope &scope, LambdaExpr const &lambda)
 {
     RTModule &mod = scope.getModule();
 
-    auto stmt = std::make_unique<ReturnStmt>(lambda.expr);
+    auto stmt = std::make_unique<ReturnStmt>(
+            std::unique_ptr<Expr const>(
+                    &lambda.getExpr()));
 
     RTFunc *func =
             createFunction(
                     tags.Lambda,
                     scope,
                     *stmt,
-                    lambda.args);
+                    lambda.getArguments());
+
+    // Ensure that the ReturnStmt going out of scope will not delete memory
+    // owned by the LambdaExpr.
+    stmt->releaseExpr();
 
     llvm::Value *innerFramePtrBitCast =
             ir.CreateBitCast(
@@ -531,7 +537,7 @@ Emitter::emitStatement(
     } else if (auto *expr = stmt.cast<ExprStmt>()) {
         emit(scope, expr->expr);
     } else if (auto *ret = stmt.cast<ReturnStmt>()) {
-        auto *value = emit(scope, ret->expr);
+        auto *value = emit(scope, ret->getExpr());
         ir.CreateRet(value);
     } else if (auto *def = stmt.cast<DefStmt>()) {
         auto *value = emit(scope, *def);

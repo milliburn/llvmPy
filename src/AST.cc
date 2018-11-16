@@ -104,9 +104,27 @@ IdentExpr::toStream(std::ostream &s) const
     s << getName();
 }
 
-LambdaExpr::LambdaExpr(std::vector<std::string const> const args, Expr *body)
-: args(std::move(args)), expr(*body)
+LambdaExpr::LambdaExpr(std::unique_ptr<Expr> body)
+: expr(std::move(body))
 {
+}
+
+std::vector<std::string const> const &
+LambdaExpr::getArguments() const
+{
+    return args;
+}
+
+void
+LambdaExpr::addArgument(std::string const &name)
+{
+    args.push_back(name);
+}
+
+Expr const &
+LambdaExpr::getExpr() const
+{
+    return *expr;
 }
 
 void
@@ -119,7 +137,7 @@ LambdaExpr::toStream(std::ostream &s) const
         s << ' ' << args[i];
     }
 
-    s << ": " << expr << ')';
+    s << ": " << getExpr() << ')';
 }
 
 BinaryExpr::BinaryExpr(Expr *lhs, TokenType op, Expr *rhs)
@@ -180,7 +198,7 @@ DefStmt::toStream(std::ostream &s) const
 void
 ReturnStmt::toStream(std::ostream &s) const
 {
-    s << "return " << expr << endl;
+    s << "return " << *expr << endl;
 }
 
 std::ostream &
@@ -257,8 +275,8 @@ TupleExpr::toStream(std::ostream &s) const
     s << ")";
 }
 
-std::vector<std::unique_ptr<Expr const>> &
-TupleExpr::getMembers()
+std::vector<std::unique_ptr<Expr const>> const &
+TupleExpr::getMembers() const
 {
     return members;
 }
@@ -410,9 +428,21 @@ DefStmt::DefStmt(
 {
 }
 
-ReturnStmt::ReturnStmt(Expr const &expr)
-: expr(expr)
+ReturnStmt::ReturnStmt(std::unique_ptr<Expr const> expr)
+: expr(std::move(expr))
 {
+}
+
+Expr const &
+ReturnStmt::getExpr() const
+{
+    return *expr;
+}
+
+std::unique_ptr<Expr const>
+ReturnStmt::releaseExpr()
+{
+    return std::move(expr);
 }
 
 Expr::Expr() = default;
@@ -480,12 +510,6 @@ AssignStmt::getValue() const
     return *value;
 }
 
-std::unique_ptr<std::string const>
-IdentExpr::releaseName()
-{
-    return std::move(name);
-}
-
 std::string const &
 DefStmt::getName() const
 {
@@ -502,4 +526,23 @@ CompoundStmt const &
 DefStmt::getBody() const
 {
     return *body;
+}
+
+std::vector<std::unique_ptr<Expr const>>
+TupleExpr::releaseMembers()
+{
+    decltype(members) result;
+    result.reserve(members.size());
+
+    for (auto &member : members) {
+        result.push_back(std::move(member));
+    }
+
+    return result;
+}
+
+std::unique_ptr<Expr const>
+LambdaExpr::releaseExpr()
+{
+    return std::move(expr);
 }

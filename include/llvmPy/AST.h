@@ -65,24 +65,28 @@ public:
 
     std::string const &getName() const;
 
-    std::unique_ptr<std::string const> releaseName();
-
 private:
     std::unique_ptr<std::string const> name;
 };
 
 class LambdaExpr final : public Expr {
 public:
-    std::vector<std::string const> const args;
-
-    Expr const & expr;
-
-    explicit
-    LambdaExpr(
-            std::vector<std::string const> const args,
-            Expr * body);
+    explicit LambdaExpr(std::unique_ptr<Expr> expr);
 
     void toStream(std::ostream &s) const override;
+
+    std::vector<std::string const> const &getArguments() const;
+
+    Expr const &getExpr() const;
+
+    void addArgument(std::string const &name);
+
+    std::unique_ptr<Expr const> releaseExpr();
+
+private:
+    std::vector<std::string const> args;
+
+    std::unique_ptr<Expr const> expr;
 };
 
 class UnaryExpr final : public Expr {
@@ -149,9 +153,11 @@ public:
     void toStream(std::ostream &s) const override;
 
 public:
-    std::vector<std::unique_ptr<Expr const>> &getMembers();
+    std::vector<std::unique_ptr<Expr const>> const &getMembers() const;
 
     void addMember(std::unique_ptr<Expr> member);
+
+    std::vector<std::unique_ptr<Expr const>> releaseMembers();
 
 private:
     std::vector<std::unique_ptr<Expr const>> members;
@@ -216,11 +222,16 @@ private:
 
 class ReturnStmt final : public Stmt {
 public:
-    Expr const &expr;
-
-    explicit ReturnStmt(Expr const &expr);
+    explicit ReturnStmt(std::unique_ptr<Expr const> expr);
 
     void toStream(std::ostream &s) const override;
+
+    Expr const &getExpr() const;
+
+    std::unique_ptr<Expr const> releaseExpr();
+
+private:
+    std::unique_ptr<Expr const> expr;
 };
 
 class CompoundStmt final : public Stmt {
