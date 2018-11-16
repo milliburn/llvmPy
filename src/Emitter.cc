@@ -292,19 +292,9 @@ RTFunc *
 Emitter::createFunction(
         std::string const &name,
         RTScope &outerScope,
-        Stmt const &stmt_,
+        Stmt const &stmt,
         std::vector<std::string const> const &args)
 {
-    // TODO: Fix this temporary adapter.
-    std::vector<Stmt const *> stmts;
-    if (auto *compound = stmt_.cast<CompoundStmt>()) {
-        for (auto const &stmt : compound->getStatements()) {
-            stmts.push_back(stmt.get());
-        }
-    } else {
-        stmts.push_back(&stmt_);
-    }
-
     RTModule &mod = outerScope.getModule();
 
     // Names of slots in the frame.
@@ -361,7 +351,7 @@ Emitter::createFunction(
     llvm::BasicBlock *init = &function->getEntryBlock();
     llvm::BasicBlock *prog = init;
 
-    gatherSlotNames(stmt_, slotNames);
+    gatherSlotNames(stmt, slotNames);
 
     ir.SetInsertPoint(init);
 
@@ -440,7 +430,7 @@ Emitter::createFunction(
     // as a sentinel to detect use before set.
 
     zeroInitialiseSlots(
-            stmt_,
+            stmt,
             *innerScope,
             init,
             innerFrameType,
@@ -450,9 +440,7 @@ Emitter::createFunction(
 
     ir.SetInsertPoint(prog);
 
-    for (auto *stmt : stmts) {
-        emitStatement(*function, *innerScope, *stmt, nullptr);
-    }
+    emitStatement(*function, *innerScope, stmt, nullptr);
 
     if (!lastInstructionWasTerminator()) {
         ir.CreateRet(mod.llvmPy_None());
