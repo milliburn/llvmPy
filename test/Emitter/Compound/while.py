@@ -17,4 +17,4 @@ while x < 10:
 # CHECK-LABEL: endwhile:
 print(x)
 # CHECK: @llvmPy_print(
-# CHECK: ret %PyObj* @llvmPy_None
+

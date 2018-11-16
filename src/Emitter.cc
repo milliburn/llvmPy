@@ -494,11 +494,7 @@ Emitter::createFunction(
         emitStatement(*function, *innerScope, *stmt, nullptr);
     }
 
-    if (!llvm::isa<llvm::ReturnInst>(ir.GetInsertBlock()->back())) {
-        // Provide a default return value for functions that don't provide one.
-        // The optimizer should eliminate this if it's unreachable.
-        // TODO: Apparently having some functions end with two rets causes
-        // TODO: issues at runtime; hence the instruction check.
+    if (!lastInstructionWasTerminator()) {
         ir.CreateRet(mod.llvmPy_None());
     }
 
@@ -539,12 +535,18 @@ Emitter::emitCondStmt(
     thenBB->insertInto(&function);
     ir.SetInsertPoint(thenBB);
     emitStatement(function, scope, cond.getThenBranch(), loop);
-    ir.CreateBr(endifBB);
+
+    if (!lastInstructionWasTerminator()) {
+        ir.CreateBr(endifBB);
+    }
 
     elseBB->insertInto(&function);
     ir.SetInsertPoint(elseBB);
     emitStatement(function, scope, cond.getElseBranch(), loop);
-    ir.CreateBr(endifBB);
+
+    if (!lastInstructionWasTerminator()) {
+        ir.CreateBr(endifBB);
+    }
 
     endifBB->insertInto(&function);
     ir.SetInsertPoint(endifBB);
@@ -557,6 +559,11 @@ Emitter::emitStatement(
         Stmt const &stmt,
         Loop const *loop)
 {
+    if (lastInstructionWasTerminator()) {
+        // No way for control to flow here.
+        return;
+    }
+
     if (auto *compound = stmt.cast<CompoundStmt>()) {
         for (auto const &innerStmt : compound->getStatements()) {
             emitStatement(function, scope, *innerStmt, loop);
@@ -579,6 +586,10 @@ Emitter::emitStatement(
         ir.CreateStore(value, slot);
     } else if (auto *while_ = stmt.cast<WhileStmt>()) {
         emitWhileStmt(function, scope, *while_);
+    } else if (stmt.isa<BreakStmt>()) {
+        emitBreakStmt(loop);
+    } else if (stmt.isa<ContinueStmt>()) {
+        emitContinueStmt(loop);
     } else {
         assert(false);
     }
@@ -611,8 +622,31 @@ Emitter::emitWhileStmt(
     loopBB->insertInto(&function);
     ir.SetInsertPoint(loopBB);
     emitStatement(function, scope, stmt.getBody(), &loop);
-    ir.CreateBr(condBB);
+
+    if (!lastInstructionWasTerminator()) {
+        ir.CreateBr(condBB);
+    }
 
     endwhileBB->insertInto(&function);
     ir.SetInsertPoint(endwhileBB);
+}
+
+void
+Emitter::emitBreakStmt(Emitter::Loop const *loop)
+{
+    assert(loop);
+    ir.CreateBr(loop->end);
+}
+
+void
+Emitter::emitContinueStmt(Emitter::Loop const *loop)
+{
+    assert(loop);
+    ir.CreateBr(loop->cond);
+}
+
+bool
+Emitter::lastInstructionWasTerminator() const
+{
+    return ir.GetInsertBlock()->back().isTerminator();
 }

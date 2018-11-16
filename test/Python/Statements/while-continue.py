@@ -9,6 +9,7 @@ while True:
         continue
     print("Break")
     break
+    x = 5
 print("End")
 
 # CHECK-LABEL: Start

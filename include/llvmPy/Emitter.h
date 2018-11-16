@@ -56,6 +56,9 @@ public:
             RTScope &scope,
             WhileStmt const &stmt);
 
+    void emitBreakStmt(Loop const *loop);
+    void emitContinueStmt(Loop const *loop);
+
     RTModule *createModule(std::string const &name, Stmt const &stmt);
     RTModule *createModule(std::string const &name);
 
@@ -70,6 +73,8 @@ private:
     llvm::LLVMContext &ctx;
     llvm::IRBuilder<> ir;
     Types const types;
+
+    bool lastInstructionWasTerminator() const;
 };
 
 } // namespace llvmPy
