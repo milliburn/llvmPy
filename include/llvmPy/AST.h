@@ -91,7 +91,7 @@ private:
 
 class UnaryExpr final : public Expr {
 public:
-    UnaryExpr(TokenType op, std::unique_ptr<Expr> expr);
+    UnaryExpr(TokenType op, std::shared_ptr<Expr const> const &expr);
 
     void toStream(std::ostream &s) const override;
 
@@ -101,18 +101,28 @@ public:
 
 private:
     TokenType const op;
-    std::unique_ptr<Expr> const expr;
+    std::shared_ptr<Expr const> expr;
 };
 
 class BinaryExpr final : public Expr {
 public:
-    Expr const & lhs;
-    TokenType const op;
-    Expr const & rhs;
-
-    BinaryExpr(Expr * lhs, TokenType op, Expr * rhs);
+    BinaryExpr(
+            std::shared_ptr<Expr const> const &lhs,
+            TokenType op,
+            std::shared_ptr<Expr const> const &rhs);
 
     void toStream(std::ostream &s) const override;
+
+    Expr const &getLeftOperand() const;
+
+    Expr const &getRightOperand() const;
+
+    TokenType getOperator() const;
+
+private:
+    std::shared_ptr<Expr const> lhs;
+    std::shared_ptr<Expr const> rhs;
+    TokenType const op;
 };
 
 class CallExpr final : public Expr {

@@ -144,15 +144,38 @@ LambdaExpr::toStream(std::ostream &s) const
     s << ": " << getExpr() << ')';
 }
 
-BinaryExpr::BinaryExpr(Expr *lhs, TokenType op, Expr *rhs)
-: lhs(*lhs), op(op), rhs(*rhs)
+BinaryExpr::BinaryExpr(
+        std::shared_ptr<Expr const> const &lhs,
+        TokenType op,
+        std::shared_ptr<Expr const> const &rhs)
+: lhs(lhs), rhs(rhs), op(op)
 {
 }
 
 void
 BinaryExpr::toStream(std::ostream &s) const
 {
-    s << '(' << lhs << ' ' << Token(op) << ' ' << rhs << ')';
+    s << '(' << getLeftOperand()
+      << ' ' << Token(getOperator())
+      << ' ' << getRightOperand() << ')';
+}
+
+Expr const &
+BinaryExpr::getLeftOperand() const
+{
+    return *lhs;
+}
+
+Expr const &
+BinaryExpr::getRightOperand() const
+{
+    return *rhs;
+}
+
+TokenType
+BinaryExpr::getOperator() const
+{
+    return op;
 }
 
 void
@@ -316,8 +339,8 @@ TokenExpr::getTokenType() const
     return tokenType;
 }
 
-UnaryExpr::UnaryExpr(TokenType op, std::unique_ptr<Expr> expr)
-: op(op), expr(std::move(expr))
+UnaryExpr::UnaryExpr(TokenType op, std::shared_ptr<Expr const> const &expr)
+: op(op), expr(expr)
 {
 }
 

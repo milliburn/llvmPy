@@ -167,7 +167,11 @@ Parser2::readExpr(int lastPrec, Expr *lhs)
                 rhs = readExpr(precedence, rhs);
                 assert(rhs);
 
-                auto *binary = new BinaryExpr(lhs, op->getTokenType(), rhs);
+                auto *binary = new BinaryExpr(
+                        std::shared_ptr<Expr>(lhs),
+                        op->getTokenType(),
+                        std::shared_ptr<Expr>(rhs));
+
                 return readExpr(lastPrec, binary);
 
             }
@@ -204,7 +208,7 @@ Parser2::readExpr(int lastPrec, Expr *lhs)
             assert(operand);
             auto *unary = new UnaryExpr(
                     op->getTokenType(),
-                    std::unique_ptr<Expr>(operand));
+                    std::shared_ptr<Expr>(operand));
             return readExpr(lastPrec, unary);
 
         } else if (auto *atomic = readAtomicExpr()) {

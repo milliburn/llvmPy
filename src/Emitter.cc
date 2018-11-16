@@ -267,12 +267,12 @@ llvm::Value *
 Emitter::emit(RTScope &scope, BinaryExpr const &expr)
 {
     RTModule &mod = scope.getModule();
-    auto *lhs = emit(scope, expr.lhs);
-    auto *rhs = emit(scope, expr.rhs);
+    auto *lhs = emit(scope, expr.getLeftOperand());
+    auto *rhs = emit(scope, expr.getRightOperand());
 
     llvm::Value *f;
 
-    switch (expr.op) {
+    switch (expr.getOperator()) {
     case tok_add: f = mod.llvmPy_add(); break;
     case tok_sub: f = mod.llvmPy_sub(); break;
     case tok_mul: f = mod.llvmPy_mul(); break;
