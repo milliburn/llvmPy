@@ -81,7 +81,7 @@ Lexer::tokenize(std::vector<Token> & out)
         if (ident()) continue;
     }
 
-    out = tokens;
+    out = std::move(tokens);
     return true;
 }
 
@@ -118,20 +118,20 @@ Lexer::isEof()
 void
 Lexer::add(Token token)
 {
-    if (token.type == tok_eol) {
+    if (token.getTokenType() == tok_eol) {
         // Ignore empty lines at start of file.
         if (tokens.empty()) return;
 
         // Ignore empty lines in the middle of the file.
-        if (tokens.back().type == tok_eol) return;
-    } else if (token.type == tok_eof) {
+        if (tokens.back().getTokenType() == tok_eol) return;
+    } else if (token.getTokenType() == tok_eof) {
         // Ignore empty lines at end of file.
-        if (!tokens.empty() && tokens.back().type == tok_eol) {
+        if (!tokens.empty() && tokens.back().getTokenType() == tok_eol) {
             tokens.pop_back();
         }
     }
 
-    tokens.emplace_back(move(token));
+    tokens.emplace_back(std::move(token));
 }
 
 void
@@ -285,7 +285,10 @@ Lexer::numlit()
         while (oneof(isnumber, ss));
     }
 
-    add(Token(tok_number, new string(ss.str())));
+    add(Token(
+            tok_number,
+            std::make_unique<std::string>(ss.str())));
+
     return true;
 }
 
@@ -315,7 +318,11 @@ Lexer::strlit()
         }
     } while (true);
 
-    add(Token(tok_string, new string(ss.str())));
+    add(Token(
+            tok_number,
+            std::make_unique<std::string>(ss.str())));
+
+
     return true;
 }
 
@@ -329,12 +336,12 @@ Lexer::ident()
 
     while (oneof(isalnum) || is('_'));
 
-    string s(&buf[start], ibuf - start);
+    auto str = std::make_unique<std::string>(&buf[start], ibuf - start);
 
-    if (auto kw = getKeyword(s)) {
+    if (auto kw = getKeyword(*str)) {
         add(Token(kw));
     } else {
-        add(Token(tok_ident, new string(move(s))));
+        add(Token(tok_number, std::move(str)));
     }
 
     return true;
