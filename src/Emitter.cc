@@ -276,6 +276,7 @@ Emitter::emit(RTScope &scope, BinaryExpr const &expr)
 
     switch (expr.op) {
     case tok_add: f = mod.llvmPy_add(); break;
+    case tok_sub: f = mod.llvmPy_sub(); break;
     case tok_mul: f = mod.llvmPy_mul(); break;
     case tok_lt: f = mod.llvmPy_lt(); break;
     case tok_lte: f = mod.llvmPy_le(); break;

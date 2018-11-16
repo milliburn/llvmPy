@@ -62,6 +62,12 @@ RTModule::llvmPy_add() const
 }
 
 llvm::Value *
+RTModule::llvmPy_sub() const
+{
+    return ir.getOrInsertFunction("llvmPy_sub", types.llvmPy_sub);
+}
+
+llvm::Value *
 RTModule::llvmPy_mul() const
 {
     return ir.getOrInsertFunction("llvmPy_mul", types.llvmPy_binop);

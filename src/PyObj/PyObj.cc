@@ -22,16 +22,22 @@ PyObj::py__bool__()
     return true;
 }
 
-PyObj &
+PyObj *
 PyObj::py__add__(PyObj &rhs)
 {
-    return PyNone::get();
+    return &PyNone::get();
 }
 
-PyObj &
+PyObj *
+PyObj::py__sub__(PyObj &rhs)
+{
+    return &PyNone::get();
+}
+
+PyObj *
 PyObj::py__mul__(PyObj &rhs)
 {
-    return PyNone::get();
+    return &PyNone::get();
 }
 
 bool

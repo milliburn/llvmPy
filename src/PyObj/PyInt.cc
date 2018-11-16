@@ -19,20 +19,28 @@ PyInt::py__str__()
     return std::to_string(value);
 }
 
-PyObj &
+PyObj *
 PyInt::py__add__(PyObj &rhs)
 {
     int64_t lv = getValue();
     int64_t rv = rhs.as<PyInt>().getValue();
-    return *new PyInt(lv + rv);
+    return new PyInt(lv + rv);
 }
 
-PyObj &
+PyObj *
+PyInt::py__sub__(PyObj &rhs)
+{
+    int64_t lv = getValue();
+    int64_t rv = rhs.as<PyInt>().getValue();
+    return new PyInt(lv - rv);
+}
+
+PyObj *
 PyInt::py__mul__(PyObj &rhs)
 {
     int64_t lv = getValue();
     int64_t rv = rhs.as<PyInt>().getValue();
-    return *new PyInt(lv * rv);
+    return new PyInt(lv * rv);
 }
 
 int
