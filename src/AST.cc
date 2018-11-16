@@ -104,21 +104,21 @@ IdentExpr::toStream(std::ostream &s) const
     s << getName();
 }
 
-LambdaExpr::LambdaExpr(std::unique_ptr<Expr> body)
-: expr(std::move(body))
+LambdaExpr::LambdaExpr(std::shared_ptr<Expr> expr)
+: expr(expr)
 {
 }
 
-std::vector<std::string const> const &
+std::vector<std::shared_ptr<std::string const>> const &
 LambdaExpr::getArguments() const
 {
-    return args;
+    return arguments;
 }
 
 void
-LambdaExpr::addArgument(std::string const &name)
+LambdaExpr::addArgument(std::shared_ptr<std::string const> name)
 {
-    args.push_back(name);
+    arguments.emplace_back(name);
 }
 
 Expr const &
@@ -132,9 +132,9 @@ LambdaExpr::toStream(std::ostream &s) const
 {
     s << "(lambda";
 
-    for (int i = 0; i < args.size(); ++i) {
+    for (int i = 0; i < arguments.size(); ++i) {
         if (i > 0) s << ',';
-        s << ' ' << args[i];
+        s << ' ' << *arguments[i];
     }
 
     s << ": " << getExpr() << ')';
@@ -155,8 +155,6 @@ void
 CallExpr::toStream(std::ostream &s) const
 {
     s << getCallee() << '(';
-
-    auto const &args = getArguments();
 
     int iArg = 0;
     for (auto const &arg : getArguments()) {
@@ -231,19 +229,9 @@ StringExpr::getValue() const
     return *value;
 }
 
-CallExpr::CallExpr(
-        std::unique_ptr<Expr> callee,
-        std::unique_ptr<Expr> arguments)
-: callee(std::move(callee))
+CallExpr::CallExpr(std::shared_ptr<Expr> const &callee)
+: callee(callee)
 {
-    if (auto *tuple = arguments->cast<TupleExpr>()) {
-        this->arguments.reserve(tuple->getMembers().size());
-        for (auto const &member : tuple->getMembers()) {
-            this->arguments.push_back(std::make_unique<Expr const>(*member));
-        }
-    } else {
-        this->arguments.push_back(std::make_unique<Expr const>(*arguments));
-    }
 }
 
 Expr const &
@@ -252,10 +240,16 @@ CallExpr::getCallee() const
     return *callee;
 }
 
-std::vector<std::unique_ptr<Expr const>> const &
+std::vector<std::shared_ptr<Expr const>> const &
 CallExpr::getArguments() const
 {
     return arguments;
+}
+
+void
+CallExpr::addArgument(std::shared_ptr<Expr const> argument)
+{
+    arguments.emplace_back(argument);
 }
 
 TupleExpr::TupleExpr()
@@ -284,22 +278,21 @@ TupleExpr::toStream(std::ostream &s) const
     s << ")";
 }
 
-std::vector<std::unique_ptr<Expr const>> const &
+std::vector<std::shared_ptr<Expr const>> const &
 TupleExpr::getMembers() const
 {
     return members;
 }
 
 void
-TupleExpr::addMember(std::unique_ptr<Expr> member)
+TupleExpr::addMember(std::shared_ptr<Expr> member)
 {
-    members.push_back(std::move(member));
+    members.emplace_back(member);
 }
 
 TokenExpr::TokenExpr(TokenType type)
 : tokenType(type)
 {
-
 }
 
 void

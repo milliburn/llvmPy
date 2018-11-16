@@ -175,9 +175,16 @@ Parser2::readExpr(int lastPrec, Expr *lhs)
         } else if (is(tok_lp)) {
 
             auto *args = readSubExpr();
-            auto *call = new CallExpr(
-                    std::unique_ptr<Expr>(lhs),
-                    std::unique_ptr<Expr>(args));
+            auto *call = new CallExpr(std::shared_ptr<Expr>(lhs));
+
+            if (auto *tuple = args->cast<TupleExpr>()) {
+                for (auto const &member : tuple->getMembers()) {
+                    call->addArgument(member);
+                }
+            } else {
+                call->addArgument(std::shared_ptr<Expr>(args));
+            }
+
             return readExpr(lastPrec, call);
 
         } else {
@@ -471,15 +478,17 @@ Parser2::findLambdaExpression()
 
         auto *lambdaBody = readSubExpr();
 
-        auto *lambda = new LambdaExpr(std::unique_ptr<Expr>(lambdaBody));
+        auto *lambda = new LambdaExpr(std::shared_ptr<Expr>(lambdaBody));
 
         if (auto const *tuple = argsSubExpr->cast<TupleExpr>()) {
             for (auto const &member : tuple->getMembers()) {
                 auto const &ident = member->as<IdentExpr>();
-                lambda->addArgument(ident.getName());
+                lambda->addArgument(std::make_shared<std::string>(
+                        ident.getName()));
             }
         } else if (auto *ident = argsSubExpr->cast<IdentExpr>()) {
-            lambda->addArgument(ident->getName());
+            lambda->addArgument(std::make_shared<std::string>(
+                    ident->getName()));
         } else {
             assert(false && "Invalid argument subexpression");
         }

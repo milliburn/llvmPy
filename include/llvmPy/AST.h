@@ -71,22 +71,20 @@ private:
 
 class LambdaExpr final : public Expr {
 public:
-    explicit LambdaExpr(std::unique_ptr<Expr> expr);
+    explicit LambdaExpr(std::shared_ptr<Expr> expr);
 
     void toStream(std::ostream &s) const override;
 
-    std::vector<std::string const> const &getArguments() const;
+    std::vector<std::shared_ptr<std::string const>> const &getArguments() const;
 
     Expr const &getExpr() const;
 
-    void addArgument(std::string const &name);
-
-    std::unique_ptr<Expr const> releaseExpr();
+    void addArgument(std::shared_ptr<std::string const> argument);
 
 private:
-    std::vector<std::string const> args;
+    std::vector<std::shared_ptr<std::string const>> arguments;
 
-    std::unique_ptr<Expr const> expr;
+    std::shared_ptr<Expr const> expr;
 };
 
 class UnaryExpr final : public Expr {
@@ -117,21 +115,21 @@ public:
 
 class CallExpr final : public Expr {
 public:
-    explicit CallExpr(
-            std::unique_ptr<Expr> callee,
-            std::unique_ptr<Expr> arguments);
+    explicit CallExpr(std::shared_ptr<Expr> const &callee);
 
     void toStream(std::ostream &s) const override;
 
 public:
     Expr const &getCallee() const;
 
-    std::vector<std::unique_ptr<Expr const>> const &getArguments() const;
+    std::vector<std::shared_ptr<Expr const>> const &getArguments() const;
+
+    void addArgument(std::shared_ptr<Expr const> argument);
 
 private:
-    std::unique_ptr<Expr const> callee;
+    std::shared_ptr<Expr const> callee;
 
-    std::vector<std::unique_ptr<Expr const>> arguments;
+    std::vector<std::shared_ptr<Expr const>> arguments;
 };
 
 class TokenExpr final : public Expr {
@@ -154,12 +152,12 @@ public:
     void toStream(std::ostream &s) const override;
 
 public:
-    std::vector<std::unique_ptr<Expr const>> const &getMembers() const;
+    std::vector<std::shared_ptr<Expr const>> const &getMembers() const;
 
-    void addMember(std::unique_ptr<Expr> member);
+    void addMember(std::shared_ptr<Expr> member);
 
 private:
-    std::vector<std::unique_ptr<Expr const>> members;
+    std::vector<std::shared_ptr<Expr const>> members;
 };
 
 class Stmt : public AST {
