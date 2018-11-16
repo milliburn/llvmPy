@@ -51,6 +51,15 @@ main(int argc, char **argv)
     } else if (Filename.getPosition()) {
         std::ifstream input;
         input.open(Filename, std::ios::in);
+
+        if (input.fail()) {
+            // File not found.
+            cerr << "Cannot open file '"
+                    << Filename << "': file not found."
+                    << endl;
+            exit(1);
+        }
+
         Lexer lexer(input);
         lexer.tokenize(tokens);
     } else {
