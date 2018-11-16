@@ -8,10 +8,10 @@ def fib(n):                             # PARSER-LABEL:def fib(n):
     elif n == 1:                        #  PARSER-NEXT:    elif (n == 1i):
         return 1                        #  PARSER-NEXT:        return 1i
     else:                               #  PARSER-NEXT:    else:
-        return fib(n - 1) + fib(n - 2)  #  PARSER-NEXT:        return (fib((n - 1i)) + fib((n - 2i))
+        return fib(n - 1) + fib(n - 2)  #  PARSER-NEXT:        return (fib((n - 1i)) + fib((n - 2i)))
 
 
-# PARSER-NEXT: print("Start")
+# PARSER-NEXT:print("Start")
 print("Start")      # CHECK-LABEL: Start
 print(fib(0))       #  CHECK-NEXT: 0
 print(fib(1))       #  CHECK-NEXT: 1
