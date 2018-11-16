@@ -380,19 +380,19 @@ Parser2::buildCall(Expr *lhs, Expr *rhs)
 bool
 Parser2::is(TokenType tokenType)
 {
-    return token().type == tokenType;
+    return token().getTokenType() == tokenType;
 }
 
 bool
 Parser2::is_a(TokenType tokenType)
 {
-    return token().type & tokenType;
+    return token().getTokenType() & tokenType;
 }
 
 bool
 Parser2::isEnd()
 {
-    return iter == iter_end || (*iter).type == tok_eof;
+    return iter == iter_end || iter->getTokenType() == tok_eof;
 }
 
 void
@@ -409,7 +409,7 @@ Parser2::back()
     iter--;
 }
 
-Token const &
+Token &
 Parser2::token() const
 {
     return *iter;
@@ -419,14 +419,14 @@ Expr *
 Parser2::findNumericLiteral()
 {
     if (is(tok_number)) {
-        std::string const *text = token().str;
+        auto const &text = token().getString();
         next();
 
-        if (text->find('.') != std::string::npos) {
-            double value = atof(text->c_str());
+        if (text.find('.') != std::string::npos) {
+            double value = atof(text.c_str());
             return new DecLitExpr(value);
         } else {
-            int64_t value = atol(text->c_str());
+            int64_t value = atol(text.c_str());
             return new IntLitExpr(value);
         }
     } else {
@@ -439,9 +439,9 @@ Parser2::findStringLiteral()
 {
     if (is(tok_string)) {
         // The substring removes string delimiters (" or ').
-        std::string const *str = token().str;
+        auto const &text = token().getString();
         auto value = std::make_unique<std::string const>(
-                str->substr(1, str->length() - 2));
+                text.substr(1, text.length() - 2));
         next();
         return new StrLitExpr(std::move(value));
     } else {
@@ -453,7 +453,8 @@ IdentExpr *
 Parser2::findIdentifier()
 {
     if (is(tok_ident)) {
-        auto *expr = new IdentExpr(token().str);
+        auto name = token().releaseString();
+        auto *expr = new IdentExpr(std::move(name));
         next();
         return expr;
     } else {
@@ -465,7 +466,7 @@ TokenExpr *
 Parser2::findOperator()
 {
     if (is_a(tok_oper)) {
-        TokenType tokenType = token().type;
+        TokenType tokenType = token().getTokenType();
         next();
         return new TokenExpr(tokenType);
     } else {
@@ -571,7 +572,7 @@ Parser2::readCompoundStatement(int outerIndent)
     // or otherwise `pass`.
 
     assert(is(tok_indent));
-    auto const innerIndent = static_cast<int>(token().depth);
+    auto const innerIndent = static_cast<int>(token().getDepth());
     assert(innerIndent > outerIndent);
 
     for (;;) {
@@ -580,7 +581,7 @@ Parser2::readCompoundStatement(int outerIndent)
         }
 
         assert(is(tok_indent));
-        auto const indent = static_cast<int>(token().depth);
+        auto const indent = static_cast<int>(token().getDepth());
         next();
 
         if (is(tok_eol)) {
@@ -628,14 +629,16 @@ AssignStmt *
 Parser2::findAssignStatement()
 {
     if (is(tok_ident)) {
-        auto const *name = token().str;
+        auto name = token().releaseString();
         next();
 
         if (is_a(tok_assign)) {
             next();
             auto *expr = readExpr();
             assert(expr);
-            return new AssignStmt(name, expr);
+            return new AssignStmt(
+                    std::move(name),
+                    std::unique_ptr<Expr const>(expr));
         } else {
             back();
             return nullptr;
@@ -665,7 +668,7 @@ void
 Parser2::expectIndent(int indent)
 {
     assert(is(tok_indent));
-    int const actual = static_cast<int>(token().depth);
+    int const actual = static_cast<int>(token().getDepth());
     assert(indent == actual && "Unexpected indent");
     next();
 }
@@ -735,7 +738,7 @@ bool
 Parser2::isAtIndent(TokenType const tokenType, int const indent)
 {
     if (is(tok_indent)) {
-        int const nextIndent = static_cast<int>(token().depth);
+        int const nextIndent = static_cast<int>(token().getDepth());
         next();
         if (nextIndent == indent && is(tokenType)) {
             return true;

@@ -59,13 +59,17 @@ private:
 
 class IdentExpr final : public Expr {
 public:
-    std::string const & name;
-
-    explicit IdentExpr(std::string const * str);
+    explicit IdentExpr(std::unique_ptr<std::string const> name);
 
     void toStream(std::ostream &s) const override;
 
     std::string const &getName() const;
+
+private:
+    std::unique_ptr<std::string const> name_;
+
+public:
+    std::string const & name;
 };
 
 class LambdaExpr final : public Expr {
@@ -170,13 +174,24 @@ public:
 
 class AssignStmt final : public Stmt {
 public:
+    AssignStmt(
+            std::unique_ptr<std::string const> name,
+            std::unique_ptr<Expr const> value);
+
+    void toStream(std::ostream &s) const override;
+
+    std::string const &getName() const;
+
+    Expr const &getValue() const;
+
+private:
+    std::unique_ptr<std::string const> name;
+    std::unique_ptr<Expr const> value;
+
+public:
     std::string const & lhs;
 
     Expr const & rhs;
-
-    AssignStmt(std::string const * lhs, Expr * rhs);
-
-    void toStream(std::ostream &s) const override;
 };
 
 class CompoundStmt;

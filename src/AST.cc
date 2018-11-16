@@ -86,21 +86,21 @@ IntLitExpr::toStream(std::ostream &s) const
     s << value << 'i';
 }
 
-IdentExpr::IdentExpr(std::string const *str)
-: name(*str)
+IdentExpr::IdentExpr(std::unique_ptr<std::string const> name)
+: name_(std::move(name)), name(*name_)
 {
 }
 
 std::string const &
 IdentExpr::getName() const
 {
-    return name;
+    return *name_;
 }
 
 void
 IdentExpr::toStream(std::ostream &s) const
 {
-    s << name;
+    s << getName();
 }
 
 LambdaExpr::LambdaExpr(std::vector<std::string const> const args, Expr *body)
@@ -399,11 +399,6 @@ ExprStmt::ExprStmt(Expr *expr)
 {
 }
 
-AssignStmt::AssignStmt(std::string const *lhs, Expr *rhs)
-: lhs(*lhs), rhs(*rhs)
-{
-}
-
 DefStmt::DefStmt(
         std::string const &name,
         std::vector<std::string const> args,
@@ -458,4 +453,26 @@ void
 ContinueStmt::toStream(std::ostream &s) const
 {
     s << "continue" << endl;
+}
+
+AssignStmt::AssignStmt(
+        std::unique_ptr<std::string const> name,
+        std::unique_ptr<Expr const> value)
+: name(std::move(name)),
+  value(std::move(value)),
+  lhs(*name),
+  rhs(*value)
+{
+}
+
+std::string const &
+AssignStmt::getName() const
+{
+    return *name;
+}
+
+Expr const &
+AssignStmt::getValue() const
+{
+    return *value;
 }

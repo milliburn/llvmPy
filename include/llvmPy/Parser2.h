@@ -60,7 +60,7 @@ protected:
 private:
     TTokenIter &iter;
     TTokenIter iter_end;
-    Token const &token() const;
+    Token &token() const;
 
     int getPrecedence(TokenType tokenType) const;
     int getPrecedence(TokenExpr *tokenExpr) const;

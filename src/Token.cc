@@ -42,6 +42,7 @@ Token::releaseString()
 size_t
 Token::getDepth() const
 {
+    assert(getTokenType() == tok_indent);
     return depth;
 }
 
