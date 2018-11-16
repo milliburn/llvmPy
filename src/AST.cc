@@ -199,7 +199,7 @@ CallExpr::toStream(std::ostream &s) const
 void
 ExprStmt::toStream(std::ostream &s) const
 {
-    s << expr << endl;
+    s << getExpr() << endl;
 }
 
 void
@@ -399,12 +399,12 @@ PassStmt::toStream(std::ostream &s) const
 }
 
 ConditionalStmt::ConditionalStmt(
-        std::unique_ptr<Expr> condition,
-        std::unique_ptr<Stmt> thenBranch,
-        std::unique_ptr<Stmt> elseBranch)
-: condition(std::move(condition)),
-  thenBranch(std::move(thenBranch)),
-  elseBranch(std::move(elseBranch))
+        std::shared_ptr<Expr const> const &condition,
+        std::shared_ptr<Stmt const> const &thenBranch,
+        std::shared_ptr<Stmt const> const &elseBranch)
+: condition(condition),
+  thenBranch(thenBranch),
+  elseBranch(elseBranch)
 {
     assert(this->condition);
     assert(this->thenBranch);
@@ -414,17 +414,17 @@ ConditionalStmt::ConditionalStmt(
 void
 ConditionalStmt::toStream(std::ostream &s) const
 {
-    s << "if " << *condition << ":" << endl;
-    indentToStream(s, *thenBranch, INDENT);
+    s << "if " << getCondition() << ":" << endl;
+    indentToStream(s, getThenBranch(), INDENT);
 
-    if (elseBranch->isa<ConditionalStmt>()) {
+    if (getElseBranch().isa<ConditionalStmt>()) {
         // XXX: This relies on toStream() not prepending anything, i.e. we get
         // XXX: the "el" from here and the "if" from the next toStream().
         s << "el";
-        s << *elseBranch;
-    } else if (!elseBranch->isa<PassStmt>()) {
+        s << getElseBranch();
+    } else if (!getElseBranch().isa<PassStmt>()) {
         s << "else:" << endl;
-        indentToStream(s, *elseBranch, INDENT);
+        indentToStream(s, getElseBranch(), INDENT);
     }
 }
 
@@ -446,9 +446,15 @@ ConditionalStmt::getElseBranch() const
     return *elseBranch;
 }
 
-ExprStmt::ExprStmt(Expr *expr)
-: expr(*expr)
+ExprStmt::ExprStmt(std::shared_ptr<Expr const> const &expr)
+: expr(expr)
 {
+}
+
+Expr const &
+ExprStmt::getExpr() const
+{
+    return *expr;
 }
 
 DefStmt::DefStmt(
@@ -481,18 +487,18 @@ Expr::Expr() = default;
 Stmt::Stmt() = default;
 
 WhileStmt::WhileStmt(
-        std::unique_ptr<Expr> condition,
-        std::unique_ptr<Stmt> body)
-: condition(std::move(condition)),
-  body(std::move(body))
+        std::shared_ptr<Expr const> const &condition,
+        std::shared_ptr<Stmt const> const &body)
+: condition(condition),
+  body(body)
 {
 }
 
 void
 WhileStmt::toStream(std::ostream &s) const
 {
-    s << "while " << *condition << ":" << endl;
-    indentToStream(s, *body, INDENT);
+    s << "while " << getCondition() << ":" << endl;
+    indentToStream(s, getBody(), INDENT);
 }
 
 Expr const &

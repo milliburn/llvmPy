@@ -529,7 +529,7 @@ Emitter::emitStatement(
             emitStatement(function, scope, *innerStmt, loop);
         }
     } else if (auto *expr = stmt.cast<ExprStmt>()) {
-        emit(scope, expr->expr);
+        emit(scope, expr->getExpr());
     } else if (auto *ret = stmt.cast<ReturnStmt>()) {
         auto *value = emit(scope, ret->getExpr());
         ir.CreateRet(value);

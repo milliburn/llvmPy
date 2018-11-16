@@ -179,11 +179,14 @@ protected:
 
 class ExprStmt final : public Stmt {
 public:
-    Expr const & expr;
-
-    explicit ExprStmt(Expr * expr);
+    explicit ExprStmt(std::shared_ptr<Expr const> const &expr);
 
     void toStream(std::ostream &s) const override;
+
+    Expr const &getExpr() const;
+
+private:
+    std::shared_ptr<Expr const> expr;
 };
 
 class AssignStmt final : public Stmt {
@@ -264,27 +267,31 @@ public:
 class ConditionalStmt final : public Stmt {
 public:
     ConditionalStmt(
-            std::unique_ptr<Expr> condition,
-            std::unique_ptr<Stmt> thenBranch,
-            std::unique_ptr<Stmt> elseBranch);
+            std::shared_ptr<Expr const> const &condition,
+            std::shared_ptr<Stmt const> const &thenBranch,
+            std::shared_ptr<Stmt const> const &elseBranch);
 
     void toStream(std::ostream &s) const override;
 
 public:
     Expr const &getCondition() const;
+
     Stmt const &getThenBranch() const;
+
     Stmt const &getElseBranch() const;
 
 private:
-    std::unique_ptr<Expr const> condition;
-    std::unique_ptr<Stmt const> thenBranch;
-    std::unique_ptr<Stmt const> elseBranch;
+    std::shared_ptr<Expr const> condition;
+    std::shared_ptr<Stmt const> thenBranch;
+    std::shared_ptr<Stmt const> elseBranch;
 };
 
 class WhileStmt final : public Stmt {
 public:
 
-    WhileStmt(std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> body);
+    WhileStmt(
+            std::shared_ptr<Expr const> const &condition,
+            std::shared_ptr<Stmt const> const &body);
 
     void toStream(std::ostream &s) const override;
 
@@ -293,8 +300,8 @@ public:
     Stmt const &getBody() const;
 
 private:
-    std::unique_ptr<Expr const> condition;
-    std::unique_ptr<Stmt const> body;
+    std::shared_ptr<Expr const> condition;
+    std::shared_ptr<Stmt const> body;
 };
 
 class BreakStmt final : public Stmt {

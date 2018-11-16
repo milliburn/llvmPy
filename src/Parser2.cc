@@ -328,7 +328,7 @@ Parser2::readSimpleStatement(int indent)
             (stmt = findBreakStmt()) ||
             (stmt = findContinueStmt())) {
         } else if (auto *expr = readExpr()) {
-            stmt = new ExprStmt(expr);
+            stmt = new ExprStmt(std::shared_ptr<Expr>(expr));
         } else {
             return nullptr;
         }
@@ -705,9 +705,9 @@ Parser2::findConditionalStatement(int outerIndent, bool elif)
         assert(elseBranch);
 
         auto *condStmt = new ConditionalStmt(
-                std::unique_ptr<Expr>(condition),
-                std::unique_ptr<Stmt>(thenBranch),
-                std::unique_ptr<Stmt>(elseBranch));
+                std::shared_ptr<Expr>(condition),
+                std::shared_ptr<Stmt>(thenBranch),
+                std::shared_ptr<Stmt>(elseBranch));
 
         return condStmt;
     } else {
@@ -761,8 +761,8 @@ Parser2::findWhileStmt(int outerIndent)
         assert(body);
 
         return new WhileStmt(
-                std::unique_ptr<Expr>(condition),
-                std::unique_ptr<Stmt>(body));
+                std::shared_ptr<Expr>(condition),
+                std::shared_ptr<Stmt>(body));
     } else {
         return nullptr;
     }
