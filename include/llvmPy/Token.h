@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <memory>
 
 #ifdef __cplusplus
 namespace llvmPy {
@@ -72,20 +73,26 @@ enum TokenType {
 
 class Token {
 public:
-    explicit Token(TokenType type)
-        : type(type), str(nullptr) {}
+    explicit Token(TokenType type);
 
-    Token(TokenType type, std::string const * const str)
-        : type(type), str(str) {}
+    Token(TokenType type, std::unique_ptr<std::string> str);
 
-    Token(TokenType type, long depth)
-        : type(type), depth(depth) {}
+    Token(TokenType type, size_t depth);
 
-    TokenType type;
-    union {
-        std::string const * str;
-        long depth;
-    };
+    TokenType getTokenType() const;
+
+    std::string const &getString() const;
+
+    std::unique_ptr<std::string const> releaseString();
+
+    size_t getDepth() const;
+
+private:
+    TokenType const type;
+
+    std::unique_ptr<std::string const> str;
+
+    size_t const depth;
 };
 
 } // namespace llvmPy
