@@ -156,7 +156,7 @@ ExprStmt::toStream(std::ostream &s) const
 void
 AssignStmt::toStream(std::ostream &s) const
 {
-    s << lhs << " = " << rhs << endl;
+    s << *name << " = " << *value << endl;
 }
 
 void
@@ -460,8 +460,8 @@ AssignStmt::AssignStmt(
         std::unique_ptr<Expr const> value)
 : name(std::move(name)),
   value(std::move(value)),
-  lhs(*name),
-  rhs(*value)
+  lhs(getName()),
+  rhs(getValue())
 {
 }
 

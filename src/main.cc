@@ -71,12 +71,12 @@ main(int argc, char **argv)
         int iTokenOnLine = 0;
         for (auto const &token : tokens) {
             if (iTokenOnLine > 0
-                    && token.type != tok_eol
-                    && token.type != tok_eof) {
+                    && token.getTokenType() != tok_eol
+                    && token.getTokenType() != tok_eof) {
                 cout << ' ';
             }
 
-            if (token.type == tok_eof) {
+            if (token.getTokenType() == tok_eof) {
                 // Right now EOF doesn't have a canonical representation.
                 cout << endl;
                 cout << ">EOF";
@@ -86,7 +86,7 @@ main(int argc, char **argv)
 
             iTokenOnLine += 1;
 
-            if (token.type == tok_eol) {
+            if (token.getTokenType() == tok_eol) {
                 iTokenOnLine = 0;
             }
         }

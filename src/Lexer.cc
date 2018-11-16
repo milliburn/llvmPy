@@ -319,7 +319,7 @@ Lexer::strlit()
     } while (true);
 
     add(Token(
-            tok_number,
+            tok_string,
             std::make_unique<std::string>(ss.str())));
 
 
@@ -341,7 +341,7 @@ Lexer::ident()
     if (auto kw = getKeyword(*str)) {
         add(Token(kw));
     } else {
-        add(Token(tok_number, std::move(str)));
+        add(Token(tok_ident, std::move(str)));
     }
 
     return true;
