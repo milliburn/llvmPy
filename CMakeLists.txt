@@ -51,6 +51,7 @@ add_library(
         src/PyObj/PyNone.cc
         src/PyObj/PyObj.cc
         src/PyObj/PyStr.cc
+        src/RT/RTScope.cc
         src/AST.cc
         src/Compiler.cc
         src/CompilerImpl.h

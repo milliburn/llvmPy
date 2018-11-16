@@ -39,11 +39,15 @@ public:
     std::unordered_map<std::string, llvm::Value *> slots;
 
 public:
-    RTModule &getModule() const { return module; }
-    bool hasParent() const { return parent != nullptr; }
+    RTModule &getModule() const;
+
+    bool hasParent() const;
+
     RTScope &getParent() const;
-    llvm::Value *getOuterFramePtr() const { return outerFramePtr; }
-    llvm::Value *getInnerFramePtr() const { return innerFramePtr; }
+
+    llvm::Value *getOuterFramePtr() const;
+
+    llvm::Value *getInnerFramePtr() const;
 
 private:
     RTModule &module;
