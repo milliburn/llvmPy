@@ -380,7 +380,7 @@ Emitter::createFunction(
     // Generate the frame.
     llvm::StructType *innerFrameType = types.getFrameN(slots.size());
     llvm::AllocaInst *innerFrameAlloca = ir.CreateAlloca(
-            innerFrameType, 0, tags.InnerFrame);
+            innerFrameType, nullptr, tags.InnerFrame);
 
     // Store the frame's self-pointer.
     llvm::Value *frameSelfPtrGEP =
@@ -441,46 +441,14 @@ Emitter::createFunction(
 
     // Zero-initialise the contents of assign statements. This will act
     // as a sentinel to detect use before set.
-    for (auto *stmt : stmts) {
-        // TODO: Remove code duplication.
-        if (auto *assign = stmt->cast<AssignStmt>()) {
-            ir.SetInsertPoint(init);
-            auto &ident = assign->lhs;
-            assert(slots.count(ident));
-            auto slotIndex = slots[ident];
-            llvm::Value *assignGEP = ir.CreateGEP(
-                    innerFrameType,
-                    innerFrameAlloca,
-                    { types.getInt64(0),
-                      types.getInt32(2),
-                      types.getInt64(slotIndex) },
-                    tags.Var + "_" + ident);
-            ir.CreateStore(llvm::Constant::getNullValue(types.Ptr), assignGEP);
 
-            // TODO: This would be invalidated if the pointer changes
-            // TODO: (i.e. if the callee's chain ends up lifting the frame
-            // TODO: to heap).
-            innerScope->slots[ident] = assignGEP;
-        } else if (auto *def = stmt->cast<DefStmt>()) {
-            ir.SetInsertPoint(init);
-            auto &ident = def->name;
-            assert(slots.count(ident));
-            auto slotIndex = slots[ident];
-            llvm::Value *assignGEP = ir.CreateGEP(
-                    innerFrameType,
-                    innerFrameAlloca,
-                    { types.getInt64(0),
-                      types.getInt32(2),
-                      types.getInt64(slotIndex) },
-                    tags.Var + "_" + ident);
-            ir.CreateStore(llvm::Constant::getNullValue(types.Ptr), assignGEP);
-
-            // TODO: This would be invalidated if the pointer changes
-            // TODO: (i.e. if the callee's chain ends up lifting the frame
-            // TODO: to heap).
-            innerScope->slots[ident] = assignGEP;
-        }
-    }
+    zeroInitialiseSlots(
+            stmt_,
+            *innerScope,
+            slots,
+            init,
+            innerFrameType,
+            innerFrameAlloca);
 
     // Successive statements may leave the emitter at a different insert point.
 
@@ -665,3 +633,72 @@ Emitter::gatherSlotNames(Stmt const &stmt, std::set<std::string const> &names)
         gatherSlotNames(loop->getBody(), names);
     }
 }
+
+void
+Emitter::zeroInitialiseSlots(
+        Stmt const &body,
+        RTScope &scope,
+        std::map<std::string, size_t> const &slots,
+        llvm::BasicBlock *insertPoint,
+        llvm::Type *frameType,
+        llvm::Value *frameAlloca)
+{
+    ir.SetInsertPoint(insertPoint);
+    if (body.isa<ExprStmt>()
+        || body.isa<PassStmt>()
+        || body.isa<BreakStmt>()
+        || body.isa<ContinueStmt>()
+        || body.isa<ReturnStmt>()) {
+        // Ignore.
+    } else if (auto *assign = body.cast<AssignStmt>()) {
+        zeroInitialiseSlot(assign->lhs, scope, slots, frameType, frameAlloca);
+    } else if (auto *def = body.cast<DefStmt>()) {
+        zeroInitialiseSlot(def->name, scope, slots, frameType, frameAlloca);
+    } else if (auto *compound = body.cast<CompoundStmt>()) {
+        for (auto const &stmt : compound->getStatements()) {
+            zeroInitialiseSlots(
+                    *stmt, scope, slots, insertPoint, frameType, frameAlloca);
+        }
+    } else if (auto *loop = body.cast<WhileStmt>()) {
+        zeroInitialiseSlots(
+                loop->getBody(),
+                scope, slots, insertPoint, frameType, frameAlloca);
+    } else if (auto *cond = body.cast<ConditionalStmt>()) {
+        zeroInitialiseSlots(
+                cond->getThenBranch(),
+                scope, slots, insertPoint, frameType, frameAlloca);
+        zeroInitialiseSlots(
+                cond->getElseBranch(),
+                scope, slots, insertPoint, frameType, frameAlloca);
+    } else {
+        assert(false && "Unhandled statement type");
+    }
+}
+
+void
+Emitter::zeroInitialiseSlot(
+        std::string const &name,
+        RTScope &scope,
+        std::map<std::string, size_t> const &slots,
+        llvm::Type *frameType,
+        llvm::Value *frameAlloca)
+{
+    assert(slots.count(name));
+    auto index = slots.at(name);
+
+    auto *assignGEP = ir.CreateGEP(
+            frameType,
+            frameAlloca,
+            { types.getInt64(0),
+              types.getInt32(2),
+              types.getInt64(index) },
+            tags.Var + "_" + name);
+
+    ir.CreateStore(llvm::Constant::getNullValue(types.Ptr), assignGEP);
+
+    // TODO: This would be invalidated if the pointer changes
+    // TODO: (i.e. if the callee's chain ends up lifting the frame
+    // TODO: to heap).
+    scope.slots[name] = assignGEP;
+}
+
