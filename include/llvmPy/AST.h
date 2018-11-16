@@ -208,12 +208,10 @@ private:
     std::shared_ptr<Expr const> value;
 };
 
-class CompoundStmt;
-
 class DefStmt final : public Stmt {
 public:
     DefStmt(std::string const &name,
-            std::unique_ptr<CompoundStmt> body);
+            std::shared_ptr<Stmt const> const &body);
 
     void toStream(std::ostream &s) const override;
 
@@ -224,12 +222,12 @@ public:
 
     void addArgument(std::string const &name);
 
-    CompoundStmt const &getBody() const;
+    Stmt const &getBody() const;
 
 private:
     std::string const name;
     std::vector<std::string const> args;
-    std::unique_ptr<CompoundStmt> body;
+    std::shared_ptr<Stmt const> body;
 };
 
 class ReturnStmt final : public Stmt {
@@ -249,12 +247,15 @@ private:
 class CompoundStmt final : public Stmt {
 public:
     CompoundStmt();
+
     void toStream(std::ostream &s) const override;
-    std::vector<std::unique_ptr<Stmt const>> const &getStatements() const;
-    void addStatement(std::unique_ptr<Stmt> stmt);
+
+    std::vector<std::shared_ptr<Stmt const>> const &getStatements() const;
+
+    void addStatement(std::shared_ptr<Stmt const> const &stmt);
 
 private:
-    std::vector<std::unique_ptr<Stmt const>> statements;
+    std::vector<std::shared_ptr<Stmt const>> statements;
 };
 
 class PassStmt final : public Stmt {

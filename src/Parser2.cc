@@ -521,10 +521,10 @@ Parser2::findDefStatement(int outerIndent)
         assert(is(tok_eol));
         next();
 
-        CompoundStmt *body = readCompoundStatement(outerIndent);
+        Stmt *body = readCompoundStatement(outerIndent);
         assert(body);
 
-        auto *def = new DefStmt(fnName, std::unique_ptr<CompoundStmt>(body));
+        auto *def = new DefStmt(fnName, std::shared_ptr<Stmt>(body));
 
         if (auto *tuple = fnSignatureExpr->cast<TupleExpr>()) {
             for (auto const &member : tuple->getMembers()) {
@@ -555,10 +555,10 @@ Parser2::findDefStatement(int outerIndent)
  * @param outerIndent The indentation level of the enclosing block header
  *        (e.g. the if-statement).
  */
-CompoundStmt *
+Stmt *
 Parser2::readCompoundStatement(int outerIndent)
 {
-    auto *compound = new CompoundStmt();
+    std::vector<Stmt *> statements;
 
     // A compound statement _must_ contain at least one inner statement,
     // or otherwise `pass`.
@@ -591,7 +591,7 @@ Parser2::readCompoundStatement(int outerIndent)
             }
 
             assert(stmt);
-            compound->addStatement(std::unique_ptr<Stmt>(stmt));
+            statements.push_back(stmt);
         } else {
             // Covers cases where:
             //   (a) outerIndent < indent < innerIndent
@@ -601,7 +601,17 @@ Parser2::readCompoundStatement(int outerIndent)
         }
     }
 
-    return compound;
+    assert(statements.size() > 0);
+
+    if (statements.size() == 1) {
+        return statements[0];
+    } else {
+        auto *compound = new CompoundStmt();
+        for (auto &stmt : statements) {
+            compound->addStatement(std::shared_ptr<Stmt>(stmt));
+        }
+        return compound;
+    }
 }
 
 ReturnStmt *

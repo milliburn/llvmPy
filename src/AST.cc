@@ -225,9 +225,7 @@ DefStmt::toStream(std::ostream &s) const
 
     s << "):" << endl;
 
-    for (auto const &stmt : body->getStatements()) {
-        indentToStream(s, *stmt, INDENT);
-    }
+    indentToStream(s, getBody(), INDENT);
 }
 
 void
@@ -376,16 +374,16 @@ CompoundStmt::toStream(std::ostream &s) const
     }
 }
 
-std::vector<std::unique_ptr<Stmt const>> const &
+std::vector<std::shared_ptr<Stmt const>> const &
 CompoundStmt::getStatements() const
 {
     return statements;
 }
 
 void
-CompoundStmt::addStatement(std::unique_ptr<Stmt> stmt)
+CompoundStmt::addStatement(std::shared_ptr<Stmt const> const &stmt)
 {
-    statements.push_back(std::move(stmt));
+    statements.push_back(stmt);
 }
 
 PassStmt::PassStmt()
@@ -459,9 +457,9 @@ ExprStmt::getExpr() const
 
 DefStmt::DefStmt(
         std::string const &name,
-        std::unique_ptr<CompoundStmt> body)
+        std::shared_ptr<Stmt const> const &body)
 : name(name),
-  body(std::move(body))
+  body(body)
 {
 }
 
@@ -563,7 +561,7 @@ DefStmt::getArguments() const
     return args;
 }
 
-CompoundStmt const &
+Stmt const &
 DefStmt::getBody() const
 {
     return *body;
