@@ -424,17 +424,17 @@ Parser2::findNumericLiteral()
 
         if (text.find('.') != std::string::npos) {
             double value = atof(text.c_str());
-            return new DecLitExpr(value);
+            return new DecimalExpr(value);
         } else {
             int64_t value = atol(text.c_str());
-            return new IntLitExpr(value);
+            return new IntegerExpr(value);
         }
     } else {
         return nullptr;
     }
 }
 
-StrLitExpr *
+StringExpr *
 Parser2::findStringLiteral()
 {
     if (is(tok_string)) {
@@ -443,7 +443,7 @@ Parser2::findStringLiteral()
         auto value = std::make_unique<std::string const>(
                 text.substr(1, text.length() - 2));
         next();
-        return new StrLitExpr(std::move(value));
+        return new StringExpr(std::move(value));
     } else {
         return nullptr;
     }

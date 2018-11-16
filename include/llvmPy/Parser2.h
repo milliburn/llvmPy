@@ -23,7 +23,7 @@ public:
     std::unique_ptr<Expr> parse();
 
     Expr * findNumericLiteral();
-    StrLitExpr *findStringLiteral();
+    StringExpr *findStringLiteral();
     IdentExpr *findIdentifier();
     TokenExpr *findOperator();
     TokenExpr *findUnaryOperator();

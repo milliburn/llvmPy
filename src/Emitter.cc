@@ -73,7 +73,7 @@ Emitter::createModule(std::string const &name)
 llvm::Value *
 Emitter::emit(RTScope &scope, AST const &ast)
 {
-    if (auto *intLit = ast.cast<IntLitExpr>()) {
+    if (auto *intLit = ast.cast<IntegerExpr>()) {
         return emit(scope, *intLit);
     } else if (auto *ident = ast.cast<IdentExpr>()) {
         return emit(scope, *ident);
@@ -83,7 +83,7 @@ Emitter::emit(RTScope &scope, AST const &ast)
         return emit(scope, *lambda);
     } else if (auto *def = ast.cast<DefStmt>()) {
         return emit(scope, *def);
-    } else if (auto *strLit = ast.cast<StrLitExpr>()) {
+    } else if (auto *strLit = ast.cast<StringExpr>()) {
         return emit(scope, *strLit);
     } else if (auto *binop = ast.cast<BinaryExpr>()) {
         return emit(scope, *binop);
@@ -142,7 +142,7 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
 }
 
 llvm::Value *
-Emitter::emit(RTScope &scope, IntLitExpr const &expr)
+Emitter::emit(RTScope &scope, IntegerExpr const &expr)
 {
     RTModule &mod = scope.getModule();
 
@@ -251,7 +251,7 @@ Emitter::emit(RTScope &scope, DefStmt const &def)
 }
 
 llvm::Value *
-Emitter::emit(RTScope &scope, StrLitExpr const &lit)
+Emitter::emit(RTScope &scope, StringExpr const &lit)
 {
     RTModule &mod = scope.getModule();
 

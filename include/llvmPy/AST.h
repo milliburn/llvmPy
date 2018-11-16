@@ -21,9 +21,9 @@ protected:
     Expr();
 };
 
-class StrLitExpr final : public Expr {
+class StringExpr final : public Expr {
 public:
-    explicit StrLitExpr(std::unique_ptr<std::string const> value);
+    explicit StringExpr(std::unique_ptr<std::string const> value);
 
     void toStream(std::ostream &s) const override;
 
@@ -33,9 +33,9 @@ private:
     std::unique_ptr<std::string const> const value;
 };
 
-class DecLitExpr final : public Expr {
+class DecimalExpr final : public Expr {
 public:
-    explicit DecLitExpr(double v);
+    explicit DecimalExpr(double v);
 
     void toStream(std::ostream &s) const override;
 
@@ -45,9 +45,9 @@ private:
     double const value;
 };
 
-class IntLitExpr final : public Expr {
+class IntegerExpr final : public Expr {
 public:
-    explicit IntLitExpr(long v);
+    explicit IntegerExpr(long v);
 
     void toStream(std::ostream &s) const override;
 

@@ -47,41 +47,41 @@ AST::toStream(std::ostream &s) const
 }
 
 void
-StrLitExpr::toStream(std::ostream &s) const
+StringExpr::toStream(std::ostream &s) const
 {
     s << '"' << getValue() << '"';
 }
 
-DecLitExpr::DecLitExpr(double v)
+DecimalExpr::DecimalExpr(double v)
 : value(v)
 {
 }
 
 double
-DecLitExpr::getValue() const
+DecimalExpr::getValue() const
 {
     return value;
 }
 
 void
-DecLitExpr::toStream(std::ostream &s) const
+DecimalExpr::toStream(std::ostream &s) const
 {
     s << value << 'd';
 }
 
-IntLitExpr::IntLitExpr(long v)
+IntegerExpr::IntegerExpr(long v)
 : value(v)
 {
 }
 
 int64_t
-IntLitExpr::getValue() const
+IntegerExpr::getValue() const
 {
     return value;
 }
 
 void
-IntLitExpr::toStream(std::ostream &s) const
+IntegerExpr::toStream(std::ostream &s) const
 {
     s << value << 'i';
 }
@@ -197,13 +197,13 @@ operator<< (std::ostream & s, Stmt const & stmt)
     return s;
 }
 
-StrLitExpr::StrLitExpr(std::unique_ptr<std::string const> value)
+StringExpr::StringExpr(std::unique_ptr<std::string const> value)
 : value(std::move(value))
 {
 }
 
 std::string const &
-StrLitExpr::getValue() const
+StringExpr::getValue() const
 {
     return *value;
 }

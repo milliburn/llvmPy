@@ -32,12 +32,12 @@ public:
     explicit Emitter(Compiler &c) noexcept;
 
     llvm::Value *emit(RTScope &scope, AST const &ast);
-    llvm::Value *emit(RTScope &scope, IntLitExpr const &expr);
+    llvm::Value *emit(RTScope &scope, IntegerExpr const &expr);
     llvm::Value *emit(RTScope &scope, IdentExpr const &ident);
     llvm::Value *emit(RTScope &scope, CallExpr const &call);
     llvm::Value *emit(RTScope &scope, LambdaExpr const &lambda);
     llvm::Value *emit(RTScope &scope, DefStmt const &def);
-    llvm::Value *emit(RTScope &scope, StrLitExpr const &lit);
+    llvm::Value *emit(RTScope &scope, StringExpr const &lit);
     llvm::Value *emit(RTScope &scope, BinaryExpr const &expr);
 
     void emitCondStmt(
