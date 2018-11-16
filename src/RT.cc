@@ -6,45 +6,6 @@
 #include <string>
 using namespace llvmPy;
 
-RTScope::RTScope(
-        RTModule &module,
-        RTScope &parent,
-        llvm::Value *innerFramePtr,
-        llvm::Value *outerFramePtr)
-: module(module),
-  parent(&parent),
-  outerFramePtr(outerFramePtr),
-  innerFramePtr(innerFramePtr)
-{
-
-}
-
-RTScope::RTScope(RTModule &module)
-: module(module),
-  parent(nullptr),
-  outerFramePtr(nullptr),
-  innerFramePtr(nullptr)
-{
-}
-
-RTScope *
-RTScope::createDerived(
-        llvm::Value *innerFramePtr,
-        llvm::Value *outerFramePtr)
-{
-    return new RTScope(module, *this, innerFramePtr, outerFramePtr);
-}
-
-RTScope &
-RTScope::getParent() const
-{
-    if (!hasParent()) {
-        throw "Cannot return parent of top-level RTScope.";
-    }
-
-    return *parent;
-}
-
 RTModule::RTModule(
         std::string const &name,
         llvm::Module *module,
@@ -59,6 +20,12 @@ llvm::Value *
 RTModule::llvmPy_add() const
 {
     return ir.getOrInsertFunction("llvmPy_add", types.llvmPy_add);
+}
+
+llvm::Value *
+RTModule::llvmPy_sub() const
+{
+    return ir.getOrInsertFunction("llvmPy_sub", types.llvmPy_sub);
 }
 
 llvm::Value *

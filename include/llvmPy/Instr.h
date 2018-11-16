@@ -45,6 +45,7 @@ public:
     llvm::FunctionType *llvmPy_binop;
 
     llvm::FunctionType *llvmPy_add;
+    llvm::FunctionType *llvmPy_sub;
     llvm::FunctionType *llvmPy_int;
     llvm::FunctionType *llvmPy_none;
     llvm::FunctionType *llvmPy_func;
@@ -81,6 +82,7 @@ extern llvmPy::PyBool llvmPy_True;
 extern llvmPy::PyBool llvmPy_False;
 
 llvmPy::PyObj *llvmPy_add(llvmPy::PyObj &, llvmPy::PyObj &);
+llvmPy::PyObj *llvmPy_sub(llvmPy::PyObj &, llvmPy::PyObj &);
 llvmPy::PyObj *llvmPy_mul(llvmPy::PyObj &, llvmPy::PyObj &);
 llvmPy::PyInt *llvmPy_int(int64_t value);
 llvmPy::PyNone *llvmPy_none();

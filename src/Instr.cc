@@ -34,6 +34,7 @@ Types::Types(
 
     llvmPy_binop = llvm::FunctionType::get(Ptr, { Ptr, Ptr }, false);
     llvmPy_add = llvmPy_binop;
+    llvmPy_sub = llvmPy_binop;
     llvmPy_int = llvm::FunctionType::get(Ptr, { PyIntValue }, false);
     llvmPy_none = llvm::FunctionType::get(Ptr, {}, false);
     llvmPy_func = llvm::FunctionType::get(
@@ -132,13 +133,19 @@ Types::getFuncN(int N) const
 extern "C" PyObj * __used
 llvmPy_add(PyObj &l, PyObj &r)
 {
-    return &l.py__add__(r);
+    return l.py__add__(r);
+}
+
+extern "C" PyObj * __used
+llvmPy_sub(PyObj &l, PyObj &r)
+{
+    return l.py__sub__(r);
 }
 
 extern "C" llvmPy::PyObj * __used
 llvmPy_mul(llvmPy::PyObj &l, llvmPy::PyObj &r)
 {
-    return &l.py__mul__(r);
+    return l.py__mul__(r);
 }
 
 extern "C" PyInt * __used

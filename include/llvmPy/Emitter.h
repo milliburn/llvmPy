@@ -3,6 +3,7 @@
 #include <llvmPy/Compiler.h>
 #include <llvmPy/Instr.h>
 #include <llvm/IR/IRBuilder.h>
+#include <set>
 
 #ifdef __cplusplus
 namespace llvm {
@@ -58,6 +59,21 @@ public:
 
     void emitBreakStmt(Loop const *loop);
     void emitContinueStmt(Loop const *loop);
+
+    void gatherSlotNames(
+            Stmt const &stmt,
+            std::set<std::string const> &names);
+
+    void zeroInitialiseSlots(
+            Stmt const &body, RTScope &scope,
+            llvm::BasicBlock *insertPoint, llvm::Type *frameType,
+            llvm::Value *frameAlloca);
+
+    void zeroInitialiseSlot(
+            std::string const &name,
+            RTScope &scope,
+            llvm::Type *frameType,
+            llvm::Value *frameAlloca);
 
     RTModule *createModule(std::string const &name, Stmt const &stmt);
     RTModule *createModule(std::string const &name);

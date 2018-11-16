@@ -52,6 +52,24 @@ TEST_CASE("PyObj") {
             CHECK(PyInt(30).py__bool__());
         }
 
+        SECTION("py__add__()") {
+            PyInt l(2), r(3);
+            PyObj *rv = l.py__add__(r);
+            CHECK(rv->as<PyInt>().getValue() == 5);
+        }
+
+        SECTION("py__sub__()") {
+            PyInt l(2), r(3);
+            PyObj *rv = l.py__sub__(r);
+            CHECK(rv->as<PyInt>().getValue() == -1);
+        }
+
+        SECTION("py__mul__()") {
+            PyInt l(2), r(3);
+            PyObj *rv = l.py__mul__(r);
+            CHECK(rv->as<PyInt>().getValue() == 6);
+        }
+
         SECTION("py__lt__()") {
             CHECK(!one.py__lt__(one));
             CHECK(one.py__lt__(two1));

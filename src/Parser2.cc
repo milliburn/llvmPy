@@ -1,6 +1,9 @@
 #include <llvmPy/Parser2.h>
 using namespace llvmPy;
 
+// The "amount" of precedence to add for unary operators.
+static constexpr int UnaryPrecedenceOffset = 1;
+
 static std::map<TokenType, int>
 initPrecedence()
 {
@@ -120,11 +123,6 @@ Parser2::readSubExpr()
 Expr *
 Parser2::readExpr(int lastPrec, Expr *lhs)
 {
-    Expr *rhs = nullptr;
-    TokenExpr *binaryOp = nullptr;
-    TokenExpr *unaryOp = nullptr;
-    int curPrec = 0;
-
     if (isEnd() || is(tok_rp) || is(tok_eol)) {
         // End of (sub)expression.
         // Terminator (if any) is intentionally left un-consumed.
@@ -137,53 +135,98 @@ Parser2::readExpr(int lastPrec, Expr *lhs)
         // Comma is a delimiter (no binding) between expressions.
         // It is intentionally left un-consumed.
         return lhs;
-    } else if ((binaryOp = findOperator())) {
-        curPrec = getPrecedence(binaryOp);
-
-        if (curPrec <= lastPrec) {
-            back();
-            return lhs;
-        }
-
-        unaryOp = findOperator();
     }
 
-    if (is(tok_lp)) {
-        rhs = readSubExpr();
-        rhs = readExpr(curPrec, rhs);
-    } else if (
+    if (lhs) {
+        // The expression is being read in a binary context.
+
+        if (auto *op = findOperator()) {
+
+            int precedence = getPrecedence(op);
+
+            if (precedence <= lastPrec) {
+                back();
+                return lhs;
+            } else {
+
+                Expr *rhs = nullptr;
+
+                if ((rhs = readAtomicExpr())) {
+                    // Ignore
+                } else if (is(tok_lp)) {
+                    rhs = readSubExpr();
+                } else if (findOperator()) {
+                    back();
+                    rhs = readExpr(precedence, nullptr);
+                } else {
+                    assert(false && "Unhandled state");
+                    return nullptr;
+                }
+
+                assert(rhs);
+                rhs = readExpr(precedence, rhs);
+                assert(rhs);
+
+                auto *binary = new BinaryExpr(lhs, op->getTokenType(), rhs);
+                return readExpr(lastPrec, binary);
+
+            }
+
+        } else if (is(tok_lp)) {
+
+            auto *args = readSubExpr();
+            auto *call = buildCall(lhs, args);
+            return readExpr(lastPrec, call);
+
+        } else {
+
+            assert(false && "Unhandled state");
+
+        }
+
+    } else {
+        // It's the start of the (sub)expression.
+
+        if (auto *op = findUnaryOperator()) {
+
+            // TODO: Is this the correct application of unary precedence?
+            int precedence = getPrecedence(op) + UnaryPrecedenceOffset;
+            auto *operand = readExpr(precedence, nullptr);
+            assert(operand);
+            auto *unary = new UnaryExpr(
+                    op->getTokenType(),
+                    std::unique_ptr<Expr>(operand));
+            return readExpr(lastPrec, unary);
+
+        } else if (auto *atomic = readAtomicExpr()) {
+
+            return readExpr(lastPrec, atomic);
+
+        } else if (is(tok_lp)) {
+
+            // TODO: Is this the correct application of call precedence?
+            auto *subExpr = readSubExpr();
+            assert(subExpr);
+            return readExpr(lastPrec, subExpr);
+
+        } else {
+
+            return nullptr;
+
+        }
+    }
+}
+
+Expr *
+Parser2::readAtomicExpr()
+{
+    Expr *rhs = nullptr;
+    (
             (rhs = findNumericLiteral()) ||
             (rhs = findStringLiteral()) ||
             (rhs = findIdentifier()) ||
-            (rhs = findLambdaExpression())) {
-        rhs = readExpr(curPrec, rhs);
-    }
-
-    if (unaryOp && rhs) {
-        rhs = new UnaryExpr(
-                unaryOp->getTokenType(),
-                std::unique_ptr<Expr>(rhs));
-    }
-
-    if (lhs && binaryOp && rhs) {
-        // Apply binary operator to LHS and RHS.
-        Expr *binop = new BinaryExpr(lhs, binaryOp->getTokenType(), rhs);
-        return readExpr(lastPrec, binop);
-    } else if (lhs && !binaryOp && rhs) {
-        // Function call (apply arguments in RHS to callee in LHS).
-        return buildCall(lhs, rhs);
-    } else if (lhs && !binaryOp && !rhs) {
-        // Independent expression (generally literal or identifier).
-        return lhs;
-    } else if (!lhs && binaryOp && rhs) {
-        return new UnaryExpr(
-                binaryOp->getTokenType(),
-                std::unique_ptr<Expr>(rhs));
-    } else if (!lhs && !binaryOp) {
-        return rhs;
-    } else {
-        throw "Not implemented";
-    }
+            (rhs = findLambdaExpression()));
+    return rhs;
 }
 
 /**
@@ -747,6 +790,24 @@ Parser2::findContinueStmt()
     if (is(kw_continue)) {
         next();
         return new ContinueStmt();
+    } else {
+        return nullptr;
+    }
+}
+
+TokenExpr *
+Parser2::findUnaryOperator()
+{
+    if (auto *op = findOperator()) {
+        switch (op->getTokenType()) {
+        case tok_add:
+        case tok_sub:
+            return op;
+
+        default:
+            back();
+            return nullptr;
+        }
     } else {
         return nullptr;
     }

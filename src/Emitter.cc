@@ -159,24 +159,21 @@ Emitter::emit(RTScope &scope, IdentExpr const &ident)
 {
     RTModule &mod = scope.getModule();
 
-    if (ident.name == "None") {
+    auto const &name = ident.name;
+
+    if (name == "None") {
         return mod.llvmPy_None();
-    } else if (ident.name == "True") {
+    } else if (name == "True") {
         return mod.llvmPy_True();
-    } else if (ident.name == "False") {
+    } else if (name == "False") {
         return mod.llvmPy_False();
     }
 
-    llvm::Value *slot = scope.slots[ident.name];
-
-    if (slot == nullptr) {
-        // May be in an upper scope.
-        slot = scope.getParent().slots[ident.name];
-
-        if (!slot) {
-            cerr << "Slot " << ident.name << " not found!" << endl;
-            exit(127);
-        }
+    if (scope.hasSlot(name)) {
+        auto *slot = scope.getSlotValue(name);
+        return ir.CreateLoad(slot);
+    } else if (scope.getParent().hasSlot(name)) {
+        auto slotIndex = scope.getParent().getSlotIndex(ident.name);
 
         llvm::Value *outerFramePtr = ir.CreateLoad(scope.getOuterFramePtr());
 
@@ -184,14 +181,15 @@ Emitter::emit(RTScope &scope, IdentExpr const &ident)
                 outerFramePtr,
                 { types.getInt64(0),
                   types.getInt32(2),
-                  types.getInt64(0) }); // TODO: True index of slot.
+                  types.getInt64(slotIndex) });
 
         llvm::Value *outerSlot = ir.CreateLoad(outerFrameSlotGEP);
 
         return outerSlot;
+    } else {
+        cerr << "Slot " << ident.name << " not found!" << endl;
+        exit(127);
     }
-
-    return ir.CreateLoad(slot);
 }
 
 llvm::Value *
@@ -276,6 +274,7 @@ Emitter::emit(RTScope &scope, BinaryExpr const &expr)
 
     switch (expr.op) {
     case tok_add: f = mod.llvmPy_add(); break;
+    case tok_sub: f = mod.llvmPy_sub(); break;
     case tok_mul: f = mod.llvmPy_mul(); break;
     case tok_lt: f = mod.llvmPy_lt(); break;
     case tok_lte: f = mod.llvmPy_le(); break;
@@ -307,7 +306,9 @@ Emitter::createFunction(
     }
 
     RTModule &mod = outerScope.getModule();
-    map<string, size_t> slots; // Names and indices of slots in the frame.
+
+    // Names of slots in the frame.
+    std::set<std::string const> slotNames;
 
     llvm::BasicBlock *insertPoint = ir.GetInsertBlock();
     vector<llvm::Type *> argTypes;
@@ -321,8 +322,8 @@ Emitter::createFunction(
     }
 
     for (auto &argName : args) {
-        if (!slots.count(argName)) {
-            slots[argName] = slots.size();
+        if (!slotNames.count(argName)) {
+            slotNames.insert(argName);
             argTypes.push_back(types.Ptr);
         }
     }
@@ -360,20 +361,7 @@ Emitter::createFunction(
     llvm::BasicBlock *init = &function->getEntryBlock();
     llvm::BasicBlock *prog = init;
 
-    // Add slots that originate from assignments.
-    for (auto *stmt : stmts) {
-        if (auto *assignStmt = stmt->cast<AssignStmt>()) {
-            auto ident = assignStmt->lhs;
-            if (!slots.count(ident)) {
-                slots[ident] = slots.size();
-            }
-        } else if (auto *defStmt = stmt->cast<DefStmt>()) {
-            auto ident = defStmt->name;
-            if (!slots.count(ident)) {
-                slots[ident] = slots.size();
-            }
-        }
-    }
+    gatherSlotNames(stmt_, slotNames);
 
     ir.SetInsertPoint(init);
 
@@ -382,9 +370,9 @@ Emitter::createFunction(
             ir.CreateLoad(outerFramePtrPtrArg, tags.OuterFrame);
 
     // Generate the frame.
-    llvm::StructType *innerFrameType = types.getFrameN(slots.size());
+    llvm::StructType *innerFrameType = types.getFrameN(slotNames.size());
     llvm::AllocaInst *innerFrameAlloca = ir.CreateAlloca(
-            innerFrameType, 0, tags.InnerFrame);
+            innerFrameType, nullptr, tags.InnerFrame);
 
     // Store the frame's self-pointer.
     llvm::Value *frameSelfPtrGEP =
@@ -417,14 +405,19 @@ Emitter::createFunction(
                     innerFrameAlloca,
                     outerFramePtrPtrArg);
 
+    for (auto const &slotName : slotNames) {
+        innerScope->declareSlot(slotName);
+    }
+
     // Copy-initialise the contents of arguments.
     iArg = 0;
     for (auto &arg : function->args()) {
         if (iArg > 0) {
             auto ident = args[iArg - 1];
             ir.SetInsertPoint(init);
-            assert(slots.count(ident));
-            auto slotIndex = slots[ident];
+            assert(innerScope->hasSlot(ident));
+            auto slotIndex = innerScope->getSlotIndex(ident);
+
             llvm::Value *assignGEP = ir.CreateGEP(
                     innerFrameType,
                     innerFrameAlloca,
@@ -437,7 +430,7 @@ Emitter::createFunction(
             // TODO: This would be invalidated if the pointer changes
             // TODO: (i.e. if the callee's chain ends up lifting the frame
             // TODO: to heap).
-            innerScope->slots[ident] = assignGEP;
+            innerScope->setSlotValue(ident, assignGEP);
         }
 
         iArg++;
@@ -445,46 +438,13 @@ Emitter::createFunction(
 
     // Zero-initialise the contents of assign statements. This will act
     // as a sentinel to detect use before set.
-    for (auto *stmt : stmts) {
-        // TODO: Remove code duplication.
-        if (auto *assign = stmt->cast<AssignStmt>()) {
-            ir.SetInsertPoint(init);
-            auto &ident = assign->lhs;
-            assert(slots.count(ident));
-            auto slotIndex = slots[ident];
-            llvm::Value *assignGEP = ir.CreateGEP(
-                    innerFrameType,
-                    innerFrameAlloca,
-                    { types.getInt64(0),
-                      types.getInt32(2),
-                      types.getInt64(slotIndex) },
-                    tags.Var + "_" + ident);
-            ir.CreateStore(llvm::Constant::getNullValue(types.Ptr), assignGEP);
 
-            // TODO: This would be invalidated if the pointer changes
-            // TODO: (i.e. if the callee's chain ends up lifting the frame
-            // TODO: to heap).
-            innerScope->slots[ident] = assignGEP;
-        } else if (auto *def = stmt->cast<DefStmt>()) {
-            ir.SetInsertPoint(init);
-            auto &ident = def->name;
-            assert(slots.count(ident));
-            auto slotIndex = slots[ident];
-            llvm::Value *assignGEP = ir.CreateGEP(
-                    innerFrameType,
-                    innerFrameAlloca,
-                    { types.getInt64(0),
-                      types.getInt32(2),
-                      types.getInt64(slotIndex) },
-                    tags.Var + "_" + ident);
-            ir.CreateStore(llvm::Constant::getNullValue(types.Ptr), assignGEP);
-
-            // TODO: This would be invalidated if the pointer changes
-            // TODO: (i.e. if the callee's chain ends up lifting the frame
-            // TODO: to heap).
-            innerScope->slots[ident] = assignGEP;
-        }
-    }
+    zeroInitialiseSlots(
+            stmt_,
+            *innerScope,
+            init,
+            innerFrameType,
+            innerFrameAlloca);
 
     // Successive statements may leave the emitter at a different insert point.
 
@@ -575,13 +535,13 @@ Emitter::emitStatement(
         ir.CreateRet(value);
     } else if (auto *def = stmt.cast<DefStmt>()) {
         auto *value = emit(scope, *def);
-        ir.CreateStore(value, scope.slots[def->getName()]);
+        ir.CreateStore(value, scope.getSlotValue(def->getName()));
     } else if (stmt.isa<PassStmt>()) {
         // Ignore.
     } else if (auto *cond = stmt.cast<ConditionalStmt>()) {
         emitCondStmt(function, scope, *cond, loop);
     } else if (auto *assign = stmt.cast<AssignStmt>()) {
-        auto *slot = scope.slots[assign->lhs];
+        auto *slot = scope.getSlotValue(assign->lhs);
         auto *value = emit(scope, assign->rhs);
         ir.CreateStore(value, slot);
     } else if (auto *while_ = stmt.cast<WhileStmt>()) {
@@ -650,3 +610,93 @@ Emitter::lastInstructionWasTerminator() const
 {
     return ir.GetInsertBlock()->back().isTerminator();
 }
+
+void
+Emitter::gatherSlotNames(Stmt const &stmt, std::set<std::string const> &names)
+{
+    if (auto *assign = stmt.cast<AssignStmt>()) {
+        names.insert(assign->lhs);
+    } else if (auto *def = stmt.cast<DefStmt>()) {
+        names.insert(def->getName());
+    } else if (auto *compound = stmt.cast<CompoundStmt>()) {
+        for (auto const &stmt_ : compound->getStatements()) {
+            gatherSlotNames(*stmt_, names);
+        }
+    } else if (auto *cond = stmt.cast<ConditionalStmt>()) {
+        gatherSlotNames(cond->getThenBranch(), names);
+        gatherSlotNames(cond->getElseBranch(), names);
+    } else if (auto *loop = stmt.cast<WhileStmt>()) {
+        gatherSlotNames(loop->getBody(), names);
+    }
+}
+
+void
+Emitter::zeroInitialiseSlots(
+        Stmt const &body,
+        RTScope &scope,
+        llvm::BasicBlock *insertPoint,
+        llvm::Type *frameType,
+        llvm::Value *frameAlloca)
+{
+    ir.SetInsertPoint(insertPoint);
+    if (body.isa<ExprStmt>()
+        || body.isa<PassStmt>()
+        || body.isa<BreakStmt>()
+        || body.isa<ContinueStmt>()
+        || body.isa<ReturnStmt>()) {
+        // Ignore.
+    } else if (auto *assign = body.cast<AssignStmt>()) {
+        zeroInitialiseSlot(assign->lhs, scope, frameType, frameAlloca);
+    } else if (auto *def = body.cast<DefStmt>()) {
+        zeroInitialiseSlot(def->name, scope, frameType, frameAlloca);
+    } else if (auto *compound = body.cast<CompoundStmt>()) {
+        for (auto const &stmt : compound->getStatements()) {
+            zeroInitialiseSlots(
+                    *stmt, scope, insertPoint, frameType, frameAlloca);
+        }
+    } else if (auto *loop = body.cast<WhileStmt>()) {
+        zeroInitialiseSlots(
+                loop->getBody(),
+                scope, insertPoint, frameType, frameAlloca);
+    } else if (auto *cond = body.cast<ConditionalStmt>()) {
+        zeroInitialiseSlots(
+                cond->getThenBranch(),
+                scope, insertPoint, frameType, frameAlloca);
+        zeroInitialiseSlots(
+                cond->getElseBranch(),
+                scope, insertPoint, frameType, frameAlloca);
+    } else {
+        assert(false && "Unhandled statement type");
+    }
+}
+
+void
+Emitter::zeroInitialiseSlot(
+        std::string const &name,
+        RTScope &scope,
+        llvm::Type *frameType,
+        llvm::Value *frameAlloca)
+{
+    if (scope.getSlotValue(name)) {
+        // Slot already zero-initialised.
+        return;
+    }
+
+    auto index = scope.getSlotIndex(name);
+
+    auto *assignGEP = ir.CreateGEP(
+            frameType,
+            frameAlloca,
+            { types.getInt64(0),
+              types.getInt32(2),
+              types.getInt64(index) },
+            tags.Var + "_" + name);
+
+    ir.CreateStore(llvm::Constant::getNullValue(types.Ptr), assignGEP);
+
+    // TODO: This would be invalidated if the pointer changes
+    // TODO: (i.e. if the callee's chain ends up lifting the frame
+    // TODO: to heap).
+    scope.setSlotValue(name, assignGEP);
+}
+

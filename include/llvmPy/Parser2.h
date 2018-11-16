@@ -26,6 +26,7 @@ public:
     StrLitExpr *findStringLiteral();
     IdentExpr *findIdentifier();
     TokenExpr *findOperator();
+    TokenExpr *findUnaryOperator();
     LambdaExpr *findLambdaExpression();
     ReturnStmt *findReturnStatement();
     AssignStmt *findAssignStatement();
@@ -39,6 +40,7 @@ public:
     CallExpr *buildCall(Expr *lhs, Expr *rhs);
 
     std::unique_ptr<Stmt> read();
+    Expr *readAtomicExpr();
     Expr *readExpr(int precedence = 0, Expr *lhs = nullptr);
     Expr *readSubExpr();
     Stmt *readStatement(int indent);

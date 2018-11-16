@@ -24,6 +24,11 @@ class PyObj;
 
 class RTScope {
 public:
+    struct Slot {
+        llvm::Value *value;
+        size_t frameIndex;
+    };
+
     RTScope(RTModule &module,
             RTScope &parent,
             llvm::Value *innerFramePtr,
@@ -36,20 +41,35 @@ public:
             llvm::Value *innerFramePtr,
             llvm::Value *outerFramePtr);
 
-    std::unordered_map<std::string, llvm::Value *> slots;
-
 public:
-    RTModule &getModule() const { return module; }
-    bool hasParent() const { return parent != nullptr; }
+    RTModule &getModule() const;
+
+    bool hasParent() const;
+
     RTScope &getParent() const;
-    llvm::Value *getOuterFramePtr() const { return outerFramePtr; }
-    llvm::Value *getInnerFramePtr() const { return innerFramePtr; }
+
+    llvm::Value *getOuterFramePtr() const;
+
+    llvm::Value *getInnerFramePtr() const;
+
+    bool hasSlot(std::string const &name) const;
+
+    void declareSlot(std::string const &name);
+
+    llvm::Value *getSlotValue(std::string const &name) const;
+
+    void setSlotValue(std::string const &name, llvm::Value *value);
+
+    size_t getSlotIndex(std::string const &name) const;
 
 private:
     RTModule &module;
     RTScope * const parent;
     llvm::Value * const outerFramePtr;
     llvm::Value * const innerFramePtr;
+
+    std::unordered_map<std::string, Slot> slots;
+
 };
 
 class RTModule {
@@ -67,6 +87,7 @@ public:
 
 public:
     llvm::Value *llvmPy_add() const;
+    llvm::Value *llvmPy_sub() const;
     llvm::Value *llvmPy_mul() const;
     llvm::Value *llvmPy_int() const;
     llvm::Value *llvmPy_none() const;
