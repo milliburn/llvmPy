@@ -87,14 +87,15 @@ IntLitExpr::toStream(std::ostream &s) const
 }
 
 IdentExpr::IdentExpr(std::unique_ptr<std::string const> name)
-: name_(std::move(name)), name(*name_)
+: name(std::move(name))
 {
 }
 
 std::string const &
 IdentExpr::getName() const
 {
-    return *name_;
+    assert(name);
+    return *name;
 }
 
 void
@@ -162,7 +163,7 @@ AssignStmt::toStream(std::ostream &s) const
 void
 DefStmt::toStream(std::ostream &s) const
 {
-    s << "def " << name << "(";
+    s << "def " << getName() << "(";
 
     for (int i = 0; i < args.size(); ++i) {
         if (i > 0) s << ", ";
@@ -400,10 +401,12 @@ ExprStmt::ExprStmt(Expr *expr)
 }
 
 DefStmt::DefStmt(
-        std::string const &name,
+        std::unique_ptr<std::string const> name,
         std::vector<std::string const> args,
         std::unique_ptr<CompoundStmt> body)
-: name(name), args(std::move(args)), body(std::move(body))
+: name(std::move(name)),
+  args(std::move(args)),
+  body(std::move(body))
 {
 }
 
@@ -475,4 +478,28 @@ Expr const &
 AssignStmt::getValue() const
 {
     return *value;
+}
+
+std::unique_ptr<std::string const>
+IdentExpr::releaseName()
+{
+    return std::move(name);
+}
+
+std::string const &
+DefStmt::getName() const
+{
+    return *name;
+}
+
+std::vector<std::string const> const &
+DefStmt::getArguments() const
+{
+    return args;
+}
+
+CompoundStmt const &
+DefStmt::getBody() const
+{
+    return *body;
 }

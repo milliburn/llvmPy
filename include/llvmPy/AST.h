@@ -65,11 +65,10 @@ public:
 
     std::string const &getName() const;
 
-private:
-    std::unique_ptr<std::string const> name_;
+    std::unique_ptr<std::string const> releaseName();
 
-public:
-    std::string const & name;
+private:
+    std::unique_ptr<std::string const> name;
 };
 
 class LambdaExpr final : public Expr {
@@ -198,20 +197,21 @@ class CompoundStmt;
 
 class DefStmt final : public Stmt {
 public:
-    std::string const &name;
-    std::vector<std::string const> args;
-    std::unique_ptr<CompoundStmt> body;
-
-    DefStmt(std::string const &name,
+    DefStmt(std::unique_ptr<std::string const> name,
             std::vector<std::string const> args,
             std::unique_ptr<CompoundStmt> body);
 
     void toStream(std::ostream &s) const override;
 
 public:
-    std::string const &getName() const { return name; }
-    std::vector<std::string const> const &getArguments() const { return args; }
-    CompoundStmt const &getBody() const { return *body; }
+    std::string const &getName() const;
+    std::vector<std::string const> const &getArguments() const;
+    CompoundStmt const &getBody() const;
+
+private:
+    std::unique_ptr<std::string const> name;
+    std::vector<std::string const> args;
+    std::unique_ptr<CompoundStmt> body;
 };
 
 class ReturnStmt final : public Stmt {

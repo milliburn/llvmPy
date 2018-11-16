@@ -101,7 +101,7 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
     auto &args = call.getArguments();
 
     if (auto *lhsIdent = callee.cast<IdentExpr>()) {
-        if (lhsIdent->name == "print") {
+        if (lhsIdent->getName() == "print") {
             llvm::Value *arg = emit(scope, *args[0]);
             return ir.CreateCall(mod.llvmPy_print(), { arg });
         }
@@ -159,7 +159,7 @@ Emitter::emit(RTScope &scope, IdentExpr const &ident)
 {
     RTModule &mod = scope.getModule();
 
-    auto const &name = ident.name;
+    auto const &name = ident.getName();
 
     if (name == "None") {
         return mod.llvmPy_None();
@@ -173,7 +173,7 @@ Emitter::emit(RTScope &scope, IdentExpr const &ident)
         auto *slot = scope.getSlotValue(name);
         return ir.CreateLoad(slot);
     } else if (scope.getParent().hasSlot(name)) {
-        auto slotIndex = scope.getParent().getSlotIndex(ident.name);
+        auto slotIndex = scope.getParent().getSlotIndex(ident.getName());
 
         llvm::Value *outerFramePtr = ir.CreateLoad(scope.getOuterFramePtr());
 
@@ -187,7 +187,7 @@ Emitter::emit(RTScope &scope, IdentExpr const &ident)
 
         return outerSlot;
     } else {
-        cerr << "Slot " << ident.name << " not found!" << endl;
+        cerr << "Slot " << ident.getName() << " not found!" << endl;
         exit(127);
     }
 }
@@ -229,10 +229,10 @@ Emitter::emit(RTScope &scope, DefStmt const &def)
 
     RTFunc *func =
             createFunction(
-                    tags.Def + "_" + def.name,
+                    tags.Def + "_" + def.getName(),
                     scope,
                     def.getBody(),
-                    def.args);
+                    def.getArguments());
 
     llvm::Value *innerFramePtrBitCast =
             ir.CreateBitCast(
@@ -648,7 +648,7 @@ Emitter::zeroInitialiseSlots(
     } else if (auto *assign = body.cast<AssignStmt>()) {
         zeroInitialiseSlot(assign->lhs, scope, frameType, frameAlloca);
     } else if (auto *def = body.cast<DefStmt>()) {
-        zeroInitialiseSlot(def->name, scope, frameType, frameAlloca);
+        zeroInitialiseSlot(def->getName(), scope, frameType, frameAlloca);
     } else if (auto *compound = body.cast<CompoundStmt>()) {
         for (auto const &stmt : compound->getStatements()) {
             zeroInitialiseSlots(

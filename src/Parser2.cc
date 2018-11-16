@@ -514,26 +514,24 @@ Parser2::findDefStatement(int outerIndent)
     if (is(kw_def)) {
         next();
 
-        // TODO: Is this appropriate?
-        // TODO: The expression parser considers the function signature
-        // TODO: a "call expression", which is then deconstructed.
+        assert(is(tok_ident));
+        auto fnName = token().releaseString();
+        next();
 
-        auto *fnSignatureExpr = readExpr();
-        auto *fnSignature = fnSignatureExpr->cast<CallExpr>();
-        auto &fnNameExpr = fnSignature->getCallee();
-        auto &fnName = fnNameExpr.as<IdentExpr>();
+        auto &fnSignatureExpr = readExpr()->as<TupleExpr>();
+
         std::vector<std::string const> argNames;
 
         assert(is(tok_colon));
         next();
 
-        for (auto &arg : fnSignature->getArguments()) {
+        for (auto &arg : fnSignatureExpr.getMembers()) {
             auto const &ident = arg->as<IdentExpr>();
             argNames.push_back(ident.getName());
         }
 
         // TODO: Right now this kills the underlying string.
-        // delete(fnSignatureExpr);
+        delete(&fnSignatureExpr);
 
         assert(is(tok_eol));
         next();
@@ -542,7 +540,7 @@ Parser2::findDefStatement(int outerIndent)
         assert(body);
 
         return new DefStmt(
-                fnName.getName(),
+                std::move(fnName),
                 std::move(argNames),
                 std::unique_ptr<CompoundStmt>(body));
     } else {
