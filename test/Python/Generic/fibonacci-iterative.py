@@ -13,7 +13,7 @@ def fib(N):
         tmp1 = result
         result = result + tmp
         tmp = tmp1
-        i += 1
+        i = i + 1
 
     return result
 

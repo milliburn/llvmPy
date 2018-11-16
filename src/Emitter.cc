@@ -684,6 +684,12 @@ Emitter::zeroInitialiseSlot(
         llvm::Value *frameAlloca)
 {
     assert(slots.count(name));
+
+    if (scope.slots[name]) {
+        // Slot already zero-initialised.
+        return;
+    }
+
     auto index = slots.at(name);
 
     auto *assignGEP = ir.CreateGEP(
