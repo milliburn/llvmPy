@@ -518,20 +518,29 @@ Parser2::findDefStatement(int outerIndent)
         auto fnName = token().releaseString();
         next();
 
-        auto &fnSignatureExpr = readExpr()->as<TupleExpr>();
+        assert(is(tok_lp));
 
-        std::vector<std::string const> argNames;
+        auto fnSignatureExpr = std::unique_ptr<Expr>(readSubExpr());
+        std::unique_ptr<TupleExpr> fnSignatureTuple;
+
+        if (fnSignatureExpr->isa<IdentExpr>()) {
+            fnSignatureTuple = std::make_unique<TupleExpr>();
+            fnSignatureTuple->addMember(std::move(fnSignatureExpr));
+        } else {
+            assert(fnSignatureExpr->isa<TupleExpr>());
+            fnSignatureTuple.reset(
+                    fnSignatureExpr.release()->cast<TupleExpr>());
+        }
 
         assert(is(tok_colon));
         next();
 
-        for (auto &arg : fnSignatureExpr.getMembers()) {
+        std::vector<std::string const> argNames;
+
+        for (auto &arg : fnSignatureTuple->getMembers()) {
             auto const &ident = arg->as<IdentExpr>();
             argNames.push_back(ident.getName());
         }
-
-        // TODO: Right now this kills the underlying string.
-        delete(&fnSignatureExpr);
 
         assert(is(tok_eol));
         next();
@@ -627,13 +636,14 @@ AssignStmt *
 Parser2::findAssignStatement()
 {
     if (is(tok_ident)) {
-        auto name = token().releaseString();
+        auto &nameToken = token();
         next();
 
         if (is_a(tok_assign)) {
             next();
             auto *expr = readExpr();
             assert(expr);
+            auto name = nameToken.releaseString();
             return new AssignStmt(
                     std::move(name),
                     std::unique_ptr<Expr const>(expr));
