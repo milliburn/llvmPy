@@ -37,8 +37,6 @@ public:
     BreakStmt *findBreakStmt();
     ContinueStmt *findContinueStmt();
 
-    CallExpr *buildCall(Expr *lhs, Expr *rhs);
-
     std::unique_ptr<Stmt> read();
     Expr *readAtomicExpr();
     Expr *readExpr(int precedence = 0, Expr *lhs = nullptr);

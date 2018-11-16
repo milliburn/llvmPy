@@ -175,7 +175,9 @@ Parser2::readExpr(int lastPrec, Expr *lhs)
         } else if (is(tok_lp)) {
 
             auto *args = readSubExpr();
-            auto *call = buildCall(lhs, args);
+            auto *call = new CallExpr(
+                    std::unique_ptr<Expr>(lhs),
+                    std::unique_ptr<Expr>(args));
             return readExpr(lastPrec, call);
 
         } else {
@@ -357,24 +359,6 @@ Parser2::readBlockStatement(int indent)
     } else {
         return nullptr;
     }
-}
-
-CallExpr *
-Parser2::buildCall(Expr *lhs, Expr *rhs)
-{
-    auto *call = new CallExpr(std::unique_ptr<Expr>(lhs));
-
-    if (auto *tuple = rhs->cast<TupleExpr>()) {
-        for (auto &member : tuple->releaseMembers()) {
-            call->addArgument(std::move(member));
-        }
-
-        delete(tuple);
-    } else if (rhs) {
-        call->addArgument(std::unique_ptr<Expr>(rhs));
-    }
-
-    return call;
 }
 
 bool

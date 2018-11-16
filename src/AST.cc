@@ -156,11 +156,16 @@ CallExpr::toStream(std::ostream &s) const
 {
     s << getCallee() << '(';
 
-    auto &args = getArguments();
+    auto const &args = getArguments();
 
-    for (int i = 0; i < args.size(); ++i) {
-        if (i > 0) s << ", ";
-        s << *args[i];
+    int iArg = 0;
+    for (auto const &arg : getArguments()) {
+        if (iArg > 0) {
+            s << ", ";
+        }
+
+        s << *arg;
+        iArg += 1;
     }
 
     s << ')';
@@ -226,9 +231,19 @@ StringExpr::getValue() const
     return *value;
 }
 
-CallExpr::CallExpr(std::unique_ptr<Expr> callee)
+CallExpr::CallExpr(
+        std::unique_ptr<Expr> callee,
+        std::unique_ptr<Expr> arguments)
 : callee(std::move(callee))
 {
+    if (auto *tuple = arguments->cast<TupleExpr>()) {
+        this->arguments.reserve(tuple->getMembers().size());
+        for (auto const &member : tuple->getMembers()) {
+            this->arguments.push_back(std::make_unique<Expr const>(*member));
+        }
+    } else {
+        this->arguments.push_back(std::make_unique<Expr const>(*arguments));
+    }
 }
 
 Expr const &
@@ -241,12 +256,6 @@ std::vector<std::unique_ptr<Expr const>> const &
 CallExpr::getArguments() const
 {
     return arguments;
-}
-
-void
-CallExpr::addArgument(std::unique_ptr<Expr const> arg)
-{
-    arguments.push_back(std::move(arg));
 }
 
 TupleExpr::TupleExpr()
@@ -285,7 +294,6 @@ void
 TupleExpr::addMember(std::unique_ptr<Expr> member)
 {
     members.push_back(std::move(member));
-    // members.insert(members.begin(), std::move(member));
 }
 
 TokenExpr::TokenExpr(TokenType type)
@@ -526,23 +534,4 @@ CompoundStmt const &
 DefStmt::getBody() const
 {
     return *body;
-}
-
-std::vector<std::unique_ptr<Expr const>>
-TupleExpr::releaseMembers()
-{
-    decltype(members) result;
-    result.reserve(members.size());
-
-    for (auto &member : members) {
-        result.push_back(std::move(member));
-    }
-
-    return result;
-}
-
-std::unique_ptr<Expr const>
-LambdaExpr::releaseExpr()
-{
-    return std::move(expr);
 }

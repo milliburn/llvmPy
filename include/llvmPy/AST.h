@@ -117,7 +117,9 @@ public:
 
 class CallExpr final : public Expr {
 public:
-    explicit CallExpr(std::unique_ptr<Expr> callee);
+    explicit CallExpr(
+            std::unique_ptr<Expr> callee,
+            std::unique_ptr<Expr> arguments);
 
     void toStream(std::ostream &s) const override;
 
@@ -126,10 +128,9 @@ public:
 
     std::vector<std::unique_ptr<Expr const>> const &getArguments() const;
 
-    void addArgument(std::unique_ptr<Expr const> arg);
-
 private:
     std::unique_ptr<Expr const> callee;
+
     std::vector<std::unique_ptr<Expr const>> arguments;
 };
 
@@ -156,8 +157,6 @@ public:
     std::vector<std::unique_ptr<Expr const>> const &getMembers() const;
 
     void addMember(std::unique_ptr<Expr> member);
-
-    std::vector<std::unique_ptr<Expr const>> releaseMembers();
 
 private:
     std::vector<std::unique_ptr<Expr const>> members;
