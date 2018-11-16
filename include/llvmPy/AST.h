@@ -23,14 +23,14 @@ protected:
 
 class StringExpr final : public Expr {
 public:
-    explicit StringExpr(std::unique_ptr<std::string const> value);
+    explicit StringExpr(std::string const &value);
 
     void toStream(std::ostream &s) const override;
 
     std::string const &getValue() const;
 
 private:
-    std::unique_ptr<std::string const> const value;
+    std::string const value;
 };
 
 class DecimalExpr final : public Expr {
@@ -59,14 +59,14 @@ private:
 
 class IdentExpr final : public Expr {
 public:
-    explicit IdentExpr(std::unique_ptr<std::string const> name);
+    explicit IdentExpr(std::string const &name);
 
     void toStream(std::ostream &s) const override;
 
     std::string const &getName() const;
 
 private:
-    std::unique_ptr<std::string const> name;
+    std::string const name;
 };
 
 class LambdaExpr final : public Expr {
@@ -75,14 +75,14 @@ public:
 
     void toStream(std::ostream &s) const override;
 
-    std::vector<std::shared_ptr<std::string const>> const &getArguments() const;
+    std::vector<std::string const> const &getArguments() const;
 
     Expr const &getExpr() const;
 
-    void addArgument(std::shared_ptr<std::string const> argument);
+    void addArgument(std::string const &argument);
 
 private:
-    std::vector<std::shared_ptr<std::string const>> arguments;
+    std::vector<std::string const> arguments;
 
     std::shared_ptr<Expr const> expr;
 };
@@ -200,19 +200,22 @@ class CompoundStmt;
 
 class DefStmt final : public Stmt {
 public:
-    DefStmt(std::unique_ptr<std::string const> name,
-            std::vector<std::string const> args,
+    DefStmt(std::string const &name,
             std::unique_ptr<CompoundStmt> body);
 
     void toStream(std::ostream &s) const override;
 
 public:
     std::string const &getName() const;
+
     std::vector<std::string const> const &getArguments() const;
+
+    void addArgument(std::string const &name);
+
     CompoundStmt const &getBody() const;
 
 private:
-    std::unique_ptr<std::string const> name;
+    std::string const name;
     std::vector<std::string const> args;
     std::unique_ptr<CompoundStmt> body;
 };

@@ -201,18 +201,12 @@ Emitter::emit(RTScope &scope, LambdaExpr const &lambda)
             std::unique_ptr<Expr const>(
                     &lambda.getExpr()));
 
-    // TODO: XXX
-    std::vector<std::string const> args;
-    for (auto const &arg : lambda.getArguments()) {
-        args.push_back(*arg);
-    }
-
     RTFunc *func =
             createFunction(
                     tags.Lambda,
                     scope,
                     *stmt,
-                    args);
+                    lambda.getArguments());
 
     // Ensure that the ReturnStmt going out of scope will not delete memory
     // owned by the LambdaExpr.

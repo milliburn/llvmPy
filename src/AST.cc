@@ -66,7 +66,7 @@ DecimalExpr::getValue() const
 void
 DecimalExpr::toStream(std::ostream &s) const
 {
-    s << value << 'd';
+    s << getValue() << 'd';
 }
 
 IntegerExpr::IntegerExpr(long v)
@@ -83,19 +83,18 @@ IntegerExpr::getValue() const
 void
 IntegerExpr::toStream(std::ostream &s) const
 {
-    s << value << 'i';
+    s << getValue() << 'i';
 }
 
-IdentExpr::IdentExpr(std::unique_ptr<std::string const> name)
-: name(std::move(name))
+IdentExpr::IdentExpr(std::string const &name)
+: name(name)
 {
 }
 
 std::string const &
 IdentExpr::getName() const
 {
-    assert(name);
-    return *name;
+    return name;
 }
 
 void
@@ -109,14 +108,14 @@ LambdaExpr::LambdaExpr(std::shared_ptr<Expr> expr)
 {
 }
 
-std::vector<std::shared_ptr<std::string const>> const &
+std::vector<std::string const> const &
 LambdaExpr::getArguments() const
 {
     return arguments;
 }
 
 void
-LambdaExpr::addArgument(std::shared_ptr<std::string const> name)
+LambdaExpr::addArgument(std::string const &name)
 {
     arguments.emplace_back(name);
 }
@@ -132,9 +131,14 @@ LambdaExpr::toStream(std::ostream &s) const
 {
     s << "(lambda";
 
-    for (int i = 0; i < arguments.size(); ++i) {
-        if (i > 0) s << ',';
-        s << ' ' << *arguments[i];
+    int iArg = 0;
+    for (auto const &arg : getArguments()) {
+        if (iArg > 0) {
+            s << ",";
+        }
+
+        s << ' ' << arg;
+        iArg += 1;
     }
 
     s << ": " << getExpr() << ')';
@@ -186,9 +190,14 @@ DefStmt::toStream(std::ostream &s) const
 {
     s << "def " << getName() << "(";
 
-    for (int i = 0; i < args.size(); ++i) {
-        if (i > 0) s << ", ";
-        s << args[i];
+    int iArg = 0;
+    for (auto const &arg : getArguments()) {
+        if (iArg > 0) {
+            s << ", ";
+        }
+
+        s << arg;
+        iArg += 1;
     }
 
     s << "):" << endl;
@@ -218,15 +227,15 @@ operator<< (std::ostream & s, Stmt const & stmt)
     return s;
 }
 
-StringExpr::StringExpr(std::unique_ptr<std::string const> value)
-: value(std::move(value))
+StringExpr::StringExpr(std::string const &value)
+: value(value)
 {
 }
 
 std::string const &
 StringExpr::getValue() const
 {
-    return *value;
+    return value;
 }
 
 CallExpr::CallExpr(std::shared_ptr<Expr> const &callee)
@@ -420,11 +429,9 @@ ExprStmt::ExprStmt(Expr *expr)
 }
 
 DefStmt::DefStmt(
-        std::unique_ptr<std::string const> name,
-        std::vector<std::string const> args,
+        std::string const &name,
         std::unique_ptr<CompoundStmt> body)
-: name(std::move(name)),
-  args(std::move(args)),
+: name(name),
   body(std::move(body))
 {
 }
@@ -514,7 +521,7 @@ AssignStmt::getValue() const
 std::string const &
 DefStmt::getName() const
 {
-    return *name;
+    return name;
 }
 
 std::vector<std::string const> const &
@@ -527,4 +534,10 @@ CompoundStmt const &
 DefStmt::getBody() const
 {
     return *body;
+}
+
+void
+DefStmt::addArgument(std::string const &name)
+{
+    args.emplace_back(name);
 }

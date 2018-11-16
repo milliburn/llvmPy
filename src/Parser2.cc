@@ -431,10 +431,9 @@ Parser2::findStringLiteral()
     if (is(tok_string)) {
         // The substring removes string delimiters (" or ').
         auto const &text = token().getString();
-        auto value = std::make_unique<std::string const>(
-                text.substr(1, text.length() - 2));
+        auto value = text.substr(1, text.length() - 2);
         next();
-        return new StringExpr(std::move(value));
+        return new StringExpr(value);
     } else {
         return nullptr;
     }
@@ -444,8 +443,7 @@ IdentExpr *
 Parser2::findIdentifier()
 {
     if (is(tok_ident)) {
-        auto name = token().releaseString();
-        auto *expr = new IdentExpr(std::move(name));
+        auto *expr = new IdentExpr(token().getString());
         next();
         return expr;
     } else {
@@ -483,12 +481,10 @@ Parser2::findLambdaExpression()
         if (auto const *tuple = argsSubExpr->cast<TupleExpr>()) {
             for (auto const &member : tuple->getMembers()) {
                 auto const &ident = member->as<IdentExpr>();
-                lambda->addArgument(std::make_shared<std::string>(
-                        ident.getName()));
+                lambda->addArgument(ident.getName());
             }
         } else if (auto *ident = argsSubExpr->cast<IdentExpr>()) {
-            lambda->addArgument(std::make_shared<std::string>(
-                    ident->getName()));
+            lambda->addArgument(ident->getName());
         } else {
             assert(false && "Invalid argument subexpression");
         }
@@ -508,32 +504,15 @@ Parser2::findDefStatement(int outerIndent)
         next();
 
         assert(is(tok_ident));
-        auto fnName = token().releaseString();
+        auto const &fnName = token().getString();
         next();
 
         assert(is(tok_lp));
 
         auto fnSignatureExpr = std::unique_ptr<Expr>(readSubExpr());
-        std::unique_ptr<TupleExpr> fnSignatureTuple;
-
-        if (fnSignatureExpr->isa<IdentExpr>()) {
-            fnSignatureTuple = std::make_unique<TupleExpr>();
-            fnSignatureTuple->addMember(std::move(fnSignatureExpr));
-        } else {
-            assert(fnSignatureExpr->isa<TupleExpr>());
-            fnSignatureTuple.reset(
-                    fnSignatureExpr.release()->cast<TupleExpr>());
-        }
 
         assert(is(tok_colon));
         next();
-
-        std::vector<std::string const> argNames;
-
-        for (auto &arg : fnSignatureTuple->getMembers()) {
-            auto const &ident = arg->as<IdentExpr>();
-            argNames.push_back(ident.getName());
-        }
 
         assert(is(tok_eol));
         next();
@@ -541,10 +520,19 @@ Parser2::findDefStatement(int outerIndent)
         CompoundStmt *body = readCompoundStatement(outerIndent);
         assert(body);
 
-        return new DefStmt(
-                std::move(fnName),
-                std::move(argNames),
-                std::unique_ptr<CompoundStmt>(body));
+        auto *def = new DefStmt(fnName, std::unique_ptr<CompoundStmt>(body));
+
+        if (auto *tuple = fnSignatureExpr->cast<TupleExpr>()) {
+            for (auto const &member : tuple->getMembers()) {
+                auto const &ident = member->as<IdentExpr>();
+                def->addArgument(ident.getName());
+            }
+        } else {
+            auto const &ident = fnSignatureExpr->as<IdentExpr>();
+            def->addArgument(ident.getName());
+        }
+
+        return def;
     } else {
         return nullptr;
     }
