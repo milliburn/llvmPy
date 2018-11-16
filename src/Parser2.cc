@@ -156,6 +156,7 @@ Parser2::readExpr(int lastPrec, Expr *lhs)
             (rhs = findStringLiteral()) ||
             (rhs = findIdentifier()) ||
             (rhs = findLambdaExpression())) {
+        // It's an atomic expression.
         rhs = readExpr(curPrec, rhs);
     }
 
