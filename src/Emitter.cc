@@ -360,17 +360,13 @@ Emitter::createFunction(
     llvm::BasicBlock *init = &function->getEntryBlock();
     llvm::BasicBlock *prog = init;
 
-    // Add slots that originate from assignments.
-    for (auto *stmt : stmts) {
-        if (auto *assignStmt = stmt->cast<AssignStmt>()) {
-            auto ident = assignStmt->lhs;
-            if (!slots.count(ident)) {
-                slots[ident] = slots.size();
-            }
-        } else if (auto *defStmt = stmt->cast<DefStmt>()) {
-            auto ident = defStmt->name;
-            if (!slots.count(ident)) {
-                slots[ident] = slots.size();
+    {
+        // Gather slots from statements in this scope.
+        std::set<std::string const> slotNames;
+        gatherSlotNames(stmt_, slotNames);
+        for (auto slotName : slotNames) {
+            if (!slots.count(slotName)) {
+                slots[slotName] = slots.size();
             }
         }
     }
@@ -649,4 +645,23 @@ bool
 Emitter::lastInstructionWasTerminator() const
 {
     return ir.GetInsertBlock()->back().isTerminator();
+}
+
+void
+Emitter::gatherSlotNames(Stmt const &stmt, std::set<std::string const> &names)
+{
+    if (auto *assign = stmt.cast<AssignStmt>()) {
+        names.insert(assign->lhs);
+    } else if (auto *def = stmt.cast<DefStmt>()) {
+        names.insert(def->getName());
+    } else if (auto *compound = stmt.cast<CompoundStmt>()) {
+        for (auto const &stmt_ : compound->getStatements()) {
+            gatherSlotNames(*stmt_, names);
+        }
+    } else if (auto *cond = stmt.cast<ConditionalStmt>()) {
+        gatherSlotNames(cond->getThenBranch(), names);
+        gatherSlotNames(cond->getElseBranch(), names);
+    } else if (auto *loop = stmt.cast<WhileStmt>()) {
+        gatherSlotNames(loop->getBody(), names);
+    }
 }
