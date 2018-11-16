@@ -63,3 +63,41 @@ RTScope::getInnerFramePtr() const
 {
     return innerFramePtr;
 }
+
+bool
+RTScope::hasSlot(std::string const &name) const
+{
+    return slots.count(name) > 0;
+}
+
+void
+RTScope::declareSlot(std::string const &name)
+{
+    if (!hasSlot(name)) {
+        slots[name] = {
+                .value = nullptr,
+                .frameIndex = slots.size()
+        };
+    }
+}
+
+llvm::Value *
+RTScope::getSlotValue(std::string const &name) const
+{
+    assert(hasSlot(name));
+    return slots.at(name).value;
+}
+
+void
+RTScope::setSlotValue(std::string const &name, llvm::Value *value)
+{
+    assert(hasSlot(name));
+    slots.at(name).value = value;
+}
+
+size_t
+RTScope::getSlotIndex(std::string const &name) const
+{
+    assert(hasSlot(name));
+    return slots.at(name).frameIndex;
+}

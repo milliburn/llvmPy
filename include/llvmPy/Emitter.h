@@ -66,14 +66,12 @@ public:
 
     void zeroInitialiseSlots(
             Stmt const &body, RTScope &scope,
-            std::map<std::string, size_t> const &slots,
             llvm::BasicBlock *insertPoint, llvm::Type *frameType,
             llvm::Value *frameAlloca);
 
     void zeroInitialiseSlot(
             std::string const &name,
             RTScope &scope,
-            std::map<std::string, size_t> const &slots,
             llvm::Type *frameType,
             llvm::Value *frameAlloca);
 
