@@ -1,5 +1,5 @@
-# RUN: %S/../test-parser.sh %s
-# RUN: %S/../test.sh %s
+# RUN: %S/../../test-parser.sh %s
+# RUN: %S/../../test.sh %s
 
 
 def fib(n):                             # PARSER-LABEL:def fib(n):

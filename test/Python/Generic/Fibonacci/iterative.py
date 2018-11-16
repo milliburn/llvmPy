@@ -1,4 +1,4 @@
-# RUN: %S/../test.sh %s
+# RUN: %S/../../test.sh %s
 
 
 def fib(N):
