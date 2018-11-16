@@ -421,3 +421,41 @@ Expr::Expr() = default;
 
 Stmt::Stmt() = default;
 
+WhileStmt::WhileStmt(
+        std::unique_ptr<Expr> condition,
+        std::unique_ptr<Stmt> body)
+: condition(std::move(condition)),
+  body(std::move(body))
+{
+}
+
+void
+WhileStmt::toStream(std::ostream &s) const
+{
+    s << "while " << *condition << ":" << endl;
+    indentToStream(s, *body, INDENT);
+}
+
+Expr const &
+WhileStmt::getCondition() const
+{
+    return *condition;
+}
+
+Stmt const &
+WhileStmt::getBody() const
+{
+    return *body;
+}
+
+void
+BreakStmt::toStream(std::ostream &s) const
+{
+    s << "break" << endl;
+}
+
+void
+ContinueStmt::toStream(std::ostream &s) const
+{
+    s << "continue" << endl;
+}

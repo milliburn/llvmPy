@@ -16,6 +16,9 @@ buildKeywordMap()
     kws["elif"] = kw_elif;
     kws["else"] = kw_else;
     kws["pass"] = kw_pass;
+    kws["while"] = kw_while;
+    kws["break"] = kw_break;
+    kws["continue"] = kw_continue;
     return kws;
 }
 

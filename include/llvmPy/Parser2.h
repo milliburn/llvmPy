@@ -32,6 +32,9 @@ public:
     PassStmt *findPassStatement();
     DefStmt *findDefStatement(int indent);
     ConditionalStmt *findConditionalStatement(int indent, bool elif = false);
+    WhileStmt *findWhileStmt(int indent);
+    BreakStmt *findBreakStmt();
+    ContinueStmt *findContinueStmt();
 
     CallExpr *buildCall(Expr *lhs, Expr *rhs);
 

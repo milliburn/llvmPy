@@ -7,6 +7,7 @@
 #ifdef __cplusplus
 namespace llvm {
 class DataLayout;
+class BasicBlock;
 class IntegerType;
 class LLVMContext;
 class Module;
@@ -21,6 +22,12 @@ class RTModule;
 
 class Emitter {
 public:
+    /** Details of the loop construct currently in scope. */
+    struct Loop {
+        llvm::BasicBlock *cond;
+        llvm::BasicBlock *end;
+    };
+
     explicit Emitter(Compiler &c) noexcept;
 
     llvm::Value *emit(RTScope &scope, AST const &ast);
@@ -36,12 +43,21 @@ public:
             llvm::Function &function,
             RTScope &scope,
             ConditionalStmt const &cond,
-            int number);
+            Loop const *loop);
 
     void emitStatement(
             llvm::Function &function,
             RTScope &scope,
-            Stmt const &stmt);
+            Stmt const &stmt,
+            Loop const *loop);
+
+    void emitWhileStmt(
+            llvm::Function &function,
+            RTScope &scope,
+            WhileStmt const &stmt);
+
+    void emitBreakStmt(Loop const *loop);
+    void emitContinueStmt(Loop const *loop);
 
     RTModule *createModule(std::string const &name, Stmt const &stmt);
     RTModule *createModule(std::string const &name);
@@ -57,6 +73,8 @@ private:
     llvm::LLVMContext &ctx;
     llvm::IRBuilder<> ir;
     Types const types;
+
+    bool lastInstructionWasTerminator() const;
 };
 
 } // namespace llvmPy

@@ -45,6 +45,9 @@ operator<< (std::ostream & s, Token const &t)
     case kw_elif: s << ">elif"; break;
     case kw_else: s << ">else"; break;
     case kw_pass: s << ">pass"; break;
+    case kw_while: s << ">while"; break;
+    case kw_break: s << ">break"; break;
+    case kw_continue: s << ">continue"; break;
     default: s << "?"; break;
     }
 

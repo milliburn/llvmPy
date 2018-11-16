@@ -246,6 +246,32 @@ private:
     std::unique_ptr<Stmt const> elseBranch;
 };
 
+class WhileStmt final : public Stmt {
+public:
+
+    WhileStmt(std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> body);
+
+    void toStream(std::ostream &s) const override;
+
+    Expr const &getCondition() const;
+
+    Stmt const &getBody() const;
+
+private:
+    std::unique_ptr<Expr const> condition;
+    std::unique_ptr<Stmt const> body;
+};
+
+class BreakStmt final : public Stmt {
+public:
+    void toStream(std::ostream &s) const override;
+};
+
+class ContinueStmt final : public Stmt {
+public:
+    void toStream(std::ostream &s) const override;
+};
+
 } // namespace llvmPy
 
 std::ostream & operator<< (std::ostream &, llvmPy::Expr const &);

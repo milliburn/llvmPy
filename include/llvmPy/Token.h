@@ -65,6 +65,9 @@ enum TokenType {
     kw_elif,
     kw_else,
     kw_pass,
+    kw_while,
+    kw_break,
+    kw_continue
 };
 
 class Token {
