@@ -73,6 +73,8 @@ Emitter::createModule(std::string const &name)
 llvm::Value *
 Emitter::emit(RTScope &scope, AST const &ast)
 {
+    assert(&ast);
+
     if (auto *intLit = ast.cast<IntegerExpr>()) {
         return emit(scope, *intLit);
     } else if (auto *ident = ast.cast<IdentExpr>()) {
@@ -582,7 +584,7 @@ Emitter::emitWhileStmt(
 void
 Emitter::emitBreakStmt(Emitter::Loop const *loop)
 {
-    assert(loop);
+    assert(loop && loop->end);
     ir.CreateBr(loop->end);
 }
 

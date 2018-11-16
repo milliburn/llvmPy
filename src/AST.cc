@@ -123,6 +123,7 @@ LambdaExpr::addArgument(std::string const &name)
 Expr const &
 LambdaExpr::getExpr() const
 {
+    assert(expr);
     return *expr;
 }
 
@@ -163,12 +164,14 @@ BinaryExpr::toStream(std::ostream &s) const
 Expr const &
 BinaryExpr::getLeftOperand() const
 {
+    assert(lhs);
     return *lhs;
 }
 
 Expr const &
 BinaryExpr::getRightOperand() const
 {
+    assert(rhs);
     return *rhs;
 }
 
@@ -267,6 +270,7 @@ CallExpr::CallExpr(std::shared_ptr<Expr> const &callee)
 Expr const &
 CallExpr::getCallee() const
 {
+    assert(callee);
     return *callee;
 }
 
@@ -359,6 +363,7 @@ UnaryExpr::getOperator() const
 Expr const &
 UnaryExpr::getExpr() const
 {
+    assert(expr);
     return *expr;
 }
 
@@ -429,18 +434,21 @@ ConditionalStmt::toStream(std::ostream &s) const
 Expr const &
 ConditionalStmt::getCondition() const
 {
+    assert(condition);
     return *condition;
 }
 
 Stmt const &
 ConditionalStmt::getThenBranch() const
 {
+    assert(thenBranch);
     return *thenBranch;
 }
 
 Stmt const &
 ConditionalStmt::getElseBranch() const
 {
+    assert(elseBranch);
     return *elseBranch;
 }
 
@@ -452,6 +460,7 @@ ExprStmt::ExprStmt(std::shared_ptr<Expr const> const &expr)
 Expr const &
 ExprStmt::getExpr() const
 {
+    assert(expr);
     return *expr;
 }
 
@@ -471,12 +480,14 @@ ReturnStmt::ReturnStmt(std::shared_ptr<Expr const> const &expr)
 Expr const &
 ReturnStmt::getExpr() const
 {
+    assert(expr);
     return *expr;
 }
 
 std::shared_ptr<Expr const> const &
 ReturnStmt::getExprPtr() const
 {
+    assert(expr);
     return expr;
 }
 
@@ -502,12 +513,14 @@ WhileStmt::toStream(std::ostream &s) const
 Expr const &
 WhileStmt::getCondition() const
 {
+    assert(condition);
     return *condition;
 }
 
 Stmt const &
 WhileStmt::getBody() const
 {
+    assert(body);
     return *body;
 }
 
@@ -540,12 +553,14 @@ AssignStmt::getName() const
 Expr const &
 AssignStmt::getValue() const
 {
+    assert(value);
     return *value;
 }
 
 std::shared_ptr<Expr const> const &
 AssignStmt::getValuePtr() const
 {
+    assert(value);
     return value;
 }
 
@@ -564,6 +579,7 @@ DefStmt::getArguments() const
 Stmt const &
 DefStmt::getBody() const
 {
+    assert(body);
     return *body;
 }
 
@@ -576,5 +592,6 @@ DefStmt::addArgument(std::string const &name)
 std::shared_ptr<Expr const> const &
 LambdaExpr::getExprPtr() const
 {
+    assert(expr);
     return expr;
 }
