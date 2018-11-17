@@ -32,7 +32,7 @@ public:
 
     explicit Emitter(Compiler &c) noexcept;
 
-    llvm::Value *emit(RTScope &scope, AST const &ast);
+    llvm::Value *emit(RTScope &scope, Expr const &expr);
     llvm::Value *emit(RTScope &scope, IntegerExpr const &expr);
     llvm::Value *emit(RTScope &scope, IdentExpr const &ident);
     llvm::Value *emit(RTScope &scope, CallExpr const &call);

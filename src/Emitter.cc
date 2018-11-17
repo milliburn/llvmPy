@@ -77,23 +77,23 @@ Emitter::createModule(std::string const &name)
 }
 
 llvm::Value *
-Emitter::emit(RTScope &scope, AST const &ast)
+Emitter::emit(RTScope &scope, Expr const &expr)
 {
-    assert(&ast);
+    assert(&expr);
 
-    if (auto *intLit = ast.cast<IntegerExpr>()) {
+    if (auto *intLit = expr.cast<IntegerExpr>()) {
         return emit(scope, *intLit);
-    } else if (auto *ident = ast.cast<IdentExpr>()) {
+    } else if (auto *ident = expr.cast<IdentExpr>()) {
         return emit(scope, *ident);
-    } else if (auto *call = ast.cast<CallExpr>()) {
+    } else if (auto *call = expr.cast<CallExpr>()) {
         return emit(scope, *call);
-    } else if (auto *lambda = ast.cast<LambdaExpr>()) {
+    } else if (auto *lambda = expr.cast<LambdaExpr>()) {
         return emit(scope, *lambda);
-    } else if (auto *def = ast.cast<DefStmt>()) {
+    } else if (auto *def = expr.cast<DefStmt>()) {
         return emit(scope, *def);
-    } else if (auto *strLit = ast.cast<StringExpr>()) {
+    } else if (auto *strLit = expr.cast<StringExpr>()) {
         return emit(scope, *strLit);
-    } else if (auto *binop = ast.cast<BinaryExpr>()) {
+    } else if (auto *binop = expr.cast<BinaryExpr>()) {
         return emit(scope, *binop);
     } else {
         assert(false && "Unrecognised AST");
@@ -360,13 +360,10 @@ Emitter::createFunction(
     }
 
     // Create function body.
-    llvm::BasicBlock::Create(ctx, "", function);
-    llvm::BasicBlock *init = &function->getEntryBlock();
-    llvm::BasicBlock *prog = init;
+    auto *entry = llvm::BasicBlock::Create(ctx, "", function);
+    ir.SetInsertPoint(entry);
 
     gatherSlotNames(stmt, slotNames);
-
-    ir.SetInsertPoint(init);
 
     // Dereference the outer frame.
     llvm::Value *outerFramePtr =
@@ -420,7 +417,7 @@ Emitter::createFunction(
         if (iArg > 0) {
             auto ident = *argNames;
             ++argNames;
-            ir.SetInsertPoint(init);
+            ir.SetInsertPoint(entry);
             assert(innerScope->hasSlot(ident));
             auto slotIndex = innerScope->getSlotIndex(ident);
 
@@ -448,13 +445,13 @@ Emitter::createFunction(
     zeroInitialiseSlots(
             stmt,
             *innerScope,
-            init,
+            entry,
             innerFrameType,
             innerFrameAlloca);
 
     // Successive statements may leave the emitter at a different insert point.
 
-    ir.SetInsertPoint(prog);
+    ir.SetInsertPoint(entry);
 
     emitStatement(*function, *innerScope, stmt, nullptr);
 
@@ -487,9 +484,14 @@ Emitter::emitCondStmt(
     // If the BBs were immediately linked, the function would end up with
     // a non-linear BBs as any compound statement might itself create more.
 
+    auto *ifBB = llvm::BasicBlock::Create(ctx, tags.If);
     auto *thenBB = llvm::BasicBlock::Create(ctx, tags.Then);
     auto *elseBB = llvm::BasicBlock::Create(ctx, tags.Else);
     auto *endifBB = llvm::BasicBlock::Create(ctx, tags.Endif);
+
+    ir.CreateBr(ifBB);
+    ifBB->insertInto(&function);
+    ir.SetInsertPoint(ifBB);
 
     auto *ifExprValue = emit(scope, cond.getCondition());
     auto *truthyValue = ir.CreateCall(mod.llvmPy_truthy(), { ifExprValue });
