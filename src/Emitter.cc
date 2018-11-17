@@ -499,7 +499,7 @@ Emitter::emitCondStmt(
     thenBB->insertInto(&function);
     ir.SetInsertPoint(thenBB);
     emitStatement(function, scope, cond.getThenBranch(), loop);
-
+    ir.SetInsertPoint(thenBB);
     if (!lastInstructionWasTerminator()) {
         ir.CreateBr(endifBB);
     }
@@ -507,7 +507,7 @@ Emitter::emitCondStmt(
     elseBB->insertInto(&function);
     ir.SetInsertPoint(elseBB);
     emitStatement(function, scope, cond.getElseBranch(), loop);
-
+    ir.SetInsertPoint(elseBB);
     if (!lastInstructionWasTerminator()) {
         ir.CreateBr(endifBB);
     }
@@ -528,10 +528,15 @@ Emitter::emitStatement(
         return;
     }
 
+    auto *insertPoint = ir.GetInsertBlock();
+
     if (auto *compound = stmt.cast<CompoundStmt>()) {
         for (auto const &innerStmt : compound->getStatements()) {
+            ir.SetInsertPoint(insertPoint);
             emitStatement(function, scope, *innerStmt, loop);
         }
+
+        ir.SetInsertPoint(insertPoint);
     } else if (auto *expr = stmt.cast<ExprStmt>()) {
         emit(scope, expr->getExpr());
     } else if (auto *ret = stmt.cast<ReturnStmt>()) {
@@ -547,6 +552,7 @@ Emitter::emitStatement(
     } else if (auto *assign = stmt.cast<AssignStmt>()) {
         auto *slot = scope.getSlotValue(assign->getName());
         auto *value = emit(scope, assign->getValue());
+        ir.SetInsertPoint(insertPoint);
         ir.CreateStore(value, slot);
     } else if (auto *while_ = stmt.cast<WhileStmt>()) {
         emitWhileStmt(function, scope, *while_);
@@ -577,16 +583,14 @@ Emitter::emitWhileStmt(
 
     condBB->insertInto(&function);
     ir.SetInsertPoint(condBB);
-
     auto *condExprValue = emit(scope, stmt.getCondition());
     auto *truthyValue = ir.CreateCall(mod.llvmPy_truthy(), { condExprValue });
-
     ir.CreateCondBr(truthyValue, loopBB, endwhileBB);
 
     loopBB->insertInto(&function);
     ir.SetInsertPoint(loopBB);
     emitStatement(function, scope, stmt.getBody(), &loop);
-
+    ir.SetInsertPoint(loopBB);
     if (!lastInstructionWasTerminator()) {
         ir.CreateBr(condBB);
     }
