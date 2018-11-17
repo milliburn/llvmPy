@@ -43,7 +43,6 @@ add_library(
         include/llvmPy/Parser2.h
         include/llvmPy/PyObj.h
         include/llvmPy/RT.h
-        include/llvmPy/SyntaxError.h
         include/llvmPy/Token.h
         include/llvmPy/Typed.h
         include/llvmPy.h
@@ -62,7 +61,6 @@ add_library(
         src/Lexer.cc
         src/Parser2.cc
         src/RT.cc
-        src/SyntaxError.cc
         src/Token.cc
         src/PyObj.cc)
 

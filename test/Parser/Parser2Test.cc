@@ -21,7 +21,7 @@ tokenize(std::string input, bool erase)
         // assignment operator on Token.
 
         std::vector<Token> output;
-        for (int i = 1; i < tokens.size(); ++i) {
+        for (size_t i = 1; i < tokens.size(); ++i) {
             output.push_back(std::move(tokens[i]));
         }
 

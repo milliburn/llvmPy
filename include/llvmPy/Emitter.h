@@ -63,7 +63,7 @@ public:
 
     void gatherSlotNames(
             Stmt const &stmt,
-            std::set<std::string const> &names);
+            std::set<std::string> &names);
 
     void zeroInitialiseSlots(
             Stmt const &body, RTScope &scope,

@@ -1,4 +1,5 @@
 #include <llvmPy/Token.h>
+#include <assert.h>
 using namespace llvmPy;
 using namespace std;
 

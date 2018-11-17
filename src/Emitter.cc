@@ -1,6 +1,5 @@
 #include <llvmPy/Emitter.h>
 #include <llvmPy/RT.h>
-#include <llvmPy/SyntaxError.h>
 #include <llvmPy/Token.h>
 #include <llvm/IR/Value.h>
 #include <llvm/IR/Verifier.h>
@@ -307,7 +306,7 @@ Emitter::createFunction(
     RTModule &mod = outerScope.getModule();
 
     // Names of slots in the frame.
-    std::set<std::string const> slotNames;
+    std::set<std::string> slotNames;
 
     llvm::BasicBlock *insertPoint = ir.GetInsertBlock();
     vector<llvm::Type *> argTypes;
@@ -617,7 +616,7 @@ Emitter::lastInstructionWasTerminator() const
 }
 
 void
-Emitter::gatherSlotNames(Stmt const &stmt, std::set<std::string const> &names)
+Emitter::gatherSlotNames(Stmt const &stmt, std::set<std::string> &names)
 {
     if (auto *assign = stmt.cast<AssignStmt>()) {
         names.insert(assign->getName());

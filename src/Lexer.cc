@@ -1,5 +1,7 @@
 #include <llvmPy/Lexer.h>
-#include <llvmPy/SyntaxError.h>
+#include <assert.h>
+#include <string.h>
+#include <ctype.h>
 using namespace llvmPy;
 using namespace std;
 
@@ -274,15 +276,15 @@ Lexer::numlit()
     if (is('.', ss))
         point = true;
 
-    if (!oneof(isnumber, ss)) {
+    if (!oneof(isdigit, ss)) {
         pop();
         return false;
     }
 
-    while (oneof(isnumber, ss));
+    while (oneof(isdigit, ss));
 
     if (!point && is('.', ss)) {
-        while (oneof(isnumber, ss));
+        while (oneof(isdigit, ss));
     }
 
     add(Token(
@@ -363,7 +365,7 @@ Lexer::syntax()
         case '-': t = tok_sub; break;
         case '*': t = tok_mul; break;
         case '/': t = tok_div; break;
-        default: throw SyntaxError("oops!");
+        default: assert(false);
         }
 
         if (is('=')) {
@@ -392,7 +394,7 @@ Lexer::syntax()
         case ')': t = tok_rp; break;
         case '[': t = tok_lb; break;
         case ']': t = tok_rb; break;
-        default: throw new SyntaxError("oops!");
+        default: assert(false);
         }
 
         add(Token(static_cast<TokenType>(t)));
