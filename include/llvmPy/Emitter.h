@@ -37,7 +37,6 @@ public:
     llvm::Value *emit(RTScope &scope, IdentExpr const &ident);
     llvm::Value *emit(RTScope &scope, CallExpr const &call);
     llvm::Value *emit(RTScope &scope, LambdaExpr const &lambda);
-    llvm::Value *emit(RTScope &scope, DefStmt const &def);
     llvm::Value *emit(RTScope &scope, StringExpr const &lit);
     llvm::Value *emit(RTScope &scope, BinaryExpr const &expr);
 
@@ -57,6 +56,11 @@ public:
             llvm::Function &function,
             RTScope &scope,
             WhileStmt const &stmt);
+
+    void emitDefStmt(
+            llvm::Function &function,
+            RTScope &scope,
+            DefStmt const &def);
 
     void emitBreakStmt(Loop const *loop);
     void emitContinueStmt(Loop const *loop);

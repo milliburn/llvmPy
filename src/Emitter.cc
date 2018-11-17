@@ -89,8 +89,6 @@ Emitter::emit(RTScope &scope, Expr const &expr)
         return emit(scope, *call);
     } else if (auto *lambda = expr.cast<LambdaExpr>()) {
         return emit(scope, *lambda);
-    } else if (auto *def = expr.cast<DefStmt>()) {
-        return emit(scope, *def);
     } else if (auto *strLit = expr.cast<StringExpr>()) {
         return emit(scope, *strLit);
     } else if (auto *binop = expr.cast<BinaryExpr>()) {
@@ -207,6 +205,9 @@ Emitter::emit(RTScope &scope, LambdaExpr const &lambda)
 
     ReturnStmt returnStmt(lambda.getExprPtr());
 
+    // TODO: XXX?
+    auto *insertBlock = ir.GetInsertBlock();
+
     RTFunc *func =
             createFunction(
                     tags.Lambda,
@@ -214,33 +215,7 @@ Emitter::emit(RTScope &scope, LambdaExpr const &lambda)
                     returnStmt,
                     lambda.args());
 
-    llvm::Value *innerFramePtrBitCast =
-            ir.CreateBitCast(
-                    scope.getInnerFramePtr(),
-                    types.FrameNPtr);
-
-    llvm::Value *functionPtrBitCast =
-            ir.CreateBitCast(
-                    &func->getFunction(),
-                    types.i8Ptr);
-
-    return ir.CreateCall(
-            mod.llvmPy_func(),
-            { innerFramePtrBitCast,
-              functionPtrBitCast });
-}
-
-llvm::Value *
-Emitter::emit(RTScope &scope, DefStmt const &def)
-{
-    RTModule &mod = scope.getModule();
-
-    RTFunc *func =
-            createFunction(
-                    tags.Def + "_" + def.getName(),
-                    scope,
-                    def.getBody(),
-                    def.args());
+    ir.SetInsertPoint(insertBlock);
 
     llvm::Value *innerFramePtrBitCast =
             ir.CreateBitCast(
@@ -308,7 +283,6 @@ Emitter::createFunction(
     // Names of slots in the frame.
     std::set<std::string> slotNames;
 
-    llvm::BasicBlock *insertPoint = ir.GetInsertBlock();
     vector<llvm::Type *> argTypes;
 
     if (outerScope.getInnerFramePtr()) {
@@ -417,7 +391,6 @@ Emitter::createFunction(
         if (iArg > 0) {
             auto ident = *argNames;
             ++argNames;
-            ir.SetInsertPoint(entry);
             assert(innerScope->hasSlot(ident));
             auto slotIndex = innerScope->getSlotIndex(ident);
 
@@ -460,7 +433,6 @@ Emitter::createFunction(
     }
 
     llvm::verifyFunction(*function);
-    ir.SetInsertPoint(insertPoint);
 
     RTFunc *rtFunc = new RTFunc(*function, *innerScope);
 
@@ -492,10 +464,8 @@ Emitter::emitCondStmt(
     ir.CreateBr(ifBB);
     ifBB->insertInto(&function);
     ir.SetInsertPoint(ifBB);
-
     auto *ifExprValue = emit(scope, cond.getCondition());
     auto *truthyValue = ir.CreateCall(mod.llvmPy_truthy(), { ifExprValue });
-
     ir.CreateCondBr(truthyValue, thenBB, elseBB);
 
     thenBB->insertInto(&function);
@@ -545,8 +515,7 @@ Emitter::emitStatement(
         auto *value = emit(scope, ret->getExpr());
         ir.CreateRet(value);
     } else if (auto *def = stmt.cast<DefStmt>()) {
-        auto *value = emit(scope, *def);
-        ir.CreateStore(value, scope.getSlotValue(def->getName()));
+        emitDefStmt(function, scope, *def);
     } else if (stmt.isa<PassStmt>()) {
         // Ignore.
     } else if (auto *cond = stmt.cast<ConditionalStmt>()) {
@@ -710,3 +679,40 @@ Emitter::zeroInitialiseSlot(
     scope.setSlotValue(name, assignGEP);
 }
 
+void
+Emitter::emitDefStmt(
+        llvm::Function &function,
+        RTScope &scope,
+        DefStmt const &def)
+{
+    RTModule &mod = scope.getModule();
+
+    // TODO: XXX?
+    auto *insertBlock = ir.GetInsertBlock();
+
+    RTFunc *func =
+            createFunction(
+                    tags.Def + "_" + def.getName(),
+                    scope,
+                    def.getBody(),
+                    def.args());
+
+    ir.SetInsertPoint(insertBlock);
+
+    llvm::Value *innerFramePtrBitCast =
+            ir.CreateBitCast(
+                    scope.getInnerFramePtr(),
+                    types.FrameNPtr);
+
+    llvm::Value *functionPtrBitCast =
+            ir.CreateBitCast(
+                    &func->getFunction(),
+                    types.i8Ptr);
+
+    auto *value = ir.CreateCall(
+            mod.llvmPy_func(),
+            { innerFramePtrBitCast,
+              functionPtrBitCast });
+
+    ir.CreateStore(value, scope.getSlotValue(def.getName()));
+}
