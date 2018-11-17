@@ -1,11 +1,14 @@
 #pragma once
 #include <llvmPy/Token.h>
 #include <llvmPy/Typed.h>
+#include <llvmPy/Support/iterator_range.h>
 #include <string>
 #include <memory>
 
 #ifdef __cplusplus
 namespace llvmPy {
+
+using ArgNamesIter = iterator_range<std::string const *>;
 
 class AST : public Typed {
 public:
@@ -75,7 +78,11 @@ public:
 
     void toStream(std::ostream &s) const override;
 
-    std::vector<std::string const> const &getArguments() const;
+    std::string const *arg_begin() const;
+
+    std::string const *arg_end() const;
+
+    ArgNamesIter args() const;
 
     Expr const &getExpr() const;
 
@@ -84,7 +91,7 @@ public:
     void addArgument(std::string const &argument);
 
 private:
-    std::vector<std::string const> arguments;
+    std::vector<std::string> args_;
 
     std::shared_ptr<Expr const> expr;
 };
@@ -215,10 +222,13 @@ public:
 
     void toStream(std::ostream &s) const override;
 
-public:
     std::string const &getName() const;
 
-    std::vector<std::string const> const &getArguments() const;
+    std::string const *arg_begin() const;
+
+    std::string const *arg_end() const;
+
+    ArgNamesIter args() const;
 
     void addArgument(std::string const &name);
 
@@ -226,7 +236,7 @@ public:
 
 private:
     std::string const name;
-    std::vector<std::string const> args;
+    std::vector<std::string> args_;
     std::shared_ptr<Stmt const> body;
 };
 

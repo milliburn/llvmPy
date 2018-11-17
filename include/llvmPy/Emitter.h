@@ -3,6 +3,7 @@
 #include <llvmPy/Compiler.h>
 #include <llvmPy/Instr.h>
 #include <llvm/IR/IRBuilder.h>
+#include <llvmPy/Support/iterator_range.h>
 #include <set>
 
 #ifdef __cplusplus
@@ -82,7 +83,7 @@ public:
             std::string const &name,
             RTScope &scope,
             Stmt const &stmt,
-            std::vector<std::string const> const &args);
+            iterator_range<std::string const *> const &args);
 
 private:
     llvm::DataLayout const &dl;

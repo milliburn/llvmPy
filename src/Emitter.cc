@@ -6,6 +6,7 @@
 #include <llvm/IR/Verifier.h>
 #include <llvm/Support/Casting.h>
 #include <llvm/Support/raw_ostream.h>
+#include <llvmPy/Support/iterator_range.h>
 #include <iostream>
 #include <map>
 #include <stdlib.h>
@@ -57,7 +58,13 @@ Emitter::createModule(
     auto *module = new llvm::Module(name, ctx);
     module->setDataLayout(dl);
     RTModule *rtModule = new RTModule(name, module, types);
-    RTFunc *body = createFunction("__body__", rtModule->getScope(), stmt, {});
+
+    RTFunc *body = createFunction(
+            "__body__",
+            rtModule->getScope(),
+            stmt,
+            empty_range<std::string const *>());
+
     rtModule->setBody(body);
     llvm::verifyModule(*module);
     return rtModule;
@@ -206,7 +213,7 @@ Emitter::emit(RTScope &scope, LambdaExpr const &lambda)
                     tags.Lambda,
                     scope,
                     returnStmt,
-                    lambda.getArguments());
+                    lambda.args());
 
     llvm::Value *innerFramePtrBitCast =
             ir.CreateBitCast(
@@ -234,7 +241,7 @@ Emitter::emit(RTScope &scope, DefStmt const &def)
                     tags.Def + "_" + def.getName(),
                     scope,
                     def.getBody(),
-                    def.getArguments());
+                    def.args());
 
     llvm::Value *innerFramePtrBitCast =
             ir.CreateBitCast(
@@ -295,7 +302,7 @@ Emitter::createFunction(
         std::string const &name,
         RTScope &outerScope,
         Stmt const &stmt,
-        std::vector<std::string const> const &args)
+        ArgNamesIter const &args)
 {
     RTModule &mod = outerScope.getModule();
 
@@ -331,14 +338,19 @@ Emitter::createFunction(
                     &mod.getModule());
 
     // Name the arguments.
-    int iArg = 0;
+
     llvm::Value *outerFramePtrPtrArg = nullptr;
+
+    int iArg = 0;
+    auto argNames = args.begin();
+
     for (auto &arg : function->args()) {
         if (iArg == 0) {
             arg.setName(tags.OuterFramePtr);
             outerFramePtrPtrArg = &arg;
         } else {
-            arg.setName("arg_" + args[iArg - 1]);
+            arg.setName("arg_" + *argNames);
+            ++argNames;
         }
 
         ++iArg;
@@ -403,9 +415,12 @@ Emitter::createFunction(
 
     // Copy-initialise the contents of arguments.
     iArg = 0;
+    argNames = args.begin();
+
     for (auto &arg : function->args()) {
         if (iArg > 0) {
-            auto ident = args[iArg - 1];
+            auto ident = *argNames;
+            ++argNames;
             ir.SetInsertPoint(init);
             assert(innerScope->hasSlot(ident));
             auto slotIndex = innerScope->getSlotIndex(ident);

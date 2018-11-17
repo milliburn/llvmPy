@@ -34,6 +34,7 @@ add_library(
         include/llvmPy/PyObj/PyObj.h
         include/llvmPy/PyObj/PyStr.h
         include/llvmPy/RT/Frame.h
+        include/llvmPy/Support/iterator_range.h
         include/llvmPy/AST.h
         include/llvmPy/Compiler.h
         include/llvmPy/Emitter.h

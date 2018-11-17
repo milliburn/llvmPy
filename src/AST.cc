@@ -108,16 +108,28 @@ LambdaExpr::LambdaExpr(std::shared_ptr<Expr> const &expr)
 {
 }
 
-std::vector<std::string const> const &
-LambdaExpr::getArguments() const
+ArgNamesIter
+LambdaExpr::args() const
 {
-    return arguments;
+    return { arg_begin(), arg_end() };
 }
 
 void
 LambdaExpr::addArgument(std::string const &name)
 {
-    arguments.emplace_back(name);
+    args_.emplace_back(name);
+}
+
+std::string const *
+LambdaExpr::arg_begin() const
+{
+    return args_.data();
+}
+
+std::string const *
+LambdaExpr::arg_end() const
+{
+    return args_.data() + args_.size();
 }
 
 Expr const &
@@ -133,7 +145,7 @@ LambdaExpr::toStream(std::ostream &s) const
     s << "(lambda";
 
     int iArg = 0;
-    for (auto const &arg : getArguments()) {
+    for (auto const &arg : args()) {
         if (iArg > 0) {
             s << ",";
         }
@@ -217,7 +229,7 @@ DefStmt::toStream(std::ostream &s) const
     s << "def " << getName() << "(";
 
     int iArg = 0;
-    for (auto const &arg : getArguments()) {
+    for (auto const &arg : args()) {
         if (iArg > 0) {
             s << ", ";
         }
@@ -570,10 +582,22 @@ DefStmt::getName() const
     return name;
 }
 
-std::vector<std::string const> const &
-DefStmt::getArguments() const
+std::string const *
+DefStmt::arg_begin() const
 {
-    return args;
+    return args_.data();
+}
+
+std::string const *
+DefStmt::arg_end() const
+{
+    return args_.data() + args_.size();
+}
+
+ArgNamesIter
+DefStmt::args() const
+{
+    return { arg_begin(), arg_end() };
 }
 
 Stmt const &
@@ -586,7 +610,7 @@ DefStmt::getBody() const
 void
 DefStmt::addArgument(std::string const &name)
 {
-    args.emplace_back(name);
+    args_.emplace_back(name);
 }
 
 std::shared_ptr<Expr const> const &
