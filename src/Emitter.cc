@@ -109,6 +109,9 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
         if (lhsIdent->getName() == "print") {
             llvm::Value *arg = emit(scope, *args[0]);
             return ir.CreateCall(mod.llvmPy_print(), { arg });
+        } else if (lhsIdent->getName() == "len") {
+            llvm::Value *arg = emit(scope, *args[0]);
+            return ir.CreateCall(mod.llvmPy_len(), { arg });
         }
     }
 

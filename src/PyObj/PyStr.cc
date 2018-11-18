@@ -34,3 +34,11 @@ PyStr::py__len__()
 {
     return static_cast<int64_t>(value->size());
 }
+
+PyObj *
+PyStr::py__add__(PyObj &rhs)
+{
+    auto const &l = getValue();
+    auto const &r = rhs.as<PyStr>().getValue();
+    return new PyStr(l + r);
+}

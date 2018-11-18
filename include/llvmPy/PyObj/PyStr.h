@@ -20,6 +20,8 @@ public:
 
     bool py__bool__() override;
 
+    PyObj *py__add__(PyObj &rhs) override;
+
 private:
     std::unique_ptr<std::string const> value;
 };

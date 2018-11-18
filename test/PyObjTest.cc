@@ -136,5 +136,13 @@ TEST_CASE("PyObj") {
             CHECK(PyStr("a").py__len__() == 1);
             CHECK(PyStr("test").py__len__() == 4);
         }
+
+        SECTION("py__add__()") {
+            PyStr s1(""), s2("a"), s3("test");
+            CHECK(s1.py__add__(s1)->as<PyStr>().getValue() == "");
+            CHECK(s1.py__add__(s2)->as<PyStr>().getValue() == "a");
+            CHECK(s2.py__add__(s2)->as<PyStr>().getValue() == "aa");
+            CHECK(s2.py__add__(s3)->as<PyStr>().getValue() == "atest");
+        }
     }
 }
