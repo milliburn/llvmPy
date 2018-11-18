@@ -5,11 +5,7 @@
 using namespace llvmPy;
 using llvm::cast;
 
-TEST_CASE("Instr", "[Instr]") {
-    Compiler compiler;
-    Emitter em(compiler);
-    RTModule *mod = em.createModule("");
-
+TEST_CASE("Instr") {
     SECTION("llvmPy_add: adding two ints will return an int") {
         PyInt lhs(1);
         PyInt rhs(2);
@@ -32,15 +28,11 @@ TEST_CASE("Instr", "[Instr]") {
 
     SECTION("llvmPy_str: return the string representation") {
         PyInt i1(2), i2(-4);
-        PyStr s1("3"), s2("-5"), s3("a");
         PyBool b1(true);
         PyNone none;
 
         CHECK(llvmPy_str(i1)->getValue() == "2");
         CHECK(llvmPy_str(i2)->getValue() == "-4");
-        CHECK(llvmPy_str(s1)->getValue() == "3");
-        CHECK(llvmPy_str(s2)->getValue() == "-5");
-        CHECK(llvmPy_str(s3)->getValue() == "a");
         CHECK(llvmPy_str(b1)->getValue() == "True");
         CHECK(llvmPy_str(none)->getValue() == "None");
     }
@@ -70,39 +62,7 @@ TEST_CASE("Instr", "[Instr]") {
         CHECK(rv == label);
         CHECK(callframe == frame);
     }
-
-    SECTION("llvmPy_truthy: will return the truth value of an object") {
-        CHECK(llvmPy_truthy(llvmPy_True) == 1);
-        CHECK(llvmPy_truthy(llvmPy_False) == 0);
-        CHECK(llvmPy_truthy(llvmPy_None) == 0);
-
-        PyStr a(""), b("test");
-
-        CHECK(llvmPy_truthy(a) == 0);
-        CHECK(llvmPy_truthy(b) == 1);
-    }
-
-    SECTION("llvmPy_bool: will return the __bool__ of the object") {
-        auto const *t = &PyBool::get(true);
-        auto const *f = &PyBool::get(false);
-
-        CHECK(llvmPy_bool(llvmPy_True) == t);
-        CHECK(llvmPy_bool(llvmPy_False) == f);
-        CHECK(llvmPy_bool(llvmPy_None) == f);
-
-        PyInt i1(-1), i2(0), i3(1), i4(30);
-
-        CHECK(llvmPy_bool(i1) == t);
-        CHECK(llvmPy_bool(i2) == f);
-        CHECK(llvmPy_bool(i3) == t);
-        CHECK(llvmPy_bool(i4) == t);
-
-        PyStr s1(""), s2("test");
-
-        CHECK(llvmPy_bool(s1) == f);
-        CHECK(llvmPy_bool(s2) == t);
-    }
-
+    
     SECTION("llvmPy_len: will return the __len__ of the object") {
         PyStr s1(""), s2("test");
         CHECK(llvmPy_len(s1)->as<PyInt>().getValue() == 0);
