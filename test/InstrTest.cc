@@ -5,11 +5,7 @@
 using namespace llvmPy;
 using llvm::cast;
 
-TEST_CASE("Instr", "[Instr]") {
-    Compiler compiler;
-    Emitter em(compiler);
-    RTModule *mod = em.createModule("");
-
+TEST_CASE("Instr") {
     SECTION("llvmPy_add: adding two ints will return an int") {
         PyInt lhs(1);
         PyInt rhs(2);

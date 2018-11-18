@@ -1,0 +1,20 @@
+#include <llvmPy/Instr.h>
+#include <llvmPy/PyObj/PyObj.h>
+#include <catch2/catch.hpp>
+#include <fakeit.hpp>
+using namespace llvmPy;
+using namespace fakeit;
+
+TEST_CASE("builtin: str()", "[builtins][str]") {
+    Mock<PyObj> mock;
+    std::string const str("test");
+
+    SECTION("llvmPy_str() calls the object's py__str__()") {
+        When(Method(mock, py__str__)).Return(str);
+        PyStr const *rv = llvmPy_str(mock.get());
+        Verify(Method(mock, py__str__)).Once();
+        VerifyNoOtherInvocations(mock);
+        CHECK(rv->getValue() == str);
+    }
+
+}

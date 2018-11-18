@@ -102,7 +102,8 @@ add_executable(
         test/InstrTest.cc
         test/TestSuite.cc
         test/PyObjTest.cc
-        test/Parser/Parser2Test.cc)
+        test/Parser/Parser2Test.cc
+        test/Builtins/str/builtin_str.cc)
 
 # The test suites depend on an up-to-date llvmPy binary.
 add_dependencies(
@@ -114,7 +115,8 @@ configure_file(
 
 target_include_directories(
         ${name}Test
-        PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/src)
+        PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/src
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/library/FakeIt/single_header/catch)
 
 target_link_libraries(
         ${name}Test

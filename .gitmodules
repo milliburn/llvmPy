@@ -1,3 +1,6 @@
 [submodule "library/Catch2"]
 	path = library/Catch2
 	url = https://github.com/catchorg/Catch2.git
+[submodule "library/FakeIt"]
+	path = library/FakeIt
+	url = https://github.com/eranpeer/FakeIt.git

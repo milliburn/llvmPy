@@ -4,6 +4,7 @@
   <component name="CidrRootsConfiguration">
     <libraryRoots>
       <file path="$PROJECT_DIR$/library/Catch2" />
+      <file path="$PROJECT_DIR$/library/FakeIt" />
     </libraryRoots>
     <excludeRoots>
       <file path="$PROJECT_DIR$/.build" />
