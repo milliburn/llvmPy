@@ -152,14 +152,6 @@ RTModule::getOrCreateGlobalExtern(std::string const &name) const
     }
 }
 
-RTFunc::RTFunc(
-        llvm::Function &func,
-        RTScope &scope)
-: func(func),
-  scope(scope)
-{
-}
-
 RT::RT(Compiler &compiler)
 : compiler(compiler)
 {

@@ -30,32 +30,18 @@ TEST_CASE("Instr", "[Instr]") {
     }
 
     SECTION("llvmPy_func: will store the frame and function pointers") {
-        auto frame = reinterpret_cast<FrameN *>(123);
-        auto rtfunc = reinterpret_cast<RTFunc *>(567);
-        uint64_t labelData[2] = { reinterpret_cast<uint64_t>(rtfunc), 999 };
-        void *label = &labelData[1];
-
+        auto frame = reinterpret_cast<FrameN*>(123);
+        auto label = reinterpret_cast<void *>(888);
         PyFunc *pyfunc = llvmPy_func(frame, label);
-
-        CHECK(&pyfunc->getFrame() == frame);
-        CHECK(&pyfunc->getFunc() == rtfunc);
+        CHECK(pyfunc->getFrame() == frame);
         CHECK(pyfunc->getLabel() == label);
     }
 
     SECTION("llvmPy_fchk: will return the LLVM function and frame pointers") {
-        llvm::Function *function =
-                llvm::Function::Create(
-                        llvm::FunctionType::get(
-                                llvm::Type::getVoidTy(compiler.getContext()),
-                                {},
-                                false),
-                        llvm::Function::ExternalLinkage);
-
         auto frame = reinterpret_cast<FrameN*>(123);
-        void *label = reinterpret_cast<void *>(888);
+        auto label = reinterpret_cast<void *>(888);
 
-        RTFunc rtf(*function, mod->getScope());
-        PyFunc f(&rtf, frame, label);
+        PyFunc f(frame, label);
         FrameN *callframe;
         void *rv = llvmPy_fchk(&callframe, f, 0);
         CHECK(rv == label);

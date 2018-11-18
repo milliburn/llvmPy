@@ -6,7 +6,7 @@
 # CHECK-DAG: %FrameN = type opaque
 # CHECK-DAG: %Frame0 = type <{ %Frame0*, %FrameN*, [0 x %PyObj*] }>
 
-# CHECK: define %PyObj* @__body__(%FrameN** %outerptr) prefix i64 {{[0-9]+}} {
+# CHECK: define %PyObj* @__body__(%FrameN** %outerptr) {
 # CHECK-NEXT: %outer = load %FrameN*, %FrameN** %outerptr
 # CHECK-NEXT: %frame = alloca %Frame0
 # CHECK-NEXT: %1 = getelementptr %Frame0, %Frame0* %frame, i64 0, i32 0

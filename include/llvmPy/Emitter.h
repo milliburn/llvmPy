@@ -83,7 +83,7 @@ public:
     RTModule *createModule(std::string const &name, Stmt const &stmt);
     RTModule *createModule(std::string const &name);
 
-    RTFunc *createFunction(
+    llvm::Function *createFunction(
             std::string const &name,
             RTScope &scope,
             Stmt const &stmt,

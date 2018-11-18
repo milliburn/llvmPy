@@ -80,8 +80,6 @@ public:
             Types const &types);
 
 public:
-    RTFunc &getBody() const { return *func; }
-    void setBody(RTFunc *func) { this->func = func; }
     llvm::Module &getModule() const { return ir; }
     RTScope &getScope() { return scope; }
 
@@ -111,23 +109,9 @@ public:
 private:
     llvm::Module &ir;
     Types const &types;
-    RTFunc *func;
     RTScope scope;
 
     llvm::GlobalVariable *getOrCreateGlobalExtern(std::string const &name) const;
-};
-
-class RTFunc {
-public:
-    RTFunc(llvm::Function &func, RTScope &scope);
-
-public:
-    llvm::Function &getFunction() const { return func; }
-    RTScope &getScope() const { return scope; }
-
-private:
-    llvm::Function &func;
-    RTScope &scope;
 };
 
 class RT {
