@@ -15,6 +15,8 @@ public:
 
     virtual std::string py__str__();
     virtual bool py__bool__();
+    virtual int64_t py__int__();
+
     virtual int64_t py__len__();
 
     virtual PyObj * py__add__(PyObj &rhs);

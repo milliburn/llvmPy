@@ -18,6 +18,8 @@ public:
 
     int64_t py__len__() override;
 
+    int64_t py__int__() override;
+
     bool py__bool__() override;
 
     bool py__eq__(PyObj &rhs) override;

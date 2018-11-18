@@ -52,3 +52,9 @@ PyStr::py__eq__(PyObj &rhs)
         return false;
     }
 }
+
+int64_t
+PyStr::py__int__()
+{
+    return std::stoi(getValue());
+}

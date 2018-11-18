@@ -153,7 +153,7 @@ llvmPy_mul(llvmPy::PyObj &l, llvmPy::PyObj &r)
 extern "C" PyInt * __used
 llvmPy_int(llvmPy::PyObj &obj)
 {
-    return nullptr;
+    return new PyInt(obj.py__int__());
 }
 
 extern "C" llvmPy::PyNone * __used
@@ -198,7 +198,7 @@ llvmPy_print(llvmPy::PyObj &obj)
 extern "C" llvmPy::PyStr * __used
 llvmPy_str(llvmPy::PyObj &obj)
 {
-    return nullptr;
+    return new PyStr(obj.py__str__());
 }
 
 /**
