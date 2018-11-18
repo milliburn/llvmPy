@@ -163,9 +163,7 @@ llvmPy_none()
 extern "C" PyFunc * __used
 llvmPy_func(FrameN *frame, void *label)
 {
-    uint64_t prefix = ((uint64_t *) label)[-1];
-    auto rtfunc = reinterpret_cast<RTFunc *>(prefix);
-    return new PyFunc(rtfunc, frame, label);
+    return new PyFunc(frame, label);
 }
 
 /**
@@ -176,7 +174,7 @@ llvmPy_func(FrameN *frame, void *label)
 extern "C" void * __used
 llvmPy_fchk(FrameN **callframe, llvmPy::PyFunc &pyfunc, int np)
 {
-    *callframe = &pyfunc.getFrame();
+    *callframe = pyfunc.getFrame();
     return pyfunc.getLabel();
 }
 

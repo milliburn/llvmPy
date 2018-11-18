@@ -58,13 +58,12 @@ Emitter::createModule(
     module->setDataLayout(dl);
     RTModule *rtModule = new RTModule(name, module, types);
 
-    RTFunc *body = createFunction(
+    createFunction(
             "__body__",
             rtModule->getScope(),
             stmt,
             empty_range<std::string const *>());
 
-    rtModule->setBody(body);
     llvm::verifyModule(*module);
     return rtModule;
 }
@@ -208,12 +207,11 @@ Emitter::emit(RTScope &scope, LambdaExpr const &lambda)
     // TODO: XXX?
     auto *insertBlock = ir.GetInsertBlock();
 
-    RTFunc *func =
-            createFunction(
-                    tags.Lambda,
-                    scope,
-                    returnStmt,
-                    lambda.args());
+    auto *function = createFunction(
+            tags.Lambda,
+            scope,
+            returnStmt,
+            lambda.args());
 
     ir.SetInsertPoint(insertBlock);
 
@@ -224,7 +222,7 @@ Emitter::emit(RTScope &scope, LambdaExpr const &lambda)
 
     llvm::Value *functionPtrBitCast =
             ir.CreateBitCast(
-                    &func->getFunction(),
+                    function,
                     types.i8Ptr);
 
     return ir.CreateCall(
@@ -271,7 +269,7 @@ Emitter::emit(RTScope &scope, BinaryExpr const &expr)
     return ir.CreateCall(f, { lhs, rhs });
 }
 
-RTFunc *
+llvm::Function *
 Emitter::createFunction(
         std::string const &name,
         RTScope &outerScope,
@@ -434,14 +432,7 @@ Emitter::createFunction(
 
     llvm::verifyFunction(*function);
 
-    RTFunc *rtFunc = new RTFunc(*function, *innerScope);
-
-    function->setPrefixData(
-            llvm::ConstantInt::get(
-                    types.PyIntValue,
-                    (uint64_t) rtFunc));
-
-    return rtFunc;
+    return function;
 }
 
 void
@@ -672,7 +663,7 @@ Emitter::zeroInitialiseSlot(
 
 void
 Emitter::emitDefStmt(
-        llvm::Function &function,
+        llvm::Function &outer,
         RTScope &scope,
         DefStmt const &def)
 {
@@ -681,12 +672,11 @@ Emitter::emitDefStmt(
     // TODO: XXX?
     auto *insertBlock = ir.GetInsertBlock();
 
-    RTFunc *func =
-            createFunction(
-                    tags.Def + "_" + def.getName(),
-                    scope,
-                    def.getBody(),
-                    def.args());
+    auto *function = createFunction(
+            tags.Def + "_" + def.getName(),
+            scope,
+            def.getBody(),
+            def.args());
 
     ir.SetInsertPoint(insertBlock);
 
@@ -697,7 +687,7 @@ Emitter::emitDefStmt(
 
     llvm::Value *functionPtrBitCast =
             ir.CreateBitCast(
-                    &func->getFunction(),
+                    function,
                     types.i8Ptr);
 
     auto *value = ir.CreateCall(
