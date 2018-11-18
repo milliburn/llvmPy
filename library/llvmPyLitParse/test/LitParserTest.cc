@@ -73,7 +73,7 @@ TEST_CASE("Unit tests") {
               "  Unresolved Tests   : 1\n"
               "  Unexpected Failures: 1\n";
 
-        ss.seekp(std::ios_base::seekdir::beg);
+        ss.seekp(0);
         LitParser parser(ss);
         parser.parse();
         auto results = parser.getResults();
@@ -83,7 +83,7 @@ TEST_CASE("Unit tests") {
         CHECK(results[9]->getResultCode() == LitResultCode::FAIL);
         CHECK(results[0]->getResultCode() == LitResultCode::UNRESOLVED);
 
-        for (int i = 0; i < results.size(); ++i) {
+        for (size_t i = 0; i < results.size(); ++i) {
             CHECK(results[i] != nullptr);
         }
     }
@@ -116,7 +116,7 @@ TEST_CASE("Unit tests") {
         ss << testOutput;
         ss << "********************\n";
 
-        ss.seekp(std::ios_base::seekdir::beg);
+        ss.seekp(0);
         LitParser parser(ss);
         LitTestResult *result = parser.parseNext();
         CHECK(result->getResultCode() == LitResultCode::FAIL);

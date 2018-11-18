@@ -1,5 +1,7 @@
 #include <llvmPy/Lexer.h>
-#include <llvmPy/SyntaxError.h>
+#include <assert.h>
+#include <string.h>
+#include <ctype.h>
 using namespace llvmPy;
 using namespace std;
 
@@ -81,7 +83,7 @@ Lexer::tokenize(std::vector<Token> & out)
         if (ident()) continue;
     }
 
-    out = tokens;
+    out = std::move(tokens);
     return true;
 }
 
@@ -118,20 +120,20 @@ Lexer::isEof()
 void
 Lexer::add(Token token)
 {
-    if (token.type == tok_eol) {
+    if (token.getTokenType() == tok_eol) {
         // Ignore empty lines at start of file.
         if (tokens.empty()) return;
 
         // Ignore empty lines in the middle of the file.
-        if (tokens.back().type == tok_eol) return;
-    } else if (token.type == tok_eof) {
+        if (tokens.back().getTokenType() == tok_eol) return;
+    } else if (token.getTokenType() == tok_eof) {
         // Ignore empty lines at end of file.
-        if (!tokens.empty() && tokens.back().type == tok_eol) {
+        if (!tokens.empty() && tokens.back().getTokenType() == tok_eol) {
             tokens.pop_back();
         }
     }
 
-    tokens.emplace_back(move(token));
+    tokens.emplace_back(std::move(token));
 }
 
 void
@@ -274,18 +276,21 @@ Lexer::numlit()
     if (is('.', ss))
         point = true;
 
-    if (!oneof(isnumber, ss)) {
+    if (!oneof(isdigit, ss)) {
         pop();
         return false;
     }
 
-    while (oneof(isnumber, ss));
+    while (oneof(isdigit, ss));
 
     if (!point && is('.', ss)) {
-        while (oneof(isnumber, ss));
+        while (oneof(isdigit, ss));
     }
 
-    add(Token(tok_number, new string(ss.str())));
+    add(Token(
+            tok_number,
+            std::make_unique<std::string>(ss.str())));
+
     return true;
 }
 
@@ -315,7 +320,11 @@ Lexer::strlit()
         }
     } while (true);
 
-    add(Token(tok_string, new string(ss.str())));
+    add(Token(
+            tok_string,
+            std::make_unique<std::string>(ss.str())));
+
+
     return true;
 }
 
@@ -329,12 +338,12 @@ Lexer::ident()
 
     while (oneof(isalnum) || is('_'));
 
-    string s(&buf[start], ibuf - start);
+    auto str = std::make_unique<std::string>(&buf[start], ibuf - start);
 
-    if (auto kw = getKeyword(s)) {
+    if (auto kw = getKeyword(*str)) {
         add(Token(kw));
     } else {
-        add(Token(tok_ident, new string(move(s))));
+        add(Token(tok_ident, std::move(str)));
     }
 
     return true;
@@ -356,7 +365,7 @@ Lexer::syntax()
         case '-': t = tok_sub; break;
         case '*': t = tok_mul; break;
         case '/': t = tok_div; break;
-        default: throw SyntaxError("oops!");
+        default: assert(false);
         }
 
         if (is('=')) {
@@ -385,7 +394,7 @@ Lexer::syntax()
         case ')': t = tok_rp; break;
         case '[': t = tok_lb; break;
         case ']': t = tok_rb; break;
-        default: throw new SyntaxError("oops!");
+        default: assert(false);
         }
 
         add(Token(static_cast<TokenType>(t)));

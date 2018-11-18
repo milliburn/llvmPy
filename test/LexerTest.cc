@@ -15,15 +15,15 @@ tokenize(string input)
     string output;
     int eofcount = 0;
 
-    for (int i = 0; i < tokens.size(); ++i) {
-        if (tokens[i].type == tok_eof) {
+    for (size_t i = 0; i < tokens.size(); ++i) {
+        if (tokens[i].getTokenType() == tok_eof) {
             eofcount++;
         }
 
         if (i > 0
-            && tokens[i].type != tok_eol
-            && tokens[i].type != tok_eof
-            && tokens[i-1].type != tok_eol) {
+            && tokens[i].getTokenType() != tok_eol
+            && tokens[i].getTokenType() != tok_eof
+            && tokens[i-1].getTokenType() != tok_eol) {
 
             output += ' ';
         }
@@ -36,7 +36,7 @@ tokenize(string input)
 
     // EOF is not printable, but ensure it's the last token.
     REQUIRE(eofcount == 1);
-    REQUIRE(tokens.back().type == tok_eof);
+    REQUIRE(tokens.back().getTokenType() == tok_eof);
 
     return output;
 }

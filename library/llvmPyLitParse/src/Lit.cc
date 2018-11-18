@@ -34,7 +34,7 @@ llvmPy::lit(
     // Waits for termination and returns exit status.
     int exitcode = pclose(pipe);
 
-    ss.seekp(std::ios_base::seekdir::beg);
+    ss.seekp(0);
 
     LitParser parser(ss);
 

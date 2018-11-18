@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <llvmPy/RT.h>
 using namespace llvmPy;
 

@@ -1,11 +1,14 @@
 #pragma once
 #include <llvmPy/Token.h>
 #include <llvmPy/Typed.h>
+#include <llvmPy/Support/iterator_range.h>
 #include <string>
 #include <memory>
 
 #ifdef __cplusplus
 namespace llvmPy {
+
+using ArgNamesIter = iterator_range<std::string const *>;
 
 class AST : public Typed {
 public:
@@ -21,21 +24,21 @@ protected:
     Expr();
 };
 
-class StrLitExpr final : public Expr {
+class StringExpr final : public Expr {
 public:
-    explicit StrLitExpr(std::unique_ptr<std::string const> value);
+    explicit StringExpr(std::string const &value);
 
     void toStream(std::ostream &s) const override;
 
     std::string const &getValue() const;
 
 private:
-    std::unique_ptr<std::string const> const value;
+    std::string const value;
 };
 
-class DecLitExpr final : public Expr {
+class DecimalExpr final : public Expr {
 public:
-    explicit DecLitExpr(double v);
+    explicit DecimalExpr(double v);
 
     void toStream(std::ostream &s) const override;
 
@@ -45,9 +48,9 @@ private:
     double const value;
 };
 
-class IntLitExpr final : public Expr {
+class IntegerExpr final : public Expr {
 public:
-    explicit IntLitExpr(long v);
+    explicit IntegerExpr(long v);
 
     void toStream(std::ostream &s) const override;
 
@@ -59,32 +62,43 @@ private:
 
 class IdentExpr final : public Expr {
 public:
-    std::string const & name;
-
-    explicit IdentExpr(std::string const * str);
+    explicit IdentExpr(std::string const &name);
 
     void toStream(std::ostream &s) const override;
 
     std::string const &getName() const;
+
+private:
+    std::string const name;
 };
 
 class LambdaExpr final : public Expr {
 public:
-    std::vector<std::string const> const args;
-
-    Expr const & expr;
-
-    explicit
-    LambdaExpr(
-            std::vector<std::string const> const args,
-            Expr * body);
+    explicit LambdaExpr(std::shared_ptr<Expr> const &expr);
 
     void toStream(std::ostream &s) const override;
+
+    std::string const *arg_begin() const;
+
+    std::string const *arg_end() const;
+
+    ArgNamesIter args() const;
+
+    Expr const &getExpr() const;
+
+    std::shared_ptr<Expr const> const &getExprPtr() const;
+
+    void addArgument(std::string const &argument);
+
+private:
+    std::vector<std::string> args_;
+
+    std::shared_ptr<Expr const> expr;
 };
 
 class UnaryExpr final : public Expr {
 public:
-    UnaryExpr(TokenType op, std::unique_ptr<Expr> expr);
+    UnaryExpr(TokenType op, std::shared_ptr<Expr const> const &expr);
 
     void toStream(std::ostream &s) const override;
 
@@ -94,36 +108,47 @@ public:
 
 private:
     TokenType const op;
-    std::unique_ptr<Expr> const expr;
+    std::shared_ptr<Expr const> expr;
 };
 
 class BinaryExpr final : public Expr {
 public:
-    Expr const & lhs;
-    TokenType const op;
-    Expr const & rhs;
-
-    BinaryExpr(Expr * lhs, TokenType op, Expr * rhs);
+    BinaryExpr(
+            std::shared_ptr<Expr const> const &lhs,
+            TokenType op,
+            std::shared_ptr<Expr const> const &rhs);
 
     void toStream(std::ostream &s) const override;
+
+    Expr const &getLeftOperand() const;
+
+    Expr const &getRightOperand() const;
+
+    TokenType getOperator() const;
+
+private:
+    std::shared_ptr<Expr const> lhs;
+    std::shared_ptr<Expr const> rhs;
+    TokenType const op;
 };
 
 class CallExpr final : public Expr {
 public:
-    explicit CallExpr(std::unique_ptr<Expr> callee);
+    explicit CallExpr(std::shared_ptr<Expr> const &callee);
 
     void toStream(std::ostream &s) const override;
 
 public:
     Expr const &getCallee() const;
 
-    std::vector<std::unique_ptr<Expr const>> const &getArguments() const;
+    std::vector<std::shared_ptr<Expr const>> const &getArguments() const;
 
-    void addArgument(std::unique_ptr<Expr const> arg);
+    void addArgument(std::shared_ptr<Expr const> argument);
 
 private:
-    std::unique_ptr<Expr const> callee;
-    std::vector<std::unique_ptr<Expr const>> arguments;
+    std::shared_ptr<Expr const> callee;
+
+    std::vector<std::shared_ptr<Expr const>> arguments;
 };
 
 class TokenExpr final : public Expr {
@@ -146,12 +171,12 @@ public:
     void toStream(std::ostream &s) const override;
 
 public:
-    std::vector<std::unique_ptr<Expr const>> &getMembers();
+    std::vector<std::shared_ptr<Expr const>> const &getMembers() const;
 
-    void addMember(std::unique_ptr<Expr> member);
+    void addMember(std::shared_ptr<Expr> member);
 
 private:
-    std::vector<std::unique_ptr<Expr const>> members;
+    std::vector<std::shared_ptr<Expr const>> members;
 };
 
 class Stmt : public AST {
@@ -161,62 +186,86 @@ protected:
 
 class ExprStmt final : public Stmt {
 public:
-    Expr const & expr;
-
-    explicit ExprStmt(Expr * expr);
+    explicit ExprStmt(std::shared_ptr<Expr const> const &expr);
 
     void toStream(std::ostream &s) const override;
+
+    Expr const &getExpr() const;
+
+private:
+    std::shared_ptr<Expr const> expr;
 };
 
 class AssignStmt final : public Stmt {
 public:
-    std::string const & lhs;
-
-    Expr const & rhs;
-
-    AssignStmt(std::string const * lhs, Expr * rhs);
+    AssignStmt(
+            std::string const &name,
+            std::shared_ptr<Expr const> const &value);
 
     void toStream(std::ostream &s) const override;
-};
 
-class CompoundStmt;
+    std::string const &getName() const;
+
+    Expr const &getValue() const;
+
+    std::shared_ptr<Expr const> const &getValuePtr() const;
+
+private:
+    std::string const name;
+    std::shared_ptr<Expr const> value;
+};
 
 class DefStmt final : public Stmt {
 public:
-    std::string const &name;
-    std::vector<std::string const> args;
-    std::unique_ptr<CompoundStmt> body;
-
     DefStmt(std::string const &name,
-            std::vector<std::string const> args,
-            std::unique_ptr<CompoundStmt> body);
+            std::shared_ptr<Stmt const> const &body);
 
     void toStream(std::ostream &s) const override;
 
-public:
-    std::string const &getName() const { return name; }
-    std::vector<std::string const> const &getArguments() const { return args; }
-    CompoundStmt const &getBody() const { return *body; }
+    std::string const &getName() const;
+
+    std::string const *arg_begin() const;
+
+    std::string const *arg_end() const;
+
+    ArgNamesIter args() const;
+
+    void addArgument(std::string const &name);
+
+    Stmt const &getBody() const;
+
+private:
+    std::string const name;
+    std::vector<std::string> args_;
+    std::shared_ptr<Stmt const> body;
 };
 
 class ReturnStmt final : public Stmt {
 public:
-    Expr const &expr;
-
-    explicit ReturnStmt(Expr const &expr);
+    explicit ReturnStmt(std::shared_ptr<Expr const> const &expr);
 
     void toStream(std::ostream &s) const override;
+
+    Expr const &getExpr() const;
+
+    std::shared_ptr<Expr const> const &getExprPtr() const;
+
+private:
+    std::shared_ptr<Expr const> expr;
 };
 
 class CompoundStmt final : public Stmt {
 public:
     CompoundStmt();
+
     void toStream(std::ostream &s) const override;
-    std::vector<std::unique_ptr<Stmt const>> const &getStatements() const;
-    void addStatement(std::unique_ptr<Stmt> stmt);
+
+    std::vector<std::shared_ptr<Stmt const>> const &getStatements() const;
+
+    void addStatement(std::shared_ptr<Stmt const> const &stmt);
 
 private:
-    std::vector<std::unique_ptr<Stmt const>> statements;
+    std::vector<std::shared_ptr<Stmt const>> statements;
 };
 
 class PassStmt final : public Stmt {
@@ -229,27 +278,31 @@ public:
 class ConditionalStmt final : public Stmt {
 public:
     ConditionalStmt(
-            std::unique_ptr<Expr> condition,
-            std::unique_ptr<Stmt> thenBranch,
-            std::unique_ptr<Stmt> elseBranch);
+            std::shared_ptr<Expr const> const &condition,
+            std::shared_ptr<Stmt const> const &thenBranch,
+            std::shared_ptr<Stmt const> const &elseBranch);
 
     void toStream(std::ostream &s) const override;
 
 public:
     Expr const &getCondition() const;
+
     Stmt const &getThenBranch() const;
+
     Stmt const &getElseBranch() const;
 
 private:
-    std::unique_ptr<Expr const> condition;
-    std::unique_ptr<Stmt const> thenBranch;
-    std::unique_ptr<Stmt const> elseBranch;
+    std::shared_ptr<Expr const> condition;
+    std::shared_ptr<Stmt const> thenBranch;
+    std::shared_ptr<Stmt const> elseBranch;
 };
 
 class WhileStmt final : public Stmt {
 public:
 
-    WhileStmt(std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> body);
+    WhileStmt(
+            std::shared_ptr<Expr const> const &condition,
+            std::shared_ptr<Stmt const> const &body);
 
     void toStream(std::ostream &s) const override;
 
@@ -258,8 +311,8 @@ public:
     Stmt const &getBody() const;
 
 private:
-    std::unique_ptr<Expr const> condition;
-    std::unique_ptr<Stmt const> body;
+    std::shared_ptr<Expr const> condition;
+    std::shared_ptr<Stmt const> body;
 };
 
 class BreakStmt final : public Stmt {

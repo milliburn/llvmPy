@@ -13,12 +13,22 @@ tokenize(std::string input, bool erase)
     std::vector<Token> tokens;
     REQUIRE(lexer.tokenize(tokens));
     REQUIRE(tokens.size() > 1);
-    REQUIRE(tokens[0].type == tok_indent);
-    // Remove the indent marker (expressions don't expect it).
+    REQUIRE(tokens[0].getTokenType() == tok_indent);
+
     if (erase) {
-        tokens.erase(tokens.begin());
+        // Remove the indent marker (expressions don't expect it).
+        // Can't use tokens.erase(), as that would require a copy
+        // assignment operator on Token.
+
+        std::vector<Token> output;
+        for (size_t i = 1; i < tokens.size(); ++i) {
+            output.push_back(std::move(tokens[i]));
+        }
+
+        return output;
+    } else {
+        return tokens;
     }
-    return tokens;
 }
 
 static std::string

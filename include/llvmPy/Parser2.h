@@ -23,7 +23,7 @@ public:
     std::unique_ptr<Expr> parse();
 
     Expr * findNumericLiteral();
-    StrLitExpr *findStringLiteral();
+    StringExpr *findStringLiteral();
     IdentExpr *findIdentifier();
     TokenExpr *findOperator();
     TokenExpr *findUnaryOperator();
@@ -37,8 +37,6 @@ public:
     BreakStmt *findBreakStmt();
     ContinueStmt *findContinueStmt();
 
-    CallExpr *buildCall(Expr *lhs, Expr *rhs);
-
     std::unique_ptr<Stmt> read();
     Expr *readAtomicExpr();
     Expr *readExpr(int precedence = 0, Expr *lhs = nullptr);
@@ -46,7 +44,7 @@ public:
     Stmt *readStatement(int indent);
     Stmt *readSimpleStatement(int indent);
     Stmt *readBlockStatement(int indent);
-    CompoundStmt *readCompoundStatement(int outerIndent);
+    Stmt *readCompoundStatement(int outerIndent);
 
     bool isEnd();
 
@@ -60,7 +58,7 @@ protected:
 private:
     TTokenIter &iter;
     TTokenIter iter_end;
-    Token const &token() const;
+    Token &token() const;
 
     int getPrecedence(TokenType tokenType) const;
     int getPrecedence(TokenExpr *tokenExpr) const;

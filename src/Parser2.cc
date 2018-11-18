@@ -167,7 +167,11 @@ Parser2::readExpr(int lastPrec, Expr *lhs)
                 rhs = readExpr(precedence, rhs);
                 assert(rhs);
 
-                auto *binary = new BinaryExpr(lhs, op->getTokenType(), rhs);
+                auto *binary = new BinaryExpr(
+                        std::shared_ptr<Expr>(lhs),
+                        op->getTokenType(),
+                        std::shared_ptr<Expr>(rhs));
+
                 return readExpr(lastPrec, binary);
 
             }
@@ -175,7 +179,16 @@ Parser2::readExpr(int lastPrec, Expr *lhs)
         } else if (is(tok_lp)) {
 
             auto *args = readSubExpr();
-            auto *call = buildCall(lhs, args);
+            auto *call = new CallExpr(std::shared_ptr<Expr>(lhs));
+
+            if (auto *tuple = args->cast<TupleExpr>()) {
+                for (auto const &member : tuple->getMembers()) {
+                    call->addArgument(member);
+                }
+            } else {
+                call->addArgument(std::shared_ptr<Expr>(args));
+            }
+
             return readExpr(lastPrec, call);
 
         } else {
@@ -195,7 +208,7 @@ Parser2::readExpr(int lastPrec, Expr *lhs)
             assert(operand);
             auto *unary = new UnaryExpr(
                     op->getTokenType(),
-                    std::unique_ptr<Expr>(operand));
+                    std::shared_ptr<Expr>(operand));
             return readExpr(lastPrec, unary);
 
         } else if (auto *atomic = readAtomicExpr()) {
@@ -315,7 +328,7 @@ Parser2::readSimpleStatement(int indent)
             (stmt = findBreakStmt()) ||
             (stmt = findContinueStmt())) {
         } else if (auto *expr = readExpr()) {
-            stmt = new ExprStmt(expr);
+            stmt = new ExprStmt(std::shared_ptr<Expr>(expr));
         } else {
             return nullptr;
         }
@@ -359,40 +372,22 @@ Parser2::readBlockStatement(int indent)
     }
 }
 
-CallExpr *
-Parser2::buildCall(Expr *lhs, Expr *rhs)
-{
-    auto *call = new CallExpr(std::unique_ptr<Expr>(lhs));
-
-    if (auto *tuple = rhs->cast<TupleExpr>()) {
-        for (auto &member : tuple->getMembers()) {
-            call->addArgument(std::move(member));
-        }
-
-        delete(tuple);
-    } else if (rhs) {
-        call->addArgument(std::unique_ptr<Expr>(rhs));
-    }
-
-    return call;
-}
-
 bool
 Parser2::is(TokenType tokenType)
 {
-    return token().type == tokenType;
+    return token().getTokenType() == tokenType;
 }
 
 bool
 Parser2::is_a(TokenType tokenType)
 {
-    return token().type & tokenType;
+    return token().getTokenType() & tokenType;
 }
 
 bool
 Parser2::isEnd()
 {
-    return iter == iter_end || (*iter).type == tok_eof;
+    return iter == iter_end || iter->getTokenType() == tok_eof;
 }
 
 void
@@ -409,7 +404,7 @@ Parser2::back()
     iter--;
 }
 
-Token const &
+Token &
 Parser2::token() const
 {
     return *iter;
@@ -419,31 +414,30 @@ Expr *
 Parser2::findNumericLiteral()
 {
     if (is(tok_number)) {
-        std::string const *text = token().str;
+        auto const &text = token().getString();
         next();
 
-        if (text->find('.') != std::string::npos) {
-            double value = atof(text->c_str());
-            return new DecLitExpr(value);
+        if (text.find('.') != std::string::npos) {
+            double value = atof(text.c_str());
+            return new DecimalExpr(value);
         } else {
-            int64_t value = atol(text->c_str());
-            return new IntLitExpr(value);
+            int64_t value = atol(text.c_str());
+            return new IntegerExpr(value);
         }
     } else {
         return nullptr;
     }
 }
 
-StrLitExpr *
+StringExpr *
 Parser2::findStringLiteral()
 {
     if (is(tok_string)) {
         // The substring removes string delimiters (" or ').
-        std::string const *str = token().str;
-        auto value = std::make_unique<std::string const>(
-                str->substr(1, str->length() - 2));
+        auto const &text = token().getString();
+        auto value = text.substr(1, text.length() - 2);
         next();
-        return new StrLitExpr(std::move(value));
+        return new StringExpr(value);
     } else {
         return nullptr;
     }
@@ -453,7 +447,7 @@ IdentExpr *
 Parser2::findIdentifier()
 {
     if (is(tok_ident)) {
-        auto *expr = new IdentExpr(token().str);
+        auto *expr = new IdentExpr(token().getString());
         next();
         return expr;
     } else {
@@ -465,7 +459,7 @@ TokenExpr *
 Parser2::findOperator()
 {
     if (is_a(tok_oper)) {
-        TokenType tokenType = token().type;
+        TokenType tokenType = token().getTokenType();
         next();
         return new TokenExpr(tokenType);
     } else {
@@ -479,29 +473,29 @@ Parser2::findLambdaExpression()
     if (is(kw_lambda)) {
         next();
 
-        std::vector<std::string const> argNames;
+        auto *argsSubExpr = readSubExpr();
 
-        Expr *argsSubExpr = readSubExpr();
+        assert(is(tok_colon));
+        next();
 
-        if (auto *tuple = argsSubExpr->cast<TupleExpr>()) {
+        auto *lambdaBody = readSubExpr();
+
+        auto *lambda = new LambdaExpr(std::shared_ptr<Expr>(lambdaBody));
+
+        if (auto const *tuple = argsSubExpr->cast<TupleExpr>()) {
             for (auto const &member : tuple->getMembers()) {
                 auto const &ident = member->as<IdentExpr>();
-                argNames.push_back(ident.getName());
+                lambda->addArgument(ident.getName());
             }
         } else if (auto *ident = argsSubExpr->cast<IdentExpr>()) {
-            argNames.push_back(ident->getName());
+            lambda->addArgument(ident->getName());
         } else {
             assert(false && "Invalid argument subexpression");
         }
 
         delete(argsSubExpr);
 
-        assert(is(tok_colon));
-        next();
-
-        Expr *lambdaBody = readSubExpr();
-
-        return new LambdaExpr(argNames, lambdaBody);
+        return lambda;
     } else {
         return nullptr;
     }
@@ -513,37 +507,36 @@ Parser2::findDefStatement(int outerIndent)
     if (is(kw_def)) {
         next();
 
-        // TODO: Is this appropriate?
-        // TODO: The expression parser considers the function signature
-        // TODO: a "call expression", which is then deconstructed.
+        assert(is(tok_ident));
+        auto const &fnName = token().getString();
+        next();
 
-        auto *fnSignatureExpr = readExpr();
-        auto *fnSignature = fnSignatureExpr->cast<CallExpr>();
-        auto &fnNameExpr = fnSignature->getCallee();
-        auto &fnName = fnNameExpr.as<IdentExpr>();
-        std::vector<std::string const> argNames;
+        assert(is(tok_lp));
+
+        auto fnSignatureExpr = std::unique_ptr<Expr>(readSubExpr());
 
         assert(is(tok_colon));
         next();
 
-        for (auto &arg : fnSignature->getArguments()) {
-            auto const &ident = arg->as<IdentExpr>();
-            argNames.push_back(ident.getName());
-        }
-
-        // TODO: Right now this kills the underlying string.
-        // delete(fnSignatureExpr);
-
         assert(is(tok_eol));
         next();
 
-        CompoundStmt *body = readCompoundStatement(outerIndent);
+        Stmt *body = readCompoundStatement(outerIndent);
         assert(body);
 
-        return new DefStmt(
-                fnName.getName(),
-                std::move(argNames),
-                std::unique_ptr<CompoundStmt>(body));
+        auto *def = new DefStmt(fnName, std::shared_ptr<Stmt>(body));
+
+        if (auto *tuple = fnSignatureExpr->cast<TupleExpr>()) {
+            for (auto const &member : tuple->getMembers()) {
+                auto const &ident = member->as<IdentExpr>();
+                def->addArgument(ident.getName());
+            }
+        } else {
+            auto const &ident = fnSignatureExpr->as<IdentExpr>();
+            def->addArgument(ident.getName());
+        }
+
+        return def;
     } else {
         return nullptr;
     }
@@ -562,16 +555,16 @@ Parser2::findDefStatement(int outerIndent)
  * @param outerIndent The indentation level of the enclosing block header
  *        (e.g. the if-statement).
  */
-CompoundStmt *
+Stmt *
 Parser2::readCompoundStatement(int outerIndent)
 {
-    auto *compound = new CompoundStmt();
+    std::vector<Stmt *> statements;
 
     // A compound statement _must_ contain at least one inner statement,
     // or otherwise `pass`.
 
     assert(is(tok_indent));
-    auto const innerIndent = static_cast<int>(token().depth);
+    auto const innerIndent = static_cast<int>(token().getDepth());
     assert(innerIndent > outerIndent);
 
     for (;;) {
@@ -580,7 +573,7 @@ Parser2::readCompoundStatement(int outerIndent)
         }
 
         assert(is(tok_indent));
-        auto const indent = static_cast<int>(token().depth);
+        auto const indent = static_cast<int>(token().getDepth());
         next();
 
         if (is(tok_eol)) {
@@ -598,7 +591,7 @@ Parser2::readCompoundStatement(int outerIndent)
             }
 
             assert(stmt);
-            compound->addStatement(std::unique_ptr<Stmt>(stmt));
+            statements.push_back(stmt);
         } else {
             // Covers cases where:
             //   (a) outerIndent < indent < innerIndent
@@ -608,7 +601,17 @@ Parser2::readCompoundStatement(int outerIndent)
         }
     }
 
-    return compound;
+    assert(statements.size() > 0);
+
+    if (statements.size() == 1) {
+        return statements[0];
+    } else {
+        auto *compound = new CompoundStmt();
+        for (auto &stmt : statements) {
+            compound->addStatement(std::shared_ptr<Stmt>(stmt));
+        }
+        return compound;
+    }
 }
 
 ReturnStmt *
@@ -618,7 +621,7 @@ Parser2::findReturnStatement()
         next();
         auto *expr = readExpr();
         assert(expr);
-        return new ReturnStmt(*expr);
+        return new ReturnStmt(std::unique_ptr<Expr>(expr));
     } else {
         return nullptr;
     }
@@ -628,14 +631,16 @@ AssignStmt *
 Parser2::findAssignStatement()
 {
     if (is(tok_ident)) {
-        auto const *name = token().str;
+        auto &nameToken = token();
         next();
 
         if (is_a(tok_assign)) {
             next();
             auto *expr = readExpr();
             assert(expr);
-            return new AssignStmt(name, expr);
+            return new AssignStmt(
+                    nameToken.getString(),
+                    std::shared_ptr<Expr const>(expr));
         } else {
             back();
             return nullptr;
@@ -665,7 +670,7 @@ void
 Parser2::expectIndent(int indent)
 {
     assert(is(tok_indent));
-    int const actual = static_cast<int>(token().depth);
+    int const actual = static_cast<int>(token().getDepth());
     assert(indent == actual && "Unexpected indent");
     next();
 }
@@ -710,9 +715,9 @@ Parser2::findConditionalStatement(int outerIndent, bool elif)
         assert(elseBranch);
 
         auto *condStmt = new ConditionalStmt(
-                std::unique_ptr<Expr>(condition),
-                std::unique_ptr<Stmt>(thenBranch),
-                std::unique_ptr<Stmt>(elseBranch));
+                std::shared_ptr<Expr>(condition),
+                std::shared_ptr<Stmt>(thenBranch),
+                std::shared_ptr<Stmt>(elseBranch));
 
         return condStmt;
     } else {
@@ -735,7 +740,7 @@ bool
 Parser2::isAtIndent(TokenType const tokenType, int const indent)
 {
     if (is(tok_indent)) {
-        int const nextIndent = static_cast<int>(token().depth);
+        int const nextIndent = static_cast<int>(token().getDepth());
         next();
         if (nextIndent == indent && is(tokenType)) {
             return true;
@@ -766,8 +771,8 @@ Parser2::findWhileStmt(int outerIndent)
         assert(body);
 
         return new WhileStmt(
-                std::unique_ptr<Expr>(condition),
-                std::unique_ptr<Stmt>(body));
+                std::shared_ptr<Expr>(condition),
+                std::shared_ptr<Stmt>(body));
     } else {
         return nullptr;
     }

@@ -3,6 +3,7 @@
 #include <llvmPy/Compiler.h>
 #include <llvmPy/Instr.h>
 #include <llvm/IR/IRBuilder.h>
+#include <llvmPy/Support/iterator_range.h>
 #include <set>
 
 #ifdef __cplusplus
@@ -31,13 +32,12 @@ public:
 
     explicit Emitter(Compiler &c) noexcept;
 
-    llvm::Value *emit(RTScope &scope, AST const &ast);
-    llvm::Value *emit(RTScope &scope, IntLitExpr const &expr);
+    llvm::Value *emit(RTScope &scope, Expr const &expr);
+    llvm::Value *emit(RTScope &scope, IntegerExpr const &expr);
     llvm::Value *emit(RTScope &scope, IdentExpr const &ident);
     llvm::Value *emit(RTScope &scope, CallExpr const &call);
     llvm::Value *emit(RTScope &scope, LambdaExpr const &lambda);
-    llvm::Value *emit(RTScope &scope, DefStmt const &def);
-    llvm::Value *emit(RTScope &scope, StrLitExpr const &lit);
+    llvm::Value *emit(RTScope &scope, StringExpr const &lit);
     llvm::Value *emit(RTScope &scope, BinaryExpr const &expr);
 
     void emitCondStmt(
@@ -57,12 +57,17 @@ public:
             RTScope &scope,
             WhileStmt const &stmt);
 
+    void emitDefStmt(
+            llvm::Function &function,
+            RTScope &scope,
+            DefStmt const &def);
+
     void emitBreakStmt(Loop const *loop);
     void emitContinueStmt(Loop const *loop);
 
     void gatherSlotNames(
             Stmt const &stmt,
-            std::set<std::string const> &names);
+            std::set<std::string> &names);
 
     void zeroInitialiseSlots(
             Stmt const &body, RTScope &scope,
@@ -82,7 +87,7 @@ public:
             std::string const &name,
             RTScope &scope,
             Stmt const &stmt,
-            std::vector<std::string const> const &args);
+            iterator_range<std::string const *> const &args);
 
 private:
     llvm::DataLayout const &dl;

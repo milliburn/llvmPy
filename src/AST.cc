@@ -47,47 +47,47 @@ AST::toStream(std::ostream &s) const
 }
 
 void
-StrLitExpr::toStream(std::ostream &s) const
+StringExpr::toStream(std::ostream &s) const
 {
     s << '"' << getValue() << '"';
 }
 
-DecLitExpr::DecLitExpr(double v)
+DecimalExpr::DecimalExpr(double v)
 : value(v)
 {
 }
 
 double
-DecLitExpr::getValue() const
+DecimalExpr::getValue() const
 {
     return value;
 }
 
 void
-DecLitExpr::toStream(std::ostream &s) const
+DecimalExpr::toStream(std::ostream &s) const
 {
-    s << value << 'd';
+    s << getValue() << 'd';
 }
 
-IntLitExpr::IntLitExpr(long v)
+IntegerExpr::IntegerExpr(long v)
 : value(v)
 {
 }
 
 int64_t
-IntLitExpr::getValue() const
+IntegerExpr::getValue() const
 {
     return value;
 }
 
 void
-IntLitExpr::toStream(std::ostream &s) const
+IntegerExpr::toStream(std::ostream &s) const
 {
-    s << value << 'i';
+    s << getValue() << 'i';
 }
 
-IdentExpr::IdentExpr(std::string const *str)
-: name(*str)
+IdentExpr::IdentExpr(std::string const &name)
+: name(name)
 {
 }
 
@@ -100,12 +100,43 @@ IdentExpr::getName() const
 void
 IdentExpr::toStream(std::ostream &s) const
 {
-    s << name;
+    s << getName();
 }
 
-LambdaExpr::LambdaExpr(std::vector<std::string const> const args, Expr *body)
-: args(std::move(args)), expr(*body)
+LambdaExpr::LambdaExpr(std::shared_ptr<Expr> const &expr)
+: expr(expr)
 {
+}
+
+ArgNamesIter
+LambdaExpr::args() const
+{
+    return { arg_begin(), arg_end() };
+}
+
+void
+LambdaExpr::addArgument(std::string const &name)
+{
+    args_.emplace_back(name);
+}
+
+std::string const *
+LambdaExpr::arg_begin() const
+{
+    return args_.data();
+}
+
+std::string const *
+LambdaExpr::arg_end() const
+{
+    return args_.data() + args_.size();
+}
+
+Expr const &
+LambdaExpr::getExpr() const
+{
+    assert(expr);
+    return *expr;
 }
 
 void
@@ -113,23 +144,53 @@ LambdaExpr::toStream(std::ostream &s) const
 {
     s << "(lambda";
 
-    for (int i = 0; i < args.size(); ++i) {
-        if (i > 0) s << ',';
-        s << ' ' << args[i];
+    int iArg = 0;
+    for (auto const &arg : args()) {
+        if (iArg > 0) {
+            s << ",";
+        }
+
+        s << ' ' << arg;
+        iArg += 1;
     }
 
-    s << ": " << expr << ')';
+    s << ": " << getExpr() << ')';
 }
 
-BinaryExpr::BinaryExpr(Expr *lhs, TokenType op, Expr *rhs)
-: lhs(*lhs), op(op), rhs(*rhs)
+BinaryExpr::BinaryExpr(
+        std::shared_ptr<Expr const> const &lhs,
+        TokenType op,
+        std::shared_ptr<Expr const> const &rhs)
+: lhs(lhs), rhs(rhs), op(op)
 {
 }
 
 void
 BinaryExpr::toStream(std::ostream &s) const
 {
-    s << '(' << lhs << ' ' << Token(op) << ' ' << rhs << ')';
+    s << '(' << getLeftOperand()
+      << ' ' << Token(getOperator())
+      << ' ' << getRightOperand() << ')';
+}
+
+Expr const &
+BinaryExpr::getLeftOperand() const
+{
+    assert(lhs);
+    return *lhs;
+}
+
+Expr const &
+BinaryExpr::getRightOperand() const
+{
+    assert(rhs);
+    return *rhs;
+}
+
+TokenType
+BinaryExpr::getOperator() const
+{
+    return op;
 }
 
 void
@@ -137,11 +198,14 @@ CallExpr::toStream(std::ostream &s) const
 {
     s << getCallee() << '(';
 
-    auto &args = getArguments();
+    int iArg = 0;
+    for (auto const &arg : getArguments()) {
+        if (iArg > 0) {
+            s << ", ";
+        }
 
-    for (int i = 0; i < args.size(); ++i) {
-        if (i > 0) s << ", ";
-        s << *args[i];
+        s << *arg;
+        iArg += 1;
     }
 
     s << ')';
@@ -150,36 +214,39 @@ CallExpr::toStream(std::ostream &s) const
 void
 ExprStmt::toStream(std::ostream &s) const
 {
-    s << expr << endl;
+    s << getExpr() << endl;
 }
 
 void
 AssignStmt::toStream(std::ostream &s) const
 {
-    s << lhs << " = " << rhs << endl;
+    s << getName() << " = " << getValue() << endl;
 }
 
 void
 DefStmt::toStream(std::ostream &s) const
 {
-    s << "def " << name << "(";
+    s << "def " << getName() << "(";
 
-    for (int i = 0; i < args.size(); ++i) {
-        if (i > 0) s << ", ";
-        s << args[i];
+    int iArg = 0;
+    for (auto const &arg : args()) {
+        if (iArg > 0) {
+            s << ", ";
+        }
+
+        s << arg;
+        iArg += 1;
     }
 
     s << "):" << endl;
 
-    for (auto const &stmt : body->getStatements()) {
-        indentToStream(s, *stmt, INDENT);
-    }
+    indentToStream(s, getBody(), INDENT);
 }
 
 void
 ReturnStmt::toStream(std::ostream &s) const
 {
-    s << "return " << expr << endl;
+    s << "return " << getExpr() << endl;
 }
 
 std::ostream &
@@ -196,38 +263,39 @@ operator<< (std::ostream & s, Stmt const & stmt)
     return s;
 }
 
-StrLitExpr::StrLitExpr(std::unique_ptr<std::string const> value)
-: value(std::move(value))
+StringExpr::StringExpr(std::string const &value)
+: value(value)
 {
 }
 
 std::string const &
-StrLitExpr::getValue() const
+StringExpr::getValue() const
 {
-    return *value;
+    return value;
 }
 
-CallExpr::CallExpr(std::unique_ptr<Expr> callee)
-: callee(std::move(callee))
+CallExpr::CallExpr(std::shared_ptr<Expr> const &callee)
+: callee(callee)
 {
 }
 
 Expr const &
 CallExpr::getCallee() const
 {
+    assert(callee);
     return *callee;
 }
 
-std::vector<std::unique_ptr<Expr const>> const &
+std::vector<std::shared_ptr<Expr const>> const &
 CallExpr::getArguments() const
 {
     return arguments;
 }
 
 void
-CallExpr::addArgument(std::unique_ptr<Expr const> arg)
+CallExpr::addArgument(std::shared_ptr<Expr const> argument)
 {
-    arguments.push_back(std::move(arg));
+    arguments.emplace_back(argument);
 }
 
 TupleExpr::TupleExpr()
@@ -256,23 +324,21 @@ TupleExpr::toStream(std::ostream &s) const
     s << ")";
 }
 
-std::vector<std::unique_ptr<Expr const>> &
-TupleExpr::getMembers()
+std::vector<std::shared_ptr<Expr const>> const &
+TupleExpr::getMembers() const
 {
     return members;
 }
 
 void
-TupleExpr::addMember(std::unique_ptr<Expr> member)
+TupleExpr::addMember(std::shared_ptr<Expr> member)
 {
-    members.push_back(std::move(member));
-    // members.insert(members.begin(), std::move(member));
+    members.emplace_back(member);
 }
 
 TokenExpr::TokenExpr(TokenType type)
 : tokenType(type)
 {
-
 }
 
 void
@@ -287,8 +353,8 @@ TokenExpr::getTokenType() const
     return tokenType;
 }
 
-UnaryExpr::UnaryExpr(TokenType op, std::unique_ptr<Expr> expr)
-: op(op), expr(std::move(expr))
+UnaryExpr::UnaryExpr(TokenType op, std::shared_ptr<Expr const> const &expr)
+: op(op), expr(expr)
 {
 }
 
@@ -309,6 +375,7 @@ UnaryExpr::getOperator() const
 Expr const &
 UnaryExpr::getExpr() const
 {
+    assert(expr);
     return *expr;
 }
 
@@ -324,16 +391,16 @@ CompoundStmt::toStream(std::ostream &s) const
     }
 }
 
-std::vector<std::unique_ptr<Stmt const>> const &
+std::vector<std::shared_ptr<Stmt const>> const &
 CompoundStmt::getStatements() const
 {
     return statements;
 }
 
 void
-CompoundStmt::addStatement(std::unique_ptr<Stmt> stmt)
+CompoundStmt::addStatement(std::shared_ptr<Stmt const> const &stmt)
 {
-    statements.push_back(std::move(stmt));
+    statements.push_back(stmt);
 }
 
 PassStmt::PassStmt()
@@ -347,12 +414,12 @@ PassStmt::toStream(std::ostream &s) const
 }
 
 ConditionalStmt::ConditionalStmt(
-        std::unique_ptr<Expr> condition,
-        std::unique_ptr<Stmt> thenBranch,
-        std::unique_ptr<Stmt> elseBranch)
-: condition(std::move(condition)),
-  thenBranch(std::move(thenBranch)),
-  elseBranch(std::move(elseBranch))
+        std::shared_ptr<Expr const> const &condition,
+        std::shared_ptr<Stmt const> const &thenBranch,
+        std::shared_ptr<Stmt const> const &elseBranch)
+: condition(condition),
+  thenBranch(thenBranch),
+  elseBranch(elseBranch)
 {
     assert(this->condition);
     assert(this->thenBranch);
@@ -362,59 +429,78 @@ ConditionalStmt::ConditionalStmt(
 void
 ConditionalStmt::toStream(std::ostream &s) const
 {
-    s << "if " << *condition << ":" << endl;
-    indentToStream(s, *thenBranch, INDENT);
+    s << "if " << getCondition() << ":" << endl;
+    indentToStream(s, getThenBranch(), INDENT);
 
-    if (elseBranch->isa<ConditionalStmt>()) {
+    if (getElseBranch().isa<ConditionalStmt>()) {
         // XXX: This relies on toStream() not prepending anything, i.e. we get
         // XXX: the "el" from here and the "if" from the next toStream().
         s << "el";
-        s << *elseBranch;
-    } else if (!elseBranch->isa<PassStmt>()) {
+        s << getElseBranch();
+    } else if (!getElseBranch().isa<PassStmt>()) {
         s << "else:" << endl;
-        indentToStream(s, *elseBranch, INDENT);
+        indentToStream(s, getElseBranch(), INDENT);
     }
 }
 
 Expr const &
 ConditionalStmt::getCondition() const
 {
+    assert(condition);
     return *condition;
 }
 
 Stmt const &
 ConditionalStmt::getThenBranch() const
 {
+    assert(thenBranch);
     return *thenBranch;
 }
 
 Stmt const &
 ConditionalStmt::getElseBranch() const
 {
+    assert(elseBranch);
     return *elseBranch;
 }
 
-ExprStmt::ExprStmt(Expr *expr)
-: expr(*expr)
+ExprStmt::ExprStmt(std::shared_ptr<Expr const> const &expr)
+: expr(expr)
 {
 }
 
-AssignStmt::AssignStmt(std::string const *lhs, Expr *rhs)
-: lhs(*lhs), rhs(*rhs)
+Expr const &
+ExprStmt::getExpr() const
 {
+    assert(expr);
+    return *expr;
 }
 
 DefStmt::DefStmt(
         std::string const &name,
-        std::vector<std::string const> args,
-        std::unique_ptr<CompoundStmt> body)
-: name(name), args(std::move(args)), body(std::move(body))
+        std::shared_ptr<Stmt const> const &body)
+: name(name),
+  body(body)
 {
 }
 
-ReturnStmt::ReturnStmt(Expr const &expr)
+ReturnStmt::ReturnStmt(std::shared_ptr<Expr const> const &expr)
 : expr(expr)
 {
+}
+
+Expr const &
+ReturnStmt::getExpr() const
+{
+    assert(expr);
+    return *expr;
+}
+
+std::shared_ptr<Expr const> const &
+ReturnStmt::getExprPtr() const
+{
+    assert(expr);
+    return expr;
 }
 
 Expr::Expr() = default;
@@ -422,29 +508,31 @@ Expr::Expr() = default;
 Stmt::Stmt() = default;
 
 WhileStmt::WhileStmt(
-        std::unique_ptr<Expr> condition,
-        std::unique_ptr<Stmt> body)
-: condition(std::move(condition)),
-  body(std::move(body))
+        std::shared_ptr<Expr const> const &condition,
+        std::shared_ptr<Stmt const> const &body)
+: condition(condition),
+  body(body)
 {
 }
 
 void
 WhileStmt::toStream(std::ostream &s) const
 {
-    s << "while " << *condition << ":" << endl;
-    indentToStream(s, *body, INDENT);
+    s << "while " << getCondition() << ":" << endl;
+    indentToStream(s, getBody(), INDENT);
 }
 
 Expr const &
 WhileStmt::getCondition() const
 {
+    assert(condition);
     return *condition;
 }
 
 Stmt const &
 WhileStmt::getBody() const
 {
+    assert(body);
     return *body;
 }
 
@@ -458,4 +546,76 @@ void
 ContinueStmt::toStream(std::ostream &s) const
 {
     s << "continue" << endl;
+}
+
+AssignStmt::AssignStmt(
+        std::string const &name,
+        std::shared_ptr<Expr const> const &value)
+: name(name),
+  value(value)
+{
+}
+
+std::string const &
+AssignStmt::getName() const
+{
+    return name;
+}
+
+Expr const &
+AssignStmt::getValue() const
+{
+    assert(value);
+    return *value;
+}
+
+std::shared_ptr<Expr const> const &
+AssignStmt::getValuePtr() const
+{
+    assert(value);
+    return value;
+}
+
+std::string const &
+DefStmt::getName() const
+{
+    return name;
+}
+
+std::string const *
+DefStmt::arg_begin() const
+{
+    return args_.data();
+}
+
+std::string const *
+DefStmt::arg_end() const
+{
+    return args_.data() + args_.size();
+}
+
+ArgNamesIter
+DefStmt::args() const
+{
+    return { arg_begin(), arg_end() };
+}
+
+Stmt const &
+DefStmt::getBody() const
+{
+    assert(body);
+    return *body;
+}
+
+void
+DefStmt::addArgument(std::string const &name)
+{
+    args_.emplace_back(name);
+}
+
+std::shared_ptr<Expr const> const &
+LambdaExpr::getExprPtr() const
+{
+    assert(expr);
+    return expr;
 }

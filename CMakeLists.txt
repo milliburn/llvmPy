@@ -34,6 +34,7 @@ add_library(
         include/llvmPy/PyObj/PyObj.h
         include/llvmPy/PyObj/PyStr.h
         include/llvmPy/RT/Frame.h
+        include/llvmPy/Support/iterator_range.h
         include/llvmPy/AST.h
         include/llvmPy/Compiler.h
         include/llvmPy/Emitter.h
@@ -42,7 +43,6 @@ add_library(
         include/llvmPy/Parser2.h
         include/llvmPy/PyObj.h
         include/llvmPy/RT.h
-        include/llvmPy/SyntaxError.h
         include/llvmPy/Token.h
         include/llvmPy/Typed.h
         include/llvmPy.h
@@ -61,7 +61,6 @@ add_library(
         src/Lexer.cc
         src/Parser2.cc
         src/RT.cc
-        src/SyntaxError.cc
         src/Token.cc
         src/PyObj.cc)
 

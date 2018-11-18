@@ -1,16 +1,54 @@
 #include <llvmPy/Token.h>
+#include <assert.h>
 using namespace llvmPy;
 using namespace std;
+
+Token::Token(TokenType type)
+: type(type), str(nullptr), depth(0)
+{
+
+}
+
+Token::Token(TokenType type, std::unique_ptr<std::string> str)
+: type(type), str(std::move(str)), depth(0)
+{
+
+}
+
+Token::Token(TokenType type, size_t depth)
+: type(type), str(nullptr), depth(depth)
+{
+}
+
+TokenType
+Token::getTokenType() const
+{
+    return type;
+}
+
+std::string const &
+Token::getString() const
+{
+    assert(str);
+    return *str;
+}
+
+size_t
+Token::getDepth() const
+{
+    assert(getTokenType() == tok_indent);
+    return depth;
+}
 
 std::ostream &
 operator<< (std::ostream & s, Token const &t)
 {
-    switch (t.type) {
+    switch (t.getTokenType()) {
     case tok_assign: s << '='; break;
-    case tok_ident: s << *t.str; break;
-    case tok_indent: s << ">" << t.depth; break;
-    case tok_number: s << *t.str << 'n'; break;
-    case tok_string: s << *t.str; break;
+    case tok_ident: s << t.getString(); break;
+    case tok_indent: s << ">" << t.getDepth(); break;
+    case tok_number: s << t.getString() << 'n'; break;
+    case tok_string: s << t.getString(); break;
     case tok_eof: break;
     case tok_eol: s << "\n"; break;
     case tok_dot: s << '.'; break;
