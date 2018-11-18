@@ -62,28 +62,7 @@ TEST_CASE("Instr") {
         CHECK(rv == label);
         CHECK(callframe == frame);
     }
-
-    SECTION("llvmPy_bool: will return the __bool__ of the object") {
-        auto const *t = &PyBool::get(true);
-        auto const *f = &PyBool::get(false);
-
-        CHECK(llvmPy_bool(llvmPy_True) == t);
-        CHECK(llvmPy_bool(llvmPy_False) == f);
-        CHECK(llvmPy_bool(llvmPy_None) == f);
-
-        PyInt i1(-1), i2(0), i3(1), i4(30);
-
-        CHECK(llvmPy_bool(i1) == t);
-        CHECK(llvmPy_bool(i2) == f);
-        CHECK(llvmPy_bool(i3) == t);
-        CHECK(llvmPy_bool(i4) == t);
-
-        PyStr s1(""), s2("test");
-
-        CHECK(llvmPy_bool(s1) == f);
-        CHECK(llvmPy_bool(s2) == t);
-    }
-
+    
     SECTION("llvmPy_len: will return the __len__ of the object") {
         PyStr s1(""), s2("test");
         CHECK(llvmPy_len(s1)->as<PyInt>().getValue() == 0);
