@@ -42,3 +42,13 @@ PyStr::py__add__(PyObj &rhs)
     auto const &r = rhs.as<PyStr>().getValue();
     return new PyStr(l + r);
 }
+
+bool
+PyStr::py__eq__(PyObj &rhs)
+{
+    if (auto *r = rhs.cast<PyStr>()) {
+        return getValue() == r->getValue();
+    } else {
+        return false;
+    }
+}

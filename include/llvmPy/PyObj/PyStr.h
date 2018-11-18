@@ -20,6 +20,8 @@ public:
 
     bool py__bool__() override;
 
+    bool py__eq__(PyObj &rhs) override;
+
     PyObj *py__add__(PyObj &rhs) override;
 
 private:
