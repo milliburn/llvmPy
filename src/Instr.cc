@@ -35,15 +35,14 @@ Types::Types(
     llvmPy_binop = llvm::FunctionType::get(Ptr, { Ptr, Ptr }, false);
     llvmPy_add = llvmPy_binop;
     llvmPy_sub = llvmPy_binop;
-    llvmPy_int = llvm::FunctionType::get(Ptr, { PyIntValue }, false);
+    llvmPy_int = llvm::FunctionType::get(Ptr, { Ptr }, false);
     llvmPy_none = llvm::FunctionType::get(Ptr, {}, false);
     llvmPy_func = llvm::FunctionType::get(
             Ptr, { FrameNPtr, i8Ptr }, false);
     llvmPy_fchk = llvm::FunctionType::get(
             i8Ptr, { FrameNPtrPtr, Ptr, PyIntValue }, false);
     llvmPy_print = llvm::FunctionType::get(Ptr, { Ptr }, false);
-    llvmPy_str = llvm::FunctionType::get(
-            Ptr, { llvm::Type::getInt8PtrTy(ctx) }, false);
+    llvmPy_str = llvm::FunctionType::get(Ptr, { Ptr }, false);
     llvmPy_bool = llvm::FunctionType::get(Ptr, { Ptr }, false);
     llvmPy_truthy = llvm::FunctionType::get(
             llvm::Type::getInt1Ty(ctx), { Ptr }, false);

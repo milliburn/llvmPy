@@ -114,6 +114,9 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
         } else if (lhsIdent->getName() == "len") {
             llvm::Value *arg = emit(scope, *args[0]);
             return ir.CreateCall(mod.llvmPy_len(), { arg });
+        } else if (lhsIdent->getName() == "str") {
+            llvm::Value *arg = emit(scope, *args[0]);
+            return ir.CreateCall(mod.llvmPy_str(), { arg });
         }
     }
 

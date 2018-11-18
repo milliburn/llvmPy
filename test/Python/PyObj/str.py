@@ -12,3 +12,4 @@ print(s1 == s1)                     # CHECK-NEXT: True
 print("a" == "test")                # CHECK-NEXT: False
 print(len(""))                      # CHECK-NEXT: 0
 print(len("test"))                  # CHECK-NEXT: 4
+print("test " + str(1))             # CHECK-NEXT: test 1
