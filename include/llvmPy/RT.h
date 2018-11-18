@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <llvmPy/RT/Frame.h>
+#include <unordered_map>
 
 #ifdef __cplusplus
 namespace llvm {
@@ -108,6 +109,7 @@ public:
     llvm::GlobalVariable *llvmPy_False() const;
 
     llvm::GlobalVariable *llvmPy_PyInt(int64_t value) const;
+    llvm::GlobalVariable *llvmPy_PyStr(std::string const &value);
 
 private:
     llvm::Module &ir;
@@ -115,7 +117,7 @@ private:
     RTScope scope;
 
     llvm::GlobalVariable *getOrCreateGlobalExtern(std::string const &name) const;
-
+    std::unordered_map<std::string, llvm::GlobalVariable *> strings_;
 };
 
 class RT {

@@ -235,13 +235,8 @@ llvm::Value *
 Emitter::emit(RTScope &scope, StringExpr const &lit)
 {
     RTModule &mod = scope.getModule();
-
-    llvm::Value *globalString =
-            ir.CreateGlobalStringPtr(
-                    lit.getValue(),
-                    tags.String);
-
-    return ir.CreateCall(mod.llvmPy_str(), { globalString });
+    auto *global = mod.llvmPy_PyStr(lit.getValue());
+    return ir.CreateLoad(global, global->getName());
 }
 
 llvm::Value *
