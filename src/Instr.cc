@@ -48,6 +48,8 @@ Types::Types(
     llvmPy_truthy = llvm::FunctionType::get(
             llvm::Type::getInt1Ty(ctx), { Ptr }, false);
 
+    llvmPy_len = llvm::FunctionType::get(Ptr, { Ptr }, false);
+
     llvm::FunctionType *cmp = llvmPy_binop;
     llvmPy_lt = cmp;
     llvmPy_le = cmp;
@@ -254,4 +256,11 @@ extern "C" uint8_t __used
 llvmPy_truthy(llvmPy::PyObj &obj)
 {
     return static_cast<uint8_t>(obj.py__bool__() ? 1 : 0);
+}
+
+extern "C" llvmPy::PyInt *
+llvmPy_len(llvmPy::PyObj &obj)
+{
+    auto len = obj.py__len__();
+    return new PyInt(len);
 }

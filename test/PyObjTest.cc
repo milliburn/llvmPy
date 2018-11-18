@@ -130,5 +130,11 @@ TEST_CASE("PyObj") {
             CHECK(!PyStr("").py__bool__());
             CHECK(PyStr("a").py__bool__());
         }
+
+        SECTION("py__len__()") {
+            CHECK(PyStr("").py__len__() == 0);
+            CHECK(PyStr("a").py__len__() == 1);
+            CHECK(PyStr("test").py__len__() == 4);
+        }
     }
 }

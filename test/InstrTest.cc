@@ -79,4 +79,10 @@ TEST_CASE("Instr", "[Instr]") {
         CHECK(llvmPy_bool(s1) == f);
         CHECK(llvmPy_bool(s2) == t);
     }
+
+    SECTION("llvmPy_len: will return the __len__ of the object") {
+        PyStr s1(""), s2("test");
+        CHECK(llvmPy_len(s1)->as<PyInt>().getValue() == 0);
+        CHECK(llvmPy_len(s2)->as<PyInt>().getValue() == 4);
+    }
 }

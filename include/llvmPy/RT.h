@@ -101,6 +101,7 @@ public:
     llvm::Value *llvmPy_ge() const;
     llvm::Value *llvmPy_gt() const;
     llvm::Value *llvmPy_truthy() const;
+    llvm::Value *llvmPy_len() const;
 
     llvm::GlobalVariable *llvmPy_None() const;
     llvm::GlobalVariable *llvmPy_True() const;

@@ -16,6 +16,8 @@ public:
 
     std::string py__str__() override;
 
+    int64_t py__len__() override;
+
     bool py__bool__() override;
 
 private:

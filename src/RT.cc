@@ -136,6 +136,12 @@ RTModule::llvmPy_truthy() const
     return ir.getOrInsertFunction("llvmPy_truthy", types.llvmPy_truthy);
 }
 
+llvm::Value *
+RTModule::llvmPy_len() const
+{
+    return ir.getOrInsertFunction("llvmPy_len", types.llvmPy_len);
+}
+
 llvm::GlobalVariable *
 RTModule::getOrCreateGlobalExtern(std::string const &name) const
 {

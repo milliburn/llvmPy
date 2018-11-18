@@ -28,3 +28,9 @@ PyStr::py__bool__()
 {
     return !value->empty();
 }
+
+int64_t
+PyStr::py__len__()
+{
+    return static_cast<int64_t>(value->size());
+}

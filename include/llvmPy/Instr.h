@@ -54,6 +54,7 @@ public:
     llvm::FunctionType *llvmPy_str;
     llvm::FunctionType *llvmPy_bool;
     llvm::FunctionType *llvmPy_truthy;
+    llvm::FunctionType *llvmPy_len;
 
     llvm::FunctionType *llvmPy_lt;
     llvm::FunctionType *llvmPy_le;
@@ -98,6 +99,8 @@ llvmPy::PyBool *llvmPy_eq(llvmPy::PyObj &l, llvmPy::PyObj &r);
 llvmPy::PyBool *llvmPy_ne(llvmPy::PyObj &l, llvmPy::PyObj &r);
 llvmPy::PyBool *llvmPy_ge(llvmPy::PyObj &l, llvmPy::PyObj &r);
 llvmPy::PyBool *llvmPy_gt(llvmPy::PyObj &l, llvmPy::PyObj &r);
+
+llvmPy::PyInt *llvmPy_len(llvmPy::PyObj &);
 
 uint8_t llvmPy_truthy(llvmPy::PyObj &);
 
