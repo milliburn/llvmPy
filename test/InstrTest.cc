@@ -28,15 +28,11 @@ TEST_CASE("Instr") {
 
     SECTION("llvmPy_str: return the string representation") {
         PyInt i1(2), i2(-4);
-        PyStr s1("3"), s2("-5"), s3("a");
         PyBool b1(true);
         PyNone none;
 
         CHECK(llvmPy_str(i1)->getValue() == "2");
         CHECK(llvmPy_str(i2)->getValue() == "-4");
-        CHECK(llvmPy_str(s1)->getValue() == "3");
-        CHECK(llvmPy_str(s2)->getValue() == "-5");
-        CHECK(llvmPy_str(s3)->getValue() == "a");
         CHECK(llvmPy_str(b1)->getValue() == "True");
         CHECK(llvmPy_str(none)->getValue() == "None");
     }

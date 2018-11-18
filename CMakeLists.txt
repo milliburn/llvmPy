@@ -103,7 +103,8 @@ add_executable(
         test/TestSuite.cc
         test/PyObjTest.cc
         test/Parser/Parser2Test.cc
-        test/Builtins/str/builtin_str.cc)
+        test/Builtins/str/builtin_str.cc
+        test/Types/PyStr/type_PyStr.cc)
 
 # The test suites depend on an up-to-date llvmPy binary.
 add_dependencies(

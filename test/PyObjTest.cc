@@ -124,36 +124,4 @@ TEST_CASE("PyObj") {
             CHECK(!PyNone::get().py__bool__());
         }
     }
-
-    SECTION("PyStr") {
-        PyStr s1(""), s2("a"), s3("test");
-
-        SECTION("py__bool__()") {
-            CHECK(!s1.py__bool__());
-            CHECK(s2.py__bool__());
-        }
-
-        SECTION("py__len__()") {
-            CHECK(s1.py__len__() == 0);
-            CHECK(s2.py__len__() == 1);
-            CHECK(s3.py__len__() == 4);
-        }
-
-        SECTION("py__add__()") {
-            CHECK(s1.py__add__(s1)->as<PyStr>().getValue() == "");
-            CHECK(s1.py__add__(s2)->as<PyStr>().getValue() == "a");
-            CHECK(s2.py__add__(s2)->as<PyStr>().getValue() == "aa");
-            CHECK(s2.py__add__(s3)->as<PyStr>().getValue() == "atest");
-        }
-
-        SECTION("py__eq__()") {
-            CHECK(s1.py__eq__(s1));
-            CHECK(!s1.py__eq__(s2));
-            CHECK(!s2.py__eq__(s1));
-
-            // Ensure the comparison is by value, not reference.
-            PyStr s21("a"), s22("a");
-            CHECK(s21.py__eq__(s22));
-        }
-    }
 }
