@@ -90,6 +90,8 @@ Emitter::emit(RTScope &scope, Expr const &expr)
         return emit(scope, *lambda);
     } else if (auto *strLit = expr.cast<StringExpr>()) {
         return emit(scope, *strLit);
+    } else if (auto *unary = expr.cast<UnaryExpr>()) {
+        return emit(scope, *unary);
     } else if (auto *binop = expr.cast<BinaryExpr>()) {
         return emit(scope, *binop);
     } else {
@@ -694,4 +696,26 @@ Emitter::emitDefStmt(
               functionPtrBitCast });
 
     ir.CreateStore(value, scope.getSlotValue(def.getName()));
+}
+
+llvm::Value *
+Emitter::emit(RTScope &scope, UnaryExpr const &unary)
+{
+    if (auto *integer = unary.getExpr().cast<IntegerExpr>()) {
+        int64_t sign = 1;
+
+        switch (unary.getOperator()) {
+        case tok_sub:
+            sign = -1;
+        case tok_add: {
+            IntegerExpr expr(sign * integer->getValue());
+            return emit(scope, expr);
+        }
+
+        default:
+            break;
+        }
+    }
+
+    assert(false && "Not Implemented");
 }
