@@ -151,9 +151,9 @@ llvmPy_mul(llvmPy::PyObj &l, llvmPy::PyObj &r)
 }
 
 extern "C" PyInt * __used
-llvmPy_int(int64_t value)
+llvmPy_int(llvmPy::PyObj &obj)
 {
-    return new PyInt(value);
+    return nullptr;
 }
 
 extern "C" llvmPy::PyNone * __used
@@ -196,10 +196,9 @@ llvmPy_print(llvmPy::PyObj &obj)
  * @brief Return a PyStr representing the underlying string given.
  */
 extern "C" llvmPy::PyStr * __used
-llvmPy_str(uint8_t const *string)
+llvmPy_str(llvmPy::PyObj &obj)
 {
-    auto copy = std::make_unique<std::string const>((char const *) string);
-    return new PyStr(std::move(copy));
+    return nullptr;
 }
 
 /**
