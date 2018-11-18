@@ -7,6 +7,6 @@
 # CHECK: define
 # CHECK-SAME: @__body__
 
-# CHECK-NEXT: [[RV:%[0-9]]] = call %PyObj* @llvmPy_add(%PyObj* @PyInt.1, %PyObj* @PyInt.2)
+# CHECK: [[RV:%[0-9]]] = call %PyObj* @llvmPy_add(%PyObj* %PyInt.1, %PyObj* %PyInt.2)
 
 # CHECK-DAG: declare %PyObj* @llvmPy_add(%PyObj*, %PyObj*)

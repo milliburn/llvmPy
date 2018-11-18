@@ -21,8 +21,6 @@ f = lambda: 1
 # CHECK-NEXT: %outer = load %Frame1*, %Frame1** %outerptr
 # CHECK-NEXT: %frame = alloca %Frame0
 
-# CHECK: [[rv:%[0-9]]] = call %PyObj* @llvmPy_int(i64 1)
-# CHECK-NEXT: ret %PyObj* [[rv]]
+# CHECK: ret %PyObj* %PyInt.1
 
-# CHECK-DAG: declare %PyObj* @llvmPy_int(i64)
 # CHECK-DAG: declare %PyObj* @llvmPy_func(%FrameN*, i8*)

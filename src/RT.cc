@@ -4,6 +4,8 @@
 #include <llvmPy/Compiler.h>
 #include <llvm/IR/GlobalVariable.h>
 #include <string>
+#include <llvm/IR/Constants.h>
+
 using namespace llvmPy;
 
 RTModule::RTModule(
@@ -128,6 +130,28 @@ llvm::GlobalVariable *
 RTModule::llvmPy_False() const
 {
     return getOrCreateGlobalExtern("llvmPy_False");
+}
+
+llvm::GlobalVariable *
+RTModule::llvmPy_PyInt(int64_t value) const
+{
+    std::string sign = value < 0 ? "_" : "";
+    std::string name = "PyInt." + sign + std::to_string(abs(value));
+
+    if (auto *var = ir.getGlobalVariable(name, true)) {
+        return var;
+    } else {
+        auto *pyint = new PyInt(value);
+        auto *pyintAddr = types.getInt64(reinterpret_cast<uint64_t>(pyint));
+        auto *pyintPtr = llvm::ConstantExpr::getIntToPtr(pyintAddr, types.Ptr);
+        return new llvm::GlobalVariable(
+                ir,
+                types.Ptr,
+                true,
+                llvm::GlobalVariable::LinkageTypes::PrivateLinkage,
+                pyintPtr,
+                name);
+    }
 }
 
 llvm::Value *

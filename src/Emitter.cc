@@ -153,13 +153,8 @@ llvm::Value *
 Emitter::emit(RTScope &scope, IntegerExpr const &expr)
 {
     RTModule &mod = scope.getModule();
-
-    llvm::ConstantInt *value =
-            llvm::ConstantInt::get(
-                    types.PyIntValue,
-                    static_cast<uint64_t>(expr.getValue()));
-
-    return ir.CreateCall(mod.llvmPy_int(), { value });
+    auto *global = mod.llvmPy_PyInt(expr.getValue());
+    return ir.CreateLoad(global, global->getName());
 }
 
 llvm::Value *

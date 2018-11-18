@@ -2,7 +2,7 @@
 # RUN: cat -n %t1 >&2
 # RUN: llvm-as < %t1 | llvm-dis | FileCheck %s
 
-# CHECK-DAG: @PyInt.1 = external constant %PyObj
+# CHECK-DAG: @PyInt.1 = private constant %PyObj
 
 # CHECK: define
 # CHECK-SAME: @__body__
@@ -13,5 +13,6 @@
 
 x = 1
 
-# CHECK-NEXT: store %PyObj* @PyInt.1, %PyObj** [[VAR_X]]
+# CHECK: %PyInt.1 = load %PyObj*, %PyObj** @PyInt.1
+# CHECK-NEXT: store %PyObj* %PyInt.1, %PyObj** [[VAR_X]]
 # CHECK: ret %PyObj* @llvmPy_None

@@ -107,12 +107,15 @@ public:
     llvm::GlobalVariable *llvmPy_True() const;
     llvm::GlobalVariable *llvmPy_False() const;
 
+    llvm::GlobalVariable *llvmPy_PyInt(int64_t value) const;
+
 private:
     llvm::Module &ir;
     Types const &types;
     RTScope scope;
 
     llvm::GlobalVariable *getOrCreateGlobalExtern(std::string const &name) const;
+
 };
 
 class RT {
