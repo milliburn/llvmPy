@@ -117,6 +117,12 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
         } else if (lhsIdent->getName() == "str") {
             llvm::Value *arg = emit(scope, *args[0]);
             return ir.CreateCall(mod.llvmPy_str(), { arg });
+        } else if (lhsIdent->getName() == "int") {
+            llvm::Value *arg = emit(scope, *args[0]);
+            return ir.CreateCall(mod.llvmPy_int(), { arg });
+        } else if (lhsIdent->getName() == "bool") {
+            llvm::Value *arg = emit(scope, *args[0]);
+            return ir.CreateCall(mod.llvmPy_bool(), { arg });
         }
     }
 
