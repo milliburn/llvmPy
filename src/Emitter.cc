@@ -90,6 +90,8 @@ Emitter::emit(RTScope &scope, Expr const &expr)
         return emit(scope, *lambda);
     } else if (auto *strLit = expr.cast<StringExpr>()) {
         return emit(scope, *strLit);
+    } else if (auto *unary = expr.cast<UnaryExpr>()) {
+        return emit(scope, *unary);
     } else if (auto *binop = expr.cast<BinaryExpr>()) {
         return emit(scope, *binop);
     } else {
@@ -109,6 +111,12 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
         if (lhsIdent->getName() == "print") {
             llvm::Value *arg = emit(scope, *args[0]);
             return ir.CreateCall(mod.llvmPy_print(), { arg });
+        } else if (lhsIdent->getName() == "len") {
+            llvm::Value *arg = emit(scope, *args[0]);
+            return ir.CreateCall(mod.llvmPy_len(), { arg });
+        } else if (lhsIdent->getName() == "str") {
+            llvm::Value *arg = emit(scope, *args[0]);
+            return ir.CreateCall(mod.llvmPy_str(), { arg });
         }
     }
 
@@ -150,13 +158,8 @@ llvm::Value *
 Emitter::emit(RTScope &scope, IntegerExpr const &expr)
 {
     RTModule &mod = scope.getModule();
-
-    llvm::ConstantInt *value =
-            llvm::ConstantInt::get(
-                    types.PyIntValue,
-                    static_cast<uint64_t>(expr.getValue()));
-
-    return ir.CreateCall(mod.llvmPy_int(), { value });
+    auto *global = mod.llvmPy_PyInt(expr.getValue());
+    return ir.CreateLoad(global, global->getName());
 }
 
 llvm::Value *
@@ -235,13 +238,8 @@ llvm::Value *
 Emitter::emit(RTScope &scope, StringExpr const &lit)
 {
     RTModule &mod = scope.getModule();
-
-    llvm::Value *globalString =
-            ir.CreateGlobalStringPtr(
-                    lit.getValue(),
-                    tags.String);
-
-    return ir.CreateCall(mod.llvmPy_str(), { globalString });
+    auto *global = mod.llvmPy_PyStr(lit.getValue());
+    return ir.CreateLoad(global, global->getName());
 }
 
 llvm::Value *
@@ -696,4 +694,26 @@ Emitter::emitDefStmt(
               functionPtrBitCast });
 
     ir.CreateStore(value, scope.getSlotValue(def.getName()));
+}
+
+llvm::Value *
+Emitter::emit(RTScope &scope, UnaryExpr const &unary)
+{
+    if (auto *integer = unary.getExpr().cast<IntegerExpr>()) {
+        int64_t sign = 1;
+
+        switch (unary.getOperator()) {
+        case tok_sub:
+            sign = -1;
+        case tok_add: {
+            IntegerExpr expr(sign * integer->getValue());
+            return emit(scope, expr);
+        }
+
+        default:
+            break;
+        }
+    }
+
+    assert(false && "Not Implemented");
 }

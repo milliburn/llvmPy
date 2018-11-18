@@ -16,7 +16,15 @@ public:
 
     std::string py__str__() override;
 
+    int64_t py__len__() override;
+
+    int64_t py__int__() override;
+
     bool py__bool__() override;
+
+    bool py__eq__(PyObj &rhs) override;
+
+    PyObj *py__add__(PyObj &rhs) override;
 
 private:
     std::unique_ptr<std::string const> value;

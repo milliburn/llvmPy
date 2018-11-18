@@ -20,6 +20,8 @@ public:
     bool py__ge__(PyObj &rhs) override;
     bool py__gt__(PyObj &rhs) override;
 
+    int64_t py__int__() override;
+
     bool py__bool__() override;
 
 private:

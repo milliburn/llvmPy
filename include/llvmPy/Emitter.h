@@ -39,6 +39,7 @@ public:
     llvm::Value *emit(RTScope &scope, LambdaExpr const &lambda);
     llvm::Value *emit(RTScope &scope, StringExpr const &lit);
     llvm::Value *emit(RTScope &scope, BinaryExpr const &expr);
+    llvm::Value *emit(RTScope &scope, UnaryExpr const &unary);
 
     void emitCondStmt(
             llvm::Function &function,

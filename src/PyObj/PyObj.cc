@@ -75,3 +75,15 @@ PyObj::py__gt__(PyObj &)
 {
     return false;
 }
+
+int64_t
+PyObj::py__len__()
+{
+    return 0;
+}
+
+int64_t
+PyObj::py__int__()
+{
+    return 0;
+}

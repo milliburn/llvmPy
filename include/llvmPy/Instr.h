@@ -54,6 +54,7 @@ public:
     llvm::FunctionType *llvmPy_str;
     llvm::FunctionType *llvmPy_bool;
     llvm::FunctionType *llvmPy_truthy;
+    llvm::FunctionType *llvmPy_len;
 
     llvm::FunctionType *llvmPy_lt;
     llvm::FunctionType *llvmPy_le;
@@ -84,12 +85,12 @@ extern llvmPy::PyBool llvmPy_False;
 llvmPy::PyObj *llvmPy_add(llvmPy::PyObj &, llvmPy::PyObj &);
 llvmPy::PyObj *llvmPy_sub(llvmPy::PyObj &, llvmPy::PyObj &);
 llvmPy::PyObj *llvmPy_mul(llvmPy::PyObj &, llvmPy::PyObj &);
-llvmPy::PyInt *llvmPy_int(int64_t value);
+llvmPy::PyInt *llvmPy_int(llvmPy::PyObj &);
 llvmPy::PyNone *llvmPy_none();
 llvmPy::PyFunc *llvmPy_func(llvmPy::FrameN *frame, void *label);
 void *llvmPy_fchk(llvmPy::FrameN **callframe, llvmPy::PyFunc &pyfunc, int np);
 llvmPy::PyObj *llvmPy_print(llvmPy::PyObj &);
-llvmPy::PyStr *llvmPy_str(uint8_t const *string);
+llvmPy::PyStr *llvmPy_str(llvmPy::PyObj &);
 llvmPy::PyBool *llvmPy_bool(llvmPy::PyObj &);
 
 llvmPy::PyBool *llvmPy_lt(llvmPy::PyObj &l, llvmPy::PyObj &r);
@@ -98,6 +99,8 @@ llvmPy::PyBool *llvmPy_eq(llvmPy::PyObj &l, llvmPy::PyObj &r);
 llvmPy::PyBool *llvmPy_ne(llvmPy::PyObj &l, llvmPy::PyObj &r);
 llvmPy::PyBool *llvmPy_ge(llvmPy::PyObj &l, llvmPy::PyObj &r);
 llvmPy::PyBool *llvmPy_gt(llvmPy::PyObj &l, llvmPy::PyObj &r);
+
+llvmPy::PyInt *llvmPy_len(llvmPy::PyObj &);
 
 uint8_t llvmPy_truthy(llvmPy::PyObj &);
 

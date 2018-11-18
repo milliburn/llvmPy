@@ -8,3 +8,5 @@ f(x + 1) + 1            # CHECK-NEXT:(f((x + 1i)) + 1i)
 
 # Pretend (f + 1) returns a callable.
 (f + 1)(x + 1)          # CHECK-NEXT:(f + 1i)((x + 1i))
+
+f(-1)                   # CHECK-NEXT:f(-1i)

@@ -98,3 +98,9 @@ PyInt::py__bool__()
 {
     return value != 0;
 }
+
+int64_t
+PyInt::py__int__()
+{
+    return value;
+}

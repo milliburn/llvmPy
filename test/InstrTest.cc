@@ -17,9 +17,32 @@ TEST_CASE("Instr", "[Instr]") {
         CHECK(rv->as<PyInt>().getValue() == 3);
     }
 
-    SECTION("llvmPy_int: will return an int") {
-        PyObj *rv = llvmPy_int(5);
-        CHECK(rv->as<PyInt>().getValue() == 5);
+    SECTION("llvmPy_int: return the integer representation") {
+        PyInt i1(2), i2(-4);
+        PyStr s1("3"), s2("-5"), s3("a");
+
+        CHECK(llvmPy_int(i1)->getValue() == 2);
+        CHECK(llvmPy_int(i2)->getValue() == -4);
+        CHECK(llvmPy_int(s1)->getValue() == 3);
+        CHECK(llvmPy_int(s2)->getValue() == -5);
+
+        // It should throw an exception, but that hasn't been implemented.
+        // CHECK(llvmPy_int(s3));
+    }
+
+    SECTION("llvmPy_str: return the string representation") {
+        PyInt i1(2), i2(-4);
+        PyStr s1("3"), s2("-5"), s3("a");
+        PyBool b1(true);
+        PyNone none;
+
+        CHECK(llvmPy_str(i1)->getValue() == "2");
+        CHECK(llvmPy_str(i2)->getValue() == "-4");
+        CHECK(llvmPy_str(s1)->getValue() == "3");
+        CHECK(llvmPy_str(s2)->getValue() == "-5");
+        CHECK(llvmPy_str(s3)->getValue() == "a");
+        CHECK(llvmPy_str(b1)->getValue() == "True");
+        CHECK(llvmPy_str(none)->getValue() == "None");
     }
 
     SECTION("llvmPy_none: will return the singleton None instance") {
@@ -78,5 +101,11 @@ TEST_CASE("Instr", "[Instr]") {
 
         CHECK(llvmPy_bool(s1) == f);
         CHECK(llvmPy_bool(s2) == t);
+    }
+
+    SECTION("llvmPy_len: will return the __len__ of the object") {
+        PyStr s1(""), s2("test");
+        CHECK(llvmPy_len(s1)->as<PyInt>().getValue() == 0);
+        CHECK(llvmPy_len(s2)->as<PyInt>().getValue() == 4);
     }
 }
