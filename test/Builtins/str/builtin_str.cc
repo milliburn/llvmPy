@@ -9,7 +9,7 @@ TEST_CASE("builtin: str()", "[builtins][str]") {
     Mock<PyObj> mock;
     std::string const str("test");
 
-    SECTION("llvmPy_str() calls the object's py__str__()") {
+    SECTION("it delegates to the object's py__str__()") {
         When(Method(mock, py__str__)).Return(str);
         PyStr const *rv = llvmPy_str(mock.get());
         Verify(Method(mock, py__str__)).Once();

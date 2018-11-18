@@ -63,17 +63,6 @@ TEST_CASE("Instr") {
         CHECK(callframe == frame);
     }
 
-    SECTION("llvmPy_truthy: will return the truth value of an object") {
-        CHECK(llvmPy_truthy(llvmPy_True) == 1);
-        CHECK(llvmPy_truthy(llvmPy_False) == 0);
-        CHECK(llvmPy_truthy(llvmPy_None) == 0);
-
-        PyStr a(""), b("test");
-
-        CHECK(llvmPy_truthy(a) == 0);
-        CHECK(llvmPy_truthy(b) == 1);
-    }
-
     SECTION("llvmPy_bool: will return the __bool__ of the object") {
         auto const *t = &PyBool::get(true);
         auto const *f = &PyBool::get(false);
