@@ -37,6 +37,6 @@ Compiler::addAndRunModule(std::unique_ptr<llvm::Module> module)
     llvm::JITTargetAddress targetAddress = expectedTargetAddress.get();
     auto moduleBodyPtr = reinterpret_cast<void(*)(void *)>(targetAddress);
 
-    Frame<0> *emptyFrame = new Frame<0>();
+    Frame *emptyFrame = new Frame();
     moduleBodyPtr(emptyFrame);
 }

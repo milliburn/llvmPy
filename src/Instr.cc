@@ -162,7 +162,7 @@ llvmPy_none()
 }
 
 extern "C" PyFunc * __used
-llvmPy_func(FrameN *frame, void *label)
+llvmPy_func(Frame *frame, void *label)
 {
     return new PyFunc(frame, label);
 }
@@ -173,7 +173,7 @@ llvmPy_func(FrameN *frame, void *label)
  * @return Pointer to the function's IR.
  */
 extern "C" void * __used
-llvmPy_fchk(FrameN **callframe, llvmPy::PyFunc &pyfunc, int np)
+llvmPy_fchk(Frame **callframe, llvmPy::PyFunc &pyfunc, int np)
 {
     *callframe = pyfunc.getFrame();
     return pyfunc.getLabel();

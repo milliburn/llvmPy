@@ -4,14 +4,11 @@ namespace llvmPy {
 
 class PyObj;
 
-template<int N>
-class Frame {
-    Frame<N> *self;
-    Frame<0> *outer;
-    PyObj *vars[N];
+struct Frame {
+    Frame *self;
+    Frame *outer;
+    PyObj *vars[];
 };
-
-typedef Frame<0> FrameN;
 
 } // namespace llvmPy
 #endif // __cplusplus
