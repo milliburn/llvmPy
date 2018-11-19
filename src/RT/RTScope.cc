@@ -28,6 +28,7 @@ RTScope::createDerived(
         llvm::Value *innerFramePtr,
         llvm::Value *outerFramePtr)
 {
+    // TODO: Assert not null.
     return new RTScope(module, *this, innerFramePtr, outerFramePtr);
 }
 

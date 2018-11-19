@@ -322,47 +322,44 @@ Emitter::createFunction(
 
     gatherSlotNames(stmt, slotNames);
 
-    // Dereference the outer frame.
-    llvm::Value *outerFramePtr =
-            ir.CreateLoad(outerFramePtrPtrArg, tags.OuterFrame);
+    // Generate the frame for variables to be potentially lifted onto the
+    // heap by a closure.
 
-    // Generate the frame.
-    llvm::StructType *innerFrameType = types.getFrameN(slotNames.size());
-    llvm::AllocaInst *innerFrameAlloca = ir.CreateAlloca(
-            innerFrameType, nullptr, tags.InnerFrame);
+    auto *frameAlloca = ir.CreateAlloca(
+            types.getFrameN(slotNames.size()),
+            nullptr,
+            tags.InnerFrame);
+
+    auto *frameSelfPtrPtr = ir.CreateGEP(
+            frameAlloca,
+            { types.getInt64(0),
+              types.getInt32(Frame::SelfIndex) });
+
+    auto *frameOuterPtrPtr = ir.CreateGEP(
+            frameAlloca,
+            { types.getInt64(0),
+              types.getInt32(Frame::OuterIndex) });
+
+    ir.CreateStore(frameAlloca, frameSelfPtrPtr);
+
+    auto *outerFramePtr = ir.CreateLoad(
+            outerFramePtrPtrArg, tags.OuterFrame);
+
+    ir.CreateStore(
+            // The outer frame might come in the form of %Frame0*,
+            // % Frame1*, etc., whereas the FrameX structure templates define
+            // the generic %FrameN* as the outer pointer value. Hence bit cast.
+            ir.CreateBitCast(
+                    outerFramePtr,
+                    types.getFrameNPtr()),
+            frameOuterPtrPtr);
 
     // TODO: Zero-initialize slots with llvm.memset or something.
 
-    // Store the frame's self-pointer.
-    llvm::Value *frameSelfPtrGEP =
-            ir.CreateGEP(
-                    innerFrameType,
-                    innerFrameAlloca,
-                    { types.getInt64(0),
-                      types.getInt32(Frame::SelfIndex) });
-    ir.CreateStore(innerFrameAlloca, frameSelfPtrGEP);
-
-    // Store the frame's outer pointer.
-
-    llvm::Value *frameOuterPtrGEP =
-            ir.CreateGEP(
-                    innerFrameType,
-                    innerFrameAlloca,
-                    { types.getInt64(0),
-                      types.getInt32(Frame::OuterIndex) });
-
-    llvm::Value *frameOuterPtrGEPBitCast =
-            ir.CreateBitCast(
-                    frameOuterPtrGEP,
-                    llvm::PointerType::getUnqual(
-                            outerFramePtr->getType()));
-
-    ir.CreateStore(outerFramePtr, frameOuterPtrGEPBitCast);
-
     RTScope *innerScope =
             outerScope.createDerived(
-                    innerFrameAlloca,
-                    outerFramePtrPtrArg);
+                    frameSelfPtrPtr,
+                    nullptr);
 
     for (auto const &slotName : slotNames) {
         innerScope->declareSlot(slotName);
@@ -379,19 +376,14 @@ Emitter::createFunction(
             assert(innerScope->hasSlot(ident));
             auto slotIndex = innerScope->getSlotIndex(ident);
 
-            llvm::Value *assignGEP = ir.CreateGEP(
-                    innerFrameType,
-                    innerFrameAlloca,
+            auto *argVarPtr = ir.CreateGEP(
+                    frameAlloca,
                     { types.getInt64(0),
                       types.getInt32(Frame::VarsIndex),
                       types.getInt64(slotIndex) },
                     tags.Var + "_" + ident);
-            ir.CreateStore(&arg, assignGEP);
 
-            // TODO: This would be invalidated if the pointer changes
-            // TODO: (i.e. if the callee's chain ends up lifting the frame
-            // TODO: to heap).
-            innerScope->setSlotValue(ident, assignGEP);
+            ir.CreateStore(&arg, argVarPtr);
         }
 
         iArg++;
@@ -400,12 +392,12 @@ Emitter::createFunction(
     // Zero-initialise the contents of assign statements. This will act
     // as a sentinel to detect use before set.
 
-    zeroInitialiseSlots(
-            stmt,
-            *innerScope,
-            entry,
-            innerFrameType,
-            innerFrameAlloca);
+    // zeroInitialiseSlots(
+    //         stmt,
+    //         *innerScope,
+    //         entry,
+    //         innerFrameType,
+    //         innerFrameAlloca);
 
     // Successive statements may leave the emitter at a different insert point.
 
@@ -718,10 +710,12 @@ Emitter::findLexicalSlotGEP(
         llvm::Value *framePtrPtr)
 {
     if (!framePtrPtr) {
-        framePtrPtr = ir.CreateGEP(
-                scope.getInnerFramePtr(),
-                { types.getInt64(0),
-                  types.getInt32(Frame::SelfIndex) });
+        framePtrPtr = scope.getInnerFramePtr();
+        //
+        // framePtrPtr = ir.CreateGEP(
+        //         scope.getInnerFramePtr(),
+        //         { types.getInt64(0),
+        //           types.getInt32(Frame::SelfIndex) });
     }
 
     if (scope.hasSlot(name)) {
@@ -734,7 +728,13 @@ Emitter::findLexicalSlotGEP(
 
         auto *framePtrBitCast = ir.CreateBitCast(
                 framePtr,
-                scope.getInnerFramePtr()->getType());
+                llvm::cast<llvm::PointerType>(
+                        scope.getInnerFramePtr()->getType())
+                        ->getElementType());
+
+        // std::cerr << "framePtrBitCast = ";
+        // framePtrBitCast->print(llvm::errs());
+        // std::cerr << std::endl;
 
         auto *slotGEP = ir.CreateGEP(
                 framePtrBitCast,
@@ -747,26 +747,30 @@ Emitter::findLexicalSlotGEP(
 
     } else if (scope.hasParent()) {
 
-        auto *outerFramePtrGEP = ir.CreateGEP(
-                framePtrPtr,
+        auto *framePtr = ir.CreateLoad(framePtrPtr);
+
+        // std::cerr << "framePtr = ";
+        // framePtr->print(llvm::errs());
+        // std::cerr << std::endl;
+
+        auto *outerFramePtrPtr = ir.CreateGEP(
+                // TODO: XXX
+                ir.CreateBitCast(framePtr, types.getFrameNPtr(10)),
                 { types.getInt64(0),
                   types.getInt32(Frame::OuterIndex) });
 
-        auto *outerFramePtr = ir.CreateLoad(outerFramePtrGEP);
-
-        // auto *outerFrameSelfPtrPtr = ir.CreateGEP(
-        //         outerFramePtr,
-        //         { types.getInt64(0),
-        //           types.getInt32(0) });
+        // std::cerr << "outerFramePtrPtr = ";
+        // outerFramePtrPtr->print(llvm::errs());
+        // std::cerr << std::endl;
 
         auto *result = findLexicalSlotGEP(
-                name, scope.getParent(), outerFramePtr);
+                name, scope.getParent(), outerFramePtrPtr);
 
         if (!result) {
             // Clean up the unused instructions.
-            // TODO: Double-check this doesn't leak memory.
-            outerFramePtr->eraseFromParent();
-            outerFramePtrGEP->deleteValue();
+            // TODO: Does it leak memory?
+            framePtr->eraseFromParent();
+            outerFramePtrPtr->deleteValue();
         }
 
         return result;
