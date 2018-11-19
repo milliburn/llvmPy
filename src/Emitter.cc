@@ -343,7 +343,7 @@ Emitter::createFunction(
     auto *frameSizePtr = ir.CreateGEP(
             frameAlloca,
             { types.getInt64(0),
-              types.getInt32(Frame::SizeIndex) });
+              types.getInt32(Frame::CountIndex) });
 
     ir.CreateStore(frameAlloca, frameSelfPtrPtr);
 

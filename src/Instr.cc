@@ -164,10 +164,36 @@ llvmPy_none()
     return &PyNone::get();
 }
 
-extern "C" PyFunc * __used
-llvmPy_func(Frame *frame, void *label)
+static Frame *
+moveFrameToHeap(Frame *stackFrame)
 {
-    return new PyFunc(frame, label);
+    if (!stackFrame || !stackFrame->self) {
+        // The frame is already on the heap.
+        return stackFrame;
+    } else {
+        // The frame is currently on the stack.
+
+        auto slotCount = stackFrame->count;
+        auto frameSize = (
+                sizeof(Frame) +
+                slotCount * sizeof(stackFrame->vars[0]));
+
+        auto *heapFrame = reinterpret_cast<Frame *>(malloc(frameSize));
+
+        memcpy(heapFrame, stackFrame, frameSize);
+
+        heapFrame->self = nullptr; // Marks that it's on the heap.
+        stackFrame->self = heapFrame;
+        heapFrame->outer = moveFrameToHeap(stackFrame->outer);
+        return heapFrame;
+    }
+}
+
+extern "C" PyFunc * __used
+llvmPy_func(Frame *stackFrame, void *label)
+{
+    Frame *heapFrame = moveFrameToHeap(stackFrame);
+    return new PyFunc(heapFrame, label);
 }
 
 /**

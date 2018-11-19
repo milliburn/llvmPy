@@ -45,10 +45,17 @@ TEST_CASE("Instr") {
     }
 
     SECTION("llvmPy_func: will store the frame and function pointers") {
-        auto frame = reinterpret_cast<Frame*>(123);
+        Frame frame = {
+                .self = nullptr,
+                .outer = nullptr,
+                .count = 0,
+        };
+
+        // TODO: Test frame heap allocation.
+
         auto label = reinterpret_cast<void *>(888);
-        PyFunc *pyfunc = llvmPy_func(frame, label);
-        CHECK(pyfunc->getFrame() == frame);
+        PyFunc *pyfunc = llvmPy_func(&frame, label);
+        CHECK(pyfunc->getFrame() == &frame);
         CHECK(pyfunc->getLabel() == label);
     }
 
