@@ -1,5 +1,5 @@
 #include <assert.h>
-#include <llvmPy/RT.h>
+#include <llvmPy/RT/RTScope.h>
 using namespace llvmPy;
 
 RTScope::RTScope(

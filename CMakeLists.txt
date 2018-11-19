@@ -35,6 +35,8 @@ add_library(
         include/llvmPy/PyObj/PyObj.h
         include/llvmPy/PyObj/PyStr.h
         include/llvmPy/RT/Frame.h
+        include/llvmPy/RT/RTModule.h
+        include/llvmPy/RT/RTScope.h
         include/llvmPy/Support/iterator_range.h
         include/llvmPy/AST.h
         include/llvmPy/Compiler.h
@@ -54,6 +56,7 @@ add_library(
         src/PyObj/PyObj.cc
         src/PyObj/PyStr.cc
         src/RT/RTScope.cc
+        src/RT/RTModule.cc
         src/AST.cc
         src/Compiler.cc
         src/CompilerImpl.h
