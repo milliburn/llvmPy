@@ -1,6 +1,5 @@
 #include <llvmPy/Emitter.h>
 #include <llvmPy/RT.h>
-#include <llvmPy/RT/FrameDesc.h>
 #include <llvmPy/Token.h>
 #include <llvm/IR/Value.h>
 #include <llvm/IR/Verifier.h>

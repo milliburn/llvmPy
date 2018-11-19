@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include <string>
 #include <llvmPy/RT/Frame.h>
+#include <llvmPy/Support/Testing.h>
 
 #ifdef __cplusplus
 namespace llvm {
@@ -43,7 +44,7 @@ public:
 
     bool hasParent() const;
 
-    RTScope &getParent() const;
+    __mock_virtual RTScope &getParent() const;
 
     llvm::Value *getOuterFramePtr() const;
 
