@@ -339,7 +339,7 @@ Emitter::createFunction(
                     innerFrameType,
                     innerFrameAlloca,
                     { types.getInt64(0),
-                      types.getInt32(0) });
+                      types.getInt32(Frame::SelfIndex) });
     ir.CreateStore(innerFrameAlloca, frameSelfPtrGEP);
 
     // Store the frame's outer pointer.
@@ -349,7 +349,7 @@ Emitter::createFunction(
                     innerFrameType,
                     innerFrameAlloca,
                     { types.getInt64(0),
-                      types.getInt32(1) });
+                      types.getInt32(Frame::OuterIndex) });
 
     llvm::Value *frameOuterPtrGEPBitCast =
             ir.CreateBitCast(
@@ -383,7 +383,7 @@ Emitter::createFunction(
                     innerFrameType,
                     innerFrameAlloca,
                     { types.getInt64(0),
-                      types.getInt32(2),
+                      types.getInt32(Frame::VarsIndex),
                       types.getInt64(slotIndex) },
                     tags.Var + "_" + ident);
             ir.CreateStore(&arg, assignGEP);
@@ -638,7 +638,7 @@ Emitter::zeroInitialiseSlot(
             frameType,
             frameAlloca,
             { types.getInt64(0),
-              types.getInt32(2),
+              types.getInt32(Frame::VarsIndex),
               types.getInt64(index) },
             tags.Var + "_" + name);
 
@@ -721,7 +721,7 @@ Emitter::findLexicalSlotGEP(
         framePtrPtr = ir.CreateGEP(
                 scope.getInnerFramePtr(),
                 { types.getInt64(0),
-                  types.getInt32(0) });
+                  types.getInt32(Frame::SelfIndex) });
     }
 
     if (scope.hasSlot(name)) {
@@ -739,7 +739,7 @@ Emitter::findLexicalSlotGEP(
         auto *slotGEP = ir.CreateGEP(
                 framePtrBitCast,
                 { types.getInt64(0),
-                  types.getInt32(2),
+                  types.getInt32(Frame::VarsIndex),
                   types.getInt64(index) },
                 tags.Var + "." + name);
 
@@ -750,7 +750,7 @@ Emitter::findLexicalSlotGEP(
         auto *outerFramePtrGEP = ir.CreateGEP(
                 framePtrPtr,
                 { types.getInt64(0),
-                  types.getInt32(1) });
+                  types.getInt32(Frame::OuterIndex) });
 
         auto *outerFramePtr = ir.CreateLoad(outerFramePtrGEP);
 
