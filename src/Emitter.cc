@@ -340,6 +340,11 @@ Emitter::createFunction(
             { types.getInt64(0),
               types.getInt32(Frame::OuterIndex) });
 
+    auto *frameSizePtr = ir.CreateGEP(
+            frameAlloca,
+            { types.getInt64(0),
+              types.getInt32(Frame::SizeIndex) });
+
     ir.CreateStore(frameAlloca, frameSelfPtrPtr);
 
     auto *outerFramePtr = ir.CreateLoad(
@@ -353,6 +358,13 @@ Emitter::createFunction(
                     outerFramePtr,
                     types.getFrameNPtr()),
             frameOuterPtrPtr);
+
+    // Store the number of slots in the frame.
+    // TODO: This should be in the function's prefix data.
+
+    ir.CreateStore(
+            types.getInt64(slotNames.size()),
+            frameSizePtr);
 
     // TODO: Zero-initialize slots with llvm.memset or something.
 

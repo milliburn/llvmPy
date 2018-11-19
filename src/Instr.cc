@@ -73,10 +73,13 @@ Types::getFrameN(int N) const
 
     llvm::StructType *st = llvm::StructType::create(
             ctx, "Frame" + std::to_string(N));
+
+    // The signature must be kept in sync with llvmPy::Frame.
     st->setBody(
             {
                     llvm::PointerType::getUnqual(st),
                     FrameNPtr,
+                    llvm::Type::getInt64Ty(ctx),
                     llvm::ArrayType::get(Ptr, N)
             },
             true);
