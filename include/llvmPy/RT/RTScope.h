@@ -59,6 +59,8 @@ public:
 
     size_t getSlotIndex(std::string const &name) const;
 
+    size_t getSlotCount() const;
+
 private:
     RTModule &module;
     RTScope * const parent;

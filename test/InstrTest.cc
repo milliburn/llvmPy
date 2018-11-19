@@ -48,13 +48,18 @@ TEST_CASE("Instr") {
         Frame frame = {
                 .self = nullptr,
                 .outer = nullptr,
-                .count = 0,
         };
 
         // TODO: Test frame heap allocation.
 
-        auto label = reinterpret_cast<void *>(888);
+        void *labelData[2] = {
+                nullptr,
+                nullptr,
+        };
+
+        auto *label = &labelData[1];
         PyFunc *pyfunc = llvmPy_func(&frame, label);
+
         CHECK(pyfunc->getFrame() == &frame);
         CHECK(pyfunc->getLabel() == label);
     }

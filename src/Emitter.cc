@@ -1,5 +1,6 @@
 #include <llvmPy/Emitter.h>
 #include <llvmPy/RT.h>
+#include <llvmPy/RT/FrameDesc.h>
 #include <llvmPy/Token.h>
 #include <llvm/IR/Value.h>
 #include <llvm/IR/Verifier.h>
@@ -340,11 +341,6 @@ Emitter::createFunction(
             { types.getInt64(0),
               types.getInt32(Frame::OuterIndex) });
 
-    auto *frameSizePtr = ir.CreateGEP(
-            frameAlloca,
-            { types.getInt64(0),
-              types.getInt32(Frame::CountIndex) });
-
     ir.CreateStore(frameAlloca, frameSelfPtrPtr);
 
     auto *outerFramePtr = ir.CreateLoad(
@@ -359,19 +355,15 @@ Emitter::createFunction(
                     types.getFrameNPtr()),
             frameOuterPtrPtr);
 
-    // Store the number of slots in the frame.
-    // TODO: This should be in the function's prefix data.
-
-    ir.CreateStore(
-            types.getInt64(slotNames.size()),
-            frameSizePtr);
-
     // TODO: Zero-initialize slots with llvm.memset or something.
 
     RTScope *innerScope =
             outerScope.createDerived(
                     frameSelfPtrPtr,
                     nullptr);
+
+    function->setPrefixData(
+            types.getInt64(reinterpret_cast<int64_t>(innerScope)));
 
     for (auto const &slotName : slotNames) {
         innerScope->declareSlot(slotName);

@@ -103,3 +103,9 @@ RTScope::getSlotIndex(std::string const &name) const
     assert(hasSlot(name));
     return slots.at(name).frameIndex;
 }
+
+size_t
+RTScope::getSlotCount() const
+{
+    return slots.size();
+}

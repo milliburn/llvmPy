@@ -79,7 +79,6 @@ Types::getFrameN(int N) const
             {
                     llvm::PointerType::getUnqual(st),
                     FrameNPtr,
-                    llvm::Type::getInt64Ty(ctx),
                     llvm::ArrayType::get(Ptr, N)
             },
             true);
@@ -165,7 +164,7 @@ llvmPy_none()
 }
 
 static Frame *
-moveFrameToHeap(Frame *stackFrame)
+moveFrameToHeap(Frame *stackFrame, RTScope const &scope)
 {
     if (!stackFrame || !stackFrame->self) {
         // The frame is already on the heap.
@@ -173,18 +172,19 @@ moveFrameToHeap(Frame *stackFrame)
     } else {
         // The frame is currently on the stack.
 
-        auto slotCount = stackFrame->count;
+        auto slotCount = scope.getSlotCount();
+
         auto frameSize = (
                 sizeof(Frame) +
                 slotCount * sizeof(stackFrame->vars[0]));
 
         auto *heapFrame = reinterpret_cast<Frame *>(malloc(frameSize));
-
         memcpy(heapFrame, stackFrame, frameSize);
 
         heapFrame->self = nullptr; // Marks that it's on the heap.
         stackFrame->self = heapFrame;
-        heapFrame->outer = moveFrameToHeap(stackFrame->outer);
+        heapFrame->outer = moveFrameToHeap(
+                stackFrame->outer, scope.getParent());
         return heapFrame;
     }
 }
@@ -192,7 +192,11 @@ moveFrameToHeap(Frame *stackFrame)
 extern "C" PyFunc * __used
 llvmPy_func(Frame *stackFrame, void *label)
 {
-    Frame *heapFrame = moveFrameToHeap(stackFrame);
+    // The `label` is that of the callee, but llvmPy_func() itself operates
+    // within the caller; hence the scope->getParent().
+
+    auto *scope = reinterpret_cast<RTScope const **>(label)[-1];
+    Frame *heapFrame = moveFrameToHeap(stackFrame, scope->getParent());
     return new PyFunc(heapFrame, label);
 }
 
