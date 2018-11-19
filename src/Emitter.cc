@@ -712,13 +712,10 @@ Emitter::findLexicalSlotGEP(
         RTScope &scope,
         llvm::Value *framePtrPtr)
 {
+    bool const isPrinting = false; // TODO: Remove the development aid.
+
     if (!framePtrPtr) {
         framePtrPtr = scope.getInnerFramePtr();
-        //
-        // framePtrPtr = ir.CreateGEP(
-        //         scope.getInnerFramePtr(),
-        //         { types.getInt64(0),
-        //           types.getInt32(Frame::SelfIndex) });
     }
 
     if (scope.hasSlot(name)) {
@@ -735,9 +732,11 @@ Emitter::findLexicalSlotGEP(
                         scope.getInnerFramePtr()->getType())
                         ->getElementType());
 
-        // std::cerr << "framePtrBitCast = ";
-        // framePtrBitCast->print(llvm::errs());
-        // std::cerr << std::endl;
+        if (isPrinting) {
+            std::cerr << "framePtrBitCast = ";
+            framePtrBitCast->print(llvm::errs());
+            std::cerr << std::endl;
+        }
 
         auto *slotGEP = ir.CreateGEP(
                 framePtrBitCast,
@@ -752,9 +751,11 @@ Emitter::findLexicalSlotGEP(
 
         auto *framePtr = ir.CreateLoad(framePtrPtr);
 
-        // std::cerr << "framePtr = ";
-        // framePtr->print(llvm::errs());
-        // std::cerr << std::endl;
+        if (isPrinting) {
+            std::cerr << "framePtr = ";
+            framePtr->print(llvm::errs());
+            std::cerr << std::endl;
+        }
 
         auto *outerFramePtrPtr = ir.CreateGEP(
                 // TODO: XXX
@@ -762,9 +763,11 @@ Emitter::findLexicalSlotGEP(
                 { types.getInt64(0),
                   types.getInt32(Frame::OuterIndex) });
 
-        // std::cerr << "outerFramePtrPtr = ";
-        // outerFramePtrPtr->print(llvm::errs());
-        // std::cerr << std::endl;
+        if (isPrinting) {
+            std::cerr << "outerFramePtrPtr = ";
+            outerFramePtrPtr->print(llvm::errs());
+            std::cerr << std::endl;
+        }
 
         auto *result = findLexicalSlotGEP(
                 name,

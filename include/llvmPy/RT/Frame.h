@@ -10,7 +10,7 @@ class PyObj;
 struct Frame {
     static constexpr int SelfIndex = 0;
     static constexpr int OuterIndex = 1;
-    static constexpr int VarsIndex = 3;
+    static constexpr int VarsIndex = 2;
 
     Frame *self;
     Frame *outer;
