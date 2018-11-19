@@ -23,7 +23,7 @@ static struct {
     string PosArgCount = "";
     string FuncPtr = "";
     string RetVal = "";
-    string Arg = "";
+    string Arg = "arg";
     string OuterFrame = "outer";
     string OuterFramePtr = "outerptr";
     string InnerFrame = "frame";
@@ -134,7 +134,6 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
 
     for (auto &arg : args) {
         llvm::Value *value = emit(scope, *arg);
-        value->setName(tags.Arg);
         argSlots.push_back(value);
         argCount++;
     }
@@ -264,7 +263,6 @@ Emitter::createFunction(
 
     RTScope *innerScope = outerScope.createDerived();
 
-
     if (outerScope.getInnerFramePtrPtr()) {
         innerScope->setOuterFrameType(outerScope.getInnerFrameType());
     } else {
@@ -281,11 +279,13 @@ Emitter::createFunction(
         }
     }
 
+    gatherSlotNames(stmt, slotNames);
+
     innerScope->setInnerFrameType(
             types.getFuncFrame(
                     name,
                     innerScope->getOuterFrameType(),
-                    argCount));
+                    slotNames.size()));
 
     llvm::Function *function =
             llvm::Function::Create(
@@ -324,7 +324,7 @@ Emitter::createFunction(
     auto *entry = llvm::BasicBlock::Create(ctx, "", function);
     ir.SetInsertPoint(entry);
 
-    gatherSlotNames(stmt, slotNames);
+
 
     // Generate the frame for variables to be potentially lifted onto the
     // heap by a closure.
@@ -654,7 +654,7 @@ Emitter::emitDefStmt(
     auto *insertBlock = ir.GetInsertBlock();
 
     auto *function = createFunction(
-            tags.Def + "_" + def.getName(),
+            def.getName(),
             scope,
             def.getBody(),
             def.args());
