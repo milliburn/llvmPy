@@ -81,6 +81,11 @@ public:
             llvm::Type *frameType,
             llvm::Value *frameAlloca);
 
+    llvm::Value *findLexicalSlotGEP(
+            std::string const &name,
+            RTScope &scope,
+            llvm::Value *framePtrPtr = nullptr);
+
     RTModule *createModule(std::string const &name, Stmt const &stmt);
     RTModule *createModule(std::string const &name);
 

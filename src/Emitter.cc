@@ -183,27 +183,8 @@ Emitter::emit(RTScope &scope, IdentExpr const &ident)
         return mod.llvmPy_False();
     }
 
-    if (scope.hasSlot(name)) {
-        auto *slot = scope.getSlotValue(name);
-        return ir.CreateLoad(slot);
-    } else if (scope.getParent().hasSlot(name)) {
-        auto slotIndex = scope.getParent().getSlotIndex(ident.getName());
-
-        llvm::Value *outerFramePtr = ir.CreateLoad(scope.getOuterFramePtr());
-
-        llvm::Value *outerFrameSlotGEP = ir.CreateGEP(
-                outerFramePtr,
-                { types.getInt64(0),
-                  types.getInt32(2),
-                  types.getInt64(slotIndex) });
-
-        llvm::Value *outerSlot = ir.CreateLoad(outerFrameSlotGEP);
-
-        return outerSlot;
-    } else {
-        cerr << "Slot " << ident.getName() << " not found!" << endl;
-        exit(127);
-    }
+    auto *gep = findLexicalSlotGEP(name, scope, scope.getInnerFramePtr());
+    return ir.CreateLoad(gep);
 }
 
 llvm::Value *
@@ -349,6 +330,8 @@ Emitter::createFunction(
     llvm::StructType *innerFrameType = types.getFrameN(slotNames.size());
     llvm::AllocaInst *innerFrameAlloca = ir.CreateAlloca(
             innerFrameType, nullptr, tags.InnerFrame);
+
+    // TODO: Zero-initialize slots with llvm.memset or something.
 
     // Store the frame's self-pointer.
     llvm::Value *frameSelfPtrGEP =
@@ -509,9 +492,9 @@ Emitter::emitStatement(
     } else if (auto *cond = stmt.cast<ConditionalStmt>()) {
         emitCondStmt(function, scope, *cond, loop);
     } else if (auto *assign = stmt.cast<AssignStmt>()) {
-        auto *slot = scope.getSlotValue(assign->getName());
+        auto *slotGEP = findLexicalSlotGEP(assign->getName(), scope);
         auto *value = emit(scope, assign->getValue());
-        ir.CreateStore(value, slot);
+        ir.CreateStore(value, slotGEP);
     } else if (auto *while_ = stmt.cast<WhileStmt>()) {
         emitWhileStmt(function, scope, *while_);
     } else if (stmt.isa<BreakStmt>()) {
@@ -642,6 +625,8 @@ Emitter::zeroInitialiseSlot(
         llvm::Type *frameType,
         llvm::Value *frameAlloca)
 {
+    return; // Ignore for now.
+
     if (scope.getSlotValue(name)) {
         // Slot already zero-initialised.
         return;
@@ -699,7 +684,9 @@ Emitter::emitDefStmt(
             { innerFramePtrBitCast,
               functionPtrBitCast });
 
-    ir.CreateStore(value, scope.getSlotValue(def.getName()));
+    auto *gep = findLexicalSlotGEP(def.getName(), scope);
+
+    ir.CreateStore(value, gep);
 }
 
 llvm::Value *
@@ -722,4 +709,70 @@ Emitter::emit(RTScope &scope, UnaryExpr const &unary)
     }
 
     assert(false && "Not Implemented");
+}
+
+llvm::Value *
+Emitter::findLexicalSlotGEP(
+        std::string const &name,
+        RTScope &scope,
+        llvm::Value *framePtrPtr)
+{
+    if (!framePtrPtr) {
+        framePtrPtr = ir.CreateGEP(
+                scope.getInnerFramePtr(),
+                { types.getInt64(0),
+                  types.getInt32(0) });
+    }
+
+    if (scope.hasSlot(name)) {
+
+        auto index = static_cast<int64_t>(scope.getSlotIndex(name));
+
+        assert(index >= 0); // Later -1 could mean it's not a frame value.
+
+        auto *framePtr = ir.CreateLoad(framePtrPtr);
+
+        auto *framePtrBitCast = ir.CreateBitCast(
+                framePtr,
+                scope.getInnerFramePtr()->getType());
+
+        auto *slotGEP = ir.CreateGEP(
+                framePtrBitCast,
+                { types.getInt64(0),
+                  types.getInt32(2),
+                  types.getInt64(index) },
+                tags.Var + "." + name);
+
+        return slotGEP;
+
+    } else if (scope.hasParent()) {
+
+        auto *outerFramePtrGEP = ir.CreateGEP(
+                framePtrPtr,
+                { types.getInt64(0),
+                  types.getInt32(1) });
+
+        auto *outerFramePtr = ir.CreateLoad(outerFramePtrGEP);
+
+        // auto *outerFrameSelfPtrPtr = ir.CreateGEP(
+        //         outerFramePtr,
+        //         { types.getInt64(0),
+        //           types.getInt32(0) });
+
+        auto *result = findLexicalSlotGEP(
+                name, scope.getParent(), outerFramePtr);
+
+        if (!result) {
+            // Clean up the unused instructions.
+            // TODO: Double-check this doesn't leak memory.
+            outerFramePtr->eraseFromParent();
+            outerFramePtrGEP->deleteValue();
+        }
+
+        return result;
+
+    } else {
+        assert(false && "Slot not found");
+        return nullptr;
+    }
 }
