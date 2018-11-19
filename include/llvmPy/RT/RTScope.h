@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include <string>
 #include <llvmPy/RT/Frame.h>
+#include <llvmPy/RT/Scope.h>
 #include <llvmPy/Support/Testing.h>
 
 #ifdef __cplusplus
@@ -20,7 +21,7 @@ class Types;
 class RTModule;
 class PyObj;
 
-class RTScope {
+class RTScope : public Scope {
 public:
     struct Slot {
         llvm::Value *value;
@@ -42,10 +43,6 @@ public:
 public:
     RTModule &getModule() const;
 
-    bool hasParent() const;
-
-    __mock_virtual RTScope &getParent() const;
-
     llvm::Value *getOuterFramePtr() const;
 
     llvm::Value *getInnerFramePtr() const;
@@ -60,11 +57,10 @@ public:
 
     size_t getSlotIndex(std::string const &name) const;
 
-    size_t getSlotCount() const;
+    size_t getSlotCount() const override;
 
 private:
     RTModule &module;
-    RTScope * const parent;
     llvm::Value * const outerFramePtr;
     llvm::Value * const innerFramePtr;
 

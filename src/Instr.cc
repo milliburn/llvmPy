@@ -164,7 +164,7 @@ llvmPy_none()
 }
 
 static Frame *
-moveFrameToHeap(Frame *stackFrame, RTScope const &scope)
+moveFrameToHeap(Frame *stackFrame, Scope const &scope)
 {
     if (!stackFrame || !stackFrame->self) {
         // The frame is already on the heap.
@@ -195,8 +195,9 @@ llvmPy_func(Frame *stackFrame, void *label)
     // The `label` is that of the callee, but llvmPy_func() itself operates
     // within the caller; hence the scope->getParent().
 
-    auto *scope = reinterpret_cast<RTScope const **>(label)[-1];
-    Frame *heapFrame = moveFrameToHeap(stackFrame, scope->getParent());
+    auto *scope = reinterpret_cast<Scope const **>(label)[-1];
+    auto &parent = scope->getParent();
+    Frame *heapFrame = moveFrameToHeap(stackFrame, parent);
     return new PyFunc(heapFrame, label);
 }
 

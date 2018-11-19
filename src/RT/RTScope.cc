@@ -7,8 +7,8 @@ RTScope::RTScope(
         RTScope &parent,
         llvm::Value *innerFramePtr,
         llvm::Value *outerFramePtr)
-        : module(module),
-          parent(&parent),
+        : Scope(parent),
+          module(module),
           outerFramePtr(outerFramePtr),
           innerFramePtr(innerFramePtr)
 {
@@ -16,8 +16,8 @@ RTScope::RTScope(
 }
 
 RTScope::RTScope(RTModule &module)
-        : module(module),
-          parent(nullptr),
+        : Scope(),
+          module(module),
           outerFramePtr(nullptr),
           innerFramePtr(nullptr)
 {
@@ -32,26 +32,10 @@ RTScope::createDerived(
     return new RTScope(module, *this, innerFramePtr, outerFramePtr);
 }
 
-RTScope &
-RTScope::getParent() const
-{
-    if (!hasParent()) {
-        throw "Cannot return parent of top-level RTScope.";
-    }
-
-    return *parent;
-}
-
 RTModule &
 RTScope::getModule() const
 {
     return module;
-}
-
-bool
-RTScope::hasParent() const
-{
-    return parent != nullptr;
 }
 
 llvm::Value *

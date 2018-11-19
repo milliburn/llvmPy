@@ -767,7 +767,9 @@ Emitter::findLexicalSlotGEP(
         // std::cerr << std::endl;
 
         auto *result = findLexicalSlotGEP(
-                name, scope.getParent(), outerFramePtrPtr);
+                name,
+                (RTScope &) scope.getParent(), // TODO
+                outerFramePtrPtr);
 
         if (!result) {
             // Clean up the unused instructions.
