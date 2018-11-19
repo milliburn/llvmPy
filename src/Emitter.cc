@@ -549,7 +549,7 @@ Emitter::emitBreakStmt(Emitter::Loop const *loop)
 void
 Emitter::emitContinueStmt(Emitter::Loop const *loop)
 {
-    assert(loop);
+    assert(loop && loop->cond);
     ir.CreateBr(loop->cond);
 }
 
