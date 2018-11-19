@@ -481,8 +481,11 @@ Emitter::emitStatement(
     } else if (auto *cond = stmt.cast<ConditionalStmt>()) {
         emitCondStmt(function, scope, *cond, loop);
     } else if (auto *assign = stmt.cast<AssignStmt>()) {
-        auto *slotGEP = findLexicalSlotGEP(assign->getName(), scope);
+        // slotGEP has to come after emission, as something like a lambda
+        // may invalidate the existing stack pointer.
+        // TODO: Ensure there's a test for it.
         auto *value = emit(scope, assign->getValue());
+        auto *slotGEP = findLexicalSlotGEP(assign->getName(), scope);
         ir.CreateStore(value, slotGEP);
     } else if (auto *while_ = stmt.cast<WhileStmt>()) {
         emitWhileStmt(function, scope, *while_);
