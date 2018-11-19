@@ -105,7 +105,8 @@ add_executable(
         test/Parser/Parser2Test.cc
         test/Builtins/str/builtin_str.cc
         test/Types/PyStr/type_PyStr.cc
-        test/Builtins/truthy/instr_truthy.cc test/Builtins/bool/builtin_bool.cc)
+        test/Builtins/truthy/instr_truthy.cc
+        test/Builtins/bool/builtin_bool.cc)
 
 # The test suites depend on an up-to-date llvmPy binary.
 add_dependencies(
