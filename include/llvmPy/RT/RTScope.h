@@ -12,6 +12,7 @@ class LLVMContext;
 class Module;
 class Value;
 class GlobalVariable;
+class StructType;
 } // namespace llvm
 
 namespace llvmPy {
@@ -28,24 +29,14 @@ public:
         size_t frameIndex;
     };
 
-    RTScope(RTModule &module,
-            RTScope &parent,
-            llvm::Value *innerFramePtr,
-            llvm::Value *outerFramePtr);
-
+    explicit RTScope(RTScope &parent);
     explicit RTScope(RTModule &module);
 
 public:
-    RTScope *createDerived(
-            llvm::Value *innerFramePtr,
-            llvm::Value *outerFramePtr);
+    RTScope *createDerived();
 
 public:
     RTModule &getModule() const;
-
-    llvm::Value *getOuterFramePtr() const;
-
-    llvm::Value *getInnerFramePtr() const;
 
     bool hasSlot(std::string const &name) const;
 
@@ -59,10 +50,23 @@ public:
 
     size_t getSlotCount() const override;
 
+    llvm::StructType *getInnerFrameType() const;
+
+    void setInnerFrameType(llvm::StructType *st);
+
+    llvm::StructType *getOuterFrameType() const;
+
+    void setOuterFrameType(llvm::StructType *st);
+
+    llvm::Value *getInnerFramePtrPtr() const;
+
+    void setInnerFramePtrPtr(llvm::Value *ptr);
+
 private:
     RTModule &module;
-    llvm::Value * const outerFramePtr;
-    llvm::Value * const innerFramePtr;
+    llvm::Value * innerFramePtrPtr;
+    llvm::StructType * innerFrameType;
+    llvm::StructType * outerFrameType;
 
     std::unordered_map<std::string, Slot> slots;
 

@@ -27,18 +27,11 @@ public:
 
     llvm::StructType *PyObj; ///< Opaque structure type.
     llvm::PointerType *Ptr; ///< Pointer to PyObj.
-    llvm::FunctionType *Func; ///< Opaque function.
-    llvm::PointerType *FuncPtr; ///< Pointer to opaque function.
-    llvm::StructType *FrameN; ///< Frame of unknown size (opaque).
-    llvm::PointerType *FrameNPtr;
-    llvm::PointerType *FrameNPtrPtr;
+    llvm::StructType *Frame; ///< Opaque frame type.
+    llvm::PointerType *FramePtr;
+    llvm::PointerType *FramePtrPtr;
 
     llvm::PointerType *i8Ptr; ///< Equivalent to void*.
-
-    llvm::StructType *getFrameN() const;
-    llvm::PointerType *getFrameNPtr() const;
-    llvm::StructType *getFrameN(int N) const;
-    llvm::PointerType *getFrameNPtr(int N) const;
 
     llvm::IntegerType *PyIntValue;
 
@@ -65,13 +58,21 @@ public:
 
     llvm::ConstantInt *getInt32(int32_t value) const;
     llvm::ConstantInt *getInt64(int64_t value) const;
+    llvm::PointerType *getPtr(llvm::Type *type) const;
 
-    llvm::FunctionType *getFuncN(int N) const;
+    llvm::FunctionType *getOpaqueFunc(int N) const;
+
+    llvm::FunctionType *
+    getFunc(
+            std::string const &name,
+            llvm::StructType *outer,
+            int N) const;
+
+    llvm::StructType *
+    getFuncFrame(std::string const &name, llvm::StructType *outer, int N) const;
 
 private:
     llvm::LLVMContext &ctx;
-    std::map<int, llvm::StructType *> mutable frameN;
-    std::map<int, llvm::FunctionType *> mutable funcN;
 };
 
 }

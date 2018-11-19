@@ -2,34 +2,28 @@
 #include <llvmPy/RT/RTScope.h>
 using namespace llvmPy;
 
-RTScope::RTScope(
-        RTModule &module,
-        RTScope &parent,
-        llvm::Value *innerFramePtr,
-        llvm::Value *outerFramePtr)
-        : Scope(parent),
-          module(module),
-          outerFramePtr(outerFramePtr),
-          innerFramePtr(innerFramePtr)
+RTScope::RTScope(RTScope &parent)
+: Scope(parent),
+  module(parent.getModule()),
+  innerFramePtrPtr(nullptr),
+  innerFrameType(nullptr),
+  outerFrameType(nullptr)
 {
-
 }
 
 RTScope::RTScope(RTModule &module)
-        : Scope(),
-          module(module),
-          outerFramePtr(nullptr),
-          innerFramePtr(nullptr)
+: Scope(),
+  module(module),
+  innerFramePtrPtr(nullptr),
+  innerFrameType(nullptr),
+  outerFrameType(nullptr)
 {
 }
 
 RTScope *
-RTScope::createDerived(
-        llvm::Value *innerFramePtr,
-        llvm::Value *outerFramePtr)
+RTScope::createDerived()
 {
-    // TODO: Assert not null.
-    return new RTScope(module, *this, innerFramePtr, outerFramePtr);
+    return new RTScope(*this);
 }
 
 RTModule &
@@ -39,15 +33,41 @@ RTScope::getModule() const
 }
 
 llvm::Value *
-RTScope::getOuterFramePtr() const
+RTScope::getInnerFramePtrPtr() const
 {
-    return outerFramePtr;
+    return innerFramePtrPtr;
 }
 
-llvm::Value *
-RTScope::getInnerFramePtr() const
+llvm::StructType *
+RTScope::getInnerFrameType() const
 {
-    return innerFramePtr;
+    assert(innerFrameType);
+    return innerFrameType;
+}
+
+void
+RTScope::setInnerFrameType(llvm::StructType *st)
+{
+    innerFrameType = st;
+}
+
+llvm::StructType *
+RTScope::getOuterFrameType() const
+{
+    assert(outerFrameType);
+    return outerFrameType;
+}
+
+void
+RTScope::setOuterFrameType(llvm::StructType *st)
+{
+    outerFrameType = st;
+}
+
+void
+RTScope::setInnerFramePtrPtr(llvm::Value *ptr)
+{
+    innerFramePtrPtr = ptr;
 }
 
 bool

@@ -140,22 +140,21 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
     }
 
     // Call frame pointer.
-    llvm::AllocaInst *callFrame = ir.CreateAlloca(
-            types.FrameNPtr, 0, tags.CallFrame);
+    auto *callFrameAlloca = ir.CreateAlloca(types.FramePtr, 0, tags.CallFrame);
 
     // Count of positional arguments.
     llvm::Value *np = llvm::ConstantInt::get(types.PyIntValue, argCount);
 
     llvm::CallInst *inst = ir.CreateCall(
             mod.llvmPy_fchk(),
-            { callFrame, lhs, np },
+            { callFrameAlloca, lhs, np },
             tags.FuncPtr);
 
-    argSlots[0] = callFrame;
+    argSlots[0] = callFrameAlloca;
 
     llvm::Value *funcBitCast = ir.CreateBitCast(
             inst,
-            llvm::PointerType::getUnqual(types.getFuncN(argCount)));
+            types.getPtr(types.getOpaqueFunc(argCount)));
 
     return ir.CreateCall(funcBitCast, argSlots, tags.RetVal);
 }
@@ -183,7 +182,7 @@ Emitter::emit(RTScope &scope, IdentExpr const &ident)
         return mod.llvmPy_False();
     }
 
-    auto *gep = findLexicalSlotGEP(name, scope, scope.getInnerFramePtr());
+    auto *gep = findLexicalSlotGEP(name, scope, scope.getInnerFramePtrPtr());
     return ir.CreateLoad(gep);
 }
 
@@ -207,8 +206,8 @@ Emitter::emit(RTScope &scope, LambdaExpr const &lambda)
 
     llvm::Value *innerFramePtrBitCast =
             ir.CreateBitCast(
-                    scope.getInnerFramePtr(),
-                    types.FrameNPtr);
+                    scope.getInnerFramePtrPtr(),
+                    types.FramePtr);
 
     llvm::Value *functionPtrBitCast =
             ir.CreateBitCast(
@@ -263,32 +262,37 @@ Emitter::createFunction(
 {
     RTModule &mod = outerScope.getModule();
 
-    // Names of slots in the frame.
-    std::set<std::string> slotNames;
+    RTScope *innerScope = outerScope.createDerived();
 
-    vector<llvm::Type *> argTypes;
 
-    if (outerScope.getInnerFramePtr()) {
-        llvm::Value *outerFramePtr = outerScope.getInnerFramePtr();
-        argTypes.push_back(
-                llvm::PointerType::getUnqual(outerFramePtr->getType()));
+    if (outerScope.getInnerFramePtrPtr()) {
+        innerScope->setOuterFrameType(outerScope.getInnerFrameType());
     } else {
-        argTypes.push_back(types.FrameNPtrPtr);
+        innerScope->setOuterFrameType(types.Frame);
     }
+
+    std::set<std::string> slotNames;
+    size_t argCount = 0;
 
     for (auto &argName : args) {
         if (!slotNames.count(argName)) {
             slotNames.insert(argName);
-            argTypes.push_back(types.Ptr);
+            argCount += 1;
         }
     }
 
+    innerScope->setInnerFrameType(
+            types.getFuncFrame(
+                    name,
+                    innerScope->getOuterFrameType(),
+                    argCount));
+
     llvm::Function *function =
             llvm::Function::Create(
-                    llvm::FunctionType::get(
-                            types.Ptr,
-                            argTypes,
-                            false),
+                    types.getFunc(
+                            name,
+                            innerScope->getOuterFrameType(),
+                            argCount),
                     llvm::Function::ExternalLinkage,
                     name,
                     &mod.getModule());
@@ -305,7 +309,7 @@ Emitter::createFunction(
             arg.setName(tags.OuterFramePtr);
             outerFramePtrPtrArg = &arg;
         } else {
-            arg.setName("arg_" + *argNames);
+            arg.setName(tags.Arg + "." + *argNames);
             ++argNames;
         }
 
@@ -326,7 +330,7 @@ Emitter::createFunction(
     // heap by a closure.
 
     auto *frameAlloca = ir.CreateAlloca(
-            types.getFrameN(slotNames.size()),
+            innerScope->getInnerFrameType(),
             nullptr,
             tags.InnerFrame);
 
@@ -334,6 +338,8 @@ Emitter::createFunction(
             frameAlloca,
             { types.getInt64(0),
               types.getInt32(Frame::SelfIndex) });
+
+    innerScope->setInnerFramePtrPtr(frameSelfPtrPtr);
 
     auto *frameOuterPtrPtr = ir.CreateGEP(
             frameAlloca,
@@ -345,21 +351,9 @@ Emitter::createFunction(
     auto *outerFramePtr = ir.CreateLoad(
             outerFramePtrPtrArg, tags.OuterFrame);
 
-    ir.CreateStore(
-            // The outer frame might come in the form of %Frame0*,
-            // % Frame1*, etc., whereas the FrameX structure templates define
-            // the generic %FrameN* as the outer pointer value. Hence bit cast.
-            ir.CreateBitCast(
-                    outerFramePtr,
-                    types.getFrameNPtr()),
-            frameOuterPtrPtr);
+    ir.CreateStore(outerFramePtr, frameOuterPtrPtr);
 
     // TODO: Zero-initialize slots with llvm.memset or something.
-
-    RTScope *innerScope =
-            outerScope.createDerived(
-                    frameSelfPtrPtr,
-                    nullptr);
 
     function->setPrefixData(
             types.getInt64(reinterpret_cast<int64_t>(innerScope)));
@@ -666,8 +660,8 @@ Emitter::emitDefStmt(
 
     llvm::Value *innerFramePtrBitCast =
             ir.CreateBitCast(
-                    scope.getInnerFramePtr(),
-                    types.FrameNPtr);
+                    scope.getInnerFramePtrPtr(),
+                    types.FramePtrPtr);
 
     llvm::Value *functionPtrBitCast =
             ir.CreateBitCast(
@@ -715,7 +709,7 @@ Emitter::findLexicalSlotGEP(
     bool const isPrinting = false; // TODO: Remove the development aid.
 
     if (!framePtrPtr) {
-        framePtrPtr = scope.getInnerFramePtr();
+        framePtrPtr = scope.getInnerFramePtrPtr();
     }
 
     if (scope.hasSlot(name)) {
@@ -726,20 +720,14 @@ Emitter::findLexicalSlotGEP(
 
         auto *framePtr = ir.CreateLoad(framePtrPtr);
 
-        auto *framePtrBitCast = ir.CreateBitCast(
-                framePtr,
-                llvm::cast<llvm::PointerType>(
-                        scope.getInnerFramePtr()->getType())
-                        ->getElementType());
-
         if (isPrinting) {
             std::cerr << "framePtrBitCast = ";
-            framePtrBitCast->print(llvm::errs());
+            framePtr->print(llvm::errs());
             std::cerr << std::endl;
         }
 
         auto *slotGEP = ir.CreateGEP(
-                framePtrBitCast,
+                framePtr,
                 { types.getInt64(0),
                   types.getInt32(Frame::VarsIndex),
                   types.getInt64(index) },
@@ -758,8 +746,7 @@ Emitter::findLexicalSlotGEP(
         }
 
         auto *outerFramePtrPtr = ir.CreateGEP(
-                // TODO: XXX
-                ir.CreateBitCast(framePtr, types.getFrameNPtr(10)),
+                framePtr,
                 { types.getInt64(0),
                   types.getInt32(Frame::OuterIndex) });
 
