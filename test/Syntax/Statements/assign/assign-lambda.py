@@ -1,9 +1,8 @@
-# RUN: test-ir.sh %s
-
-
 # Test that the assign statement reloads the frame pointer after a call to
 # llvmPy_func(), which may lift the frame from the stack to the heap.
 
+
+# RUN: test-ir.sh %s
 
 # IR-LABEL: define %PyObj* @__body__
 # IR: alloca [[F:%Frame.__body__]]
