@@ -116,14 +116,13 @@ Types::getFuncFrame(
 {
     std::string frameName = "Frame." + name;
 
-    auto *structType = llvm::StructType::create(
-            ctx, frameName);
+    auto *structType = llvm::StructType::create(ctx, frameName);
 
-    structType->setBody({
-        getPtr(structType),
-        getPtr(outer),
-        llvm::ArrayType::get(Ptr, N),
-    });
+    structType->setBody(
+            { getPtr(structType),
+              getPtr(outer),
+              llvm::ArrayType::get(Ptr, N), },
+            true);
 
     return structType;
 }
