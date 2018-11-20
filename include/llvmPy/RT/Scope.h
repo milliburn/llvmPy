@@ -14,7 +14,7 @@ public:
 
     virtual ~Scope();
 
-    bool hasParent() const;
+    __mock_virtual bool hasParent() const;
 
     __mock_virtual Scope &getParent() const;
 

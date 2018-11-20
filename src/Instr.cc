@@ -178,7 +178,13 @@ llvmPy::moveFrameToHeap(Frame *stackFrame, Scope const &scope)
         memset(stackFrame, 0, frameSize);
         stackFrame->self = heapFrame;
         heapFrame->self = nullptr; // Marks that it's on the heap.
-        heapFrame->outer = moveFrameToHeap(outer, scope.getParent());
+
+        if (scope.hasParent()) {
+            heapFrame->outer = moveFrameToHeap(outer, scope.getParent());
+        } else {
+            heapFrame->outer = nullptr;
+        }
+
         return heapFrame;
     }
 }
