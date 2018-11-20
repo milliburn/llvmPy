@@ -205,7 +205,7 @@ Emitter::emit(RTScope &scope, LambdaExpr const &lambda)
 
     llvm::Value *innerFramePtrBitCast =
             ir.CreateBitCast(
-                    scope.getInnerFramePtrPtr(),
+                    scope.getInnerFramePtr(),
                     types.FramePtr);
 
     llvm::Value *functionPtrBitCast =
@@ -324,8 +324,6 @@ Emitter::createFunction(
     auto *entry = llvm::BasicBlock::Create(ctx, "", function);
     ir.SetInsertPoint(entry);
 
-
-
     // Generate the frame for variables to be potentially lifted onto the
     // heap by a closure.
 
@@ -333,6 +331,8 @@ Emitter::createFunction(
             innerScope->getInnerFrameType(),
             nullptr,
             tags.InnerFrame);
+
+    innerScope->setInnerFramePtr(frameAlloca);
 
     auto *frameSelfPtrPtr = ir.CreateGEP(
             frameAlloca,
@@ -663,8 +663,8 @@ Emitter::emitDefStmt(
 
     llvm::Value *innerFramePtrBitCast =
             ir.CreateBitCast(
-                    scope.getInnerFramePtrPtr(),
-                    types.FramePtrPtr);
+                    scope.getInnerFramePtr(),
+                    types.FramePtr);
 
     llvm::Value *functionPtrBitCast =
             ir.CreateBitCast(

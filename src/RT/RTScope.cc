@@ -113,3 +113,15 @@ RTScope::getSlotCount() const
 {
     return slots.size();
 }
+
+llvm::Value *
+RTScope::getInnerFramePtr() const
+{
+    return innerFramePtr;
+}
+
+void
+RTScope::setInnerFramePtr(llvm::Value *ptr)
+{
+    innerFramePtr = ptr;
+}

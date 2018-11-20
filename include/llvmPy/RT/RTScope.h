@@ -62,11 +62,16 @@ public:
 
     void setInnerFramePtrPtr(llvm::Value *ptr);
 
+    llvm::Value *getInnerFramePtr() const;
+
+    void setInnerFramePtr(llvm::Value *ptr);
+
 private:
     RTModule &module;
-    llvm::Value * innerFramePtrPtr;
-    llvm::StructType * innerFrameType;
-    llvm::StructType * outerFrameType;
+    llvm::Value *innerFramePtr;
+    llvm::Value *innerFramePtrPtr;
+    llvm::StructType *innerFrameType;
+    llvm::StructType *outerFrameType;
 
     std::unordered_map<std::string, Slot> slots;
 
