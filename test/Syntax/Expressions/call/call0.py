@@ -1,17 +1,15 @@
-# RUN: llvmPy --ir %s > %t1
-# RUN: cat -n %t1 >&2
-# RUN: llvm-as < %t1 | llvm-dis | FileCheck %s
+# RUN: test-ir.sh %s
+
+# IR-LABEL: define %PyObj* @__body__
 
 f = None
-f()
+# IR: store %PyObj* @llvmPy_None, %PyObj** [[fPtr:%[^ ]+]]
 
-# CHECK-LABEL: define %PyObj* @__body__
-# CHECK: store %PyObj* null, %PyObj** [[VAR_PTR:%[a-z_0-9]+]]
-# CHECK-NEXT: store %PyObj* @llvmPy_None, %PyObj** [[VAR_PTR]]
-# CHECK-NEXT: [[VAR:%[a-z_0-9]+]] = load %PyObj*, %PyObj** [[VAR_PTR]]
-# CHECK: %callframe = alloca %FrameN*
-# CHECK: [[_FUNC:%[0-9]+]] = call i8* @llvmPy_fchk(%FrameN** %callframe, %PyObj* [[VAR]], i64 0)
-# CHECK-NEXT: [[FUNC:%[0-9]+]] = bitcast i8* [[_FUNC]] to %PyObj* (%FrameN**)
-# CHECK-NEXT: {{%[0-9]+}} = call %PyObj* [[FUNC]](%FrameN** %callframe)
+f()
+# IR: [[fPtr1:%[^ ]+]] = load %PyObj*, %PyObj** %var.f1
+# IR: %callframe = alloca %Frame*
+# IR-NEXT: [[fLabel:%[^ ]+]] = call i8* @llvmPy_fchk(%Frame** %callframe, %PyObj* [[fPtr1]], i64 0)
+# IR-NEXT: [[fFunc:%[^ ]+]] = bitcast i8* [[fLabel]] to %PyObj* (%Frame**)*
+# IR-NEXT: [[fRV:%[^ ]+]] = call %PyObj* [[fFunc]](%Frame** %callframe)
 
 # CHECK-DAG: declare i8* @llvmPy_fchk(%FrameN**, %PyObj*, i64)
