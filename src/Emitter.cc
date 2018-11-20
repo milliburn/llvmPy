@@ -509,9 +509,12 @@ Emitter::emitWhileStmt(
 {
     RTModule &mod = scope.getModule();
 
-    auto *condBB = llvm::BasicBlock::Create(ctx, tags.While);
-    auto *loopBB = llvm::BasicBlock::Create(ctx, tags.Loop);
-    auto *endwhileBB = llvm::BasicBlock::Create(ctx, tags.Endwhile);
+    auto whileIndex = scope.getNextWhileStmtIndex();
+    std::string suffix = "." + std::to_string(whileIndex);
+
+    auto *condBB = llvm::BasicBlock::Create(ctx, tags.While + suffix);
+    auto *loopBB = llvm::BasicBlock::Create(ctx, tags.Loop + suffix);
+    auto *endwhileBB = llvm::BasicBlock::Create(ctx, tags.Endwhile + suffix);
 
     Loop loop = { .cond = condBB, .end = endwhileBB };
 

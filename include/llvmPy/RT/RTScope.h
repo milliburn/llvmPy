@@ -68,6 +68,8 @@ public:
 
     size_t getNextCondStmtIndex();
 
+    size_t getNextWhileStmtIndex();
+
 private:
     RTModule &module;
     llvm::Value *innerFramePtr;
@@ -75,6 +77,7 @@ private:
     llvm::StructType *innerFrameType;
     llvm::StructType *outerFrameType;
     size_t condStmtCount;
+    size_t whileStmtCount;
 
     std::unordered_map<std::string, Slot> slots;
 

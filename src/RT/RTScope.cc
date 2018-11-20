@@ -8,7 +8,8 @@ RTScope::RTScope(RTScope &parent)
   innerFramePtrPtr(nullptr),
   innerFrameType(nullptr),
   outerFrameType(nullptr),
-  condStmtCount(0)
+  condStmtCount(0),
+  whileStmtCount(0)
 {
 }
 
@@ -18,7 +19,8 @@ RTScope::RTScope(RTModule &module)
   innerFramePtrPtr(nullptr),
   innerFrameType(nullptr),
   outerFrameType(nullptr),
-  condStmtCount(0)
+  condStmtCount(0),
+  whileStmtCount(0)
 {
 }
 
@@ -132,4 +134,10 @@ size_t
 RTScope::getNextCondStmtIndex()
 {
     return condStmtCount++;
+}
+
+size_t
+RTScope::getNextWhileStmtIndex()
+{
+    return whileStmtCount++;
 }
