@@ -5,42 +5,43 @@
 
 x = 0
 
-# IR-LABEL: if:
+# IR-LABEL: if.0:
 # IR: @llvmPy_eq
 # IR: @llvmPy_truthy
-# IR: br i1 {{%[^ ]+}}, label %then, label %else
+# IR: br i1 {{%[^ ]+}}, label %then.0, label %else.0
 if x == 1:
-    # IR-LABEL: then:
+    # IR-LABEL: then.0:
     x = 10
-# IR-LABEL: else
-# IR-NEXT: br label %if1
-# IR-LABEL: if1:
+# IR-LABEL: else.0:
+# IR-NEXT: br label %if.1
+# IR-LABEL: if.1:
 # IR: @llvmPy_ge
 # IR: @llvmPy_truthy
-# IR: br i1 {{%[^ ]+}}, label %then2, label %else3
+# IR: br i1 {{%[^ ]+}}, label %then.1, label %else.1
 elif x >= 2:
-    # IR-LABEL: then2:
+    # IR-LABEL: then.1:
     x = 11
-# CHECK-LABEL: else3:
-# CHECK-NEXT: br label %if4
-# CHECK-LABEL: if4:
-# CHECK: [[RESULT2:%[a-z_0-9]+]] = call %PyObj* @llvmPy_ne
-# CHECK-NEXT: [[TRUTHY2:%[a-z_0-9]+]] = call i1 @llvmPy_truthy(%PyObj* [[RESULT2]])
-# CHECK-NEXT: br i1 [[TRUTHY2]], label %then5, label %else6
+# IR-LABEL: else.1:
+# IR-NEXT: br label %if.2
+# IR-LABEL: if.2:
+# IR: @llvmPy_ne
+# IR: @llvmPy_truthy
+# IR: br i1 {{%[^ ]+}}, label %then.2, label %else.2
 elif x != 3:
-    # CHECK-LABEL: then5:
+    # IR-LABEL: then.2:
     x = 12
-# CHECK-LABEL: else6:
+# IR-LABEL: else.2:
 else:
     x = 13
 
-# CHECK-LABEL: endif:
-# CHECK-NEXT: br label %endif
-# CHECK-LABEL: endif7:
-# CHECK-NEXT: br label %endif8
-# CHECK-LABEL: endif8:
+# IR-LABEL: endif.2:
+# IR-LABEL: br label %endif.1
+
+# IR-LABEL: endif.1:
+# IR-LABEL: br label %endif.0
+
+# IR-LABEL: endif.0:
 
 print(x)
-
-# CHECK: @llvmPy_print(
-# CHECK-NEXT: ret %PyObj* @llvmPy_None
+# IR: @llvmPy_print
+# IR-NEXT: ret %PyObj* @llvmPy_None

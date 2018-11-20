@@ -7,7 +7,8 @@ RTScope::RTScope(RTScope &parent)
   module(parent.getModule()),
   innerFramePtrPtr(nullptr),
   innerFrameType(nullptr),
-  outerFrameType(nullptr)
+  outerFrameType(nullptr),
+  condStmtCount(0)
 {
 }
 
@@ -16,7 +17,8 @@ RTScope::RTScope(RTModule &module)
   module(module),
   innerFramePtrPtr(nullptr),
   innerFrameType(nullptr),
-  outerFrameType(nullptr)
+  outerFrameType(nullptr),
+  condStmtCount(0)
 {
 }
 
@@ -124,4 +126,10 @@ void
 RTScope::setInnerFramePtr(llvm::Value *ptr)
 {
     innerFramePtr = ptr;
+}
+
+size_t
+RTScope::getNextCondStmtIndex()
+{
+    return condStmtCount++;
 }

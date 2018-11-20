@@ -423,10 +423,13 @@ Emitter::emitCondStmt(
     // If the BBs were immediately linked, the function would end up with
     // a non-linear BBs as any compound statement might itself create more.
 
-    auto *ifBB = llvm::BasicBlock::Create(ctx, tags.If);
-    auto *thenBB = llvm::BasicBlock::Create(ctx, tags.Then);
-    auto *elseBB = llvm::BasicBlock::Create(ctx, tags.Else);
-    auto *endifBB = llvm::BasicBlock::Create(ctx, tags.Endif);
+    size_t condIndex = scope.getNextCondStmtIndex();
+    std::string suffix = "." + std::to_string(condIndex);
+
+    auto *ifBB = llvm::BasicBlock::Create(ctx, tags.If + suffix);
+    auto *thenBB = llvm::BasicBlock::Create(ctx, tags.Then + suffix);
+    auto *elseBB = llvm::BasicBlock::Create(ctx, tags.Else + suffix);
+    auto *endifBB = llvm::BasicBlock::Create(ctx, tags.Endif + suffix);
 
     ir.CreateBr(ifBB);
     ifBB->insertInto(&function);

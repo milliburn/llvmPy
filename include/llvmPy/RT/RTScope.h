@@ -66,12 +66,15 @@ public:
 
     void setInnerFramePtr(llvm::Value *ptr);
 
+    size_t getNextCondStmtIndex();
+
 private:
     RTModule &module;
     llvm::Value *innerFramePtr;
     llvm::Value *innerFramePtrPtr;
     llvm::StructType *innerFrameType;
     llvm::StructType *outerFrameType;
+    size_t condStmtCount;
 
     std::unordered_map<std::string, Slot> slots;
 
