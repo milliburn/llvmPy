@@ -157,8 +157,8 @@ llvmPy_none()
     return &PyNone::get();
 }
 
-static Frame *
-moveFrameToHeap(Frame *stackFrame, Scope const &scope)
+Frame *
+llvmPy::moveFrameToHeap(Frame *stackFrame, Scope const &scope)
 {
     if (!stackFrame || !stackFrame->self) {
         // The frame is already on the heap.
@@ -174,11 +174,11 @@ moveFrameToHeap(Frame *stackFrame, Scope const &scope)
 
         auto *heapFrame = reinterpret_cast<Frame *>(malloc(frameSize));
         memcpy(heapFrame, stackFrame, frameSize);
-
-        heapFrame->self = nullptr; // Marks that it's on the heap.
+        auto *outer = stackFrame->outer;
+        memset(stackFrame, 0, frameSize);
         stackFrame->self = heapFrame;
-        heapFrame->outer = moveFrameToHeap(
-                stackFrame->outer, scope.getParent());
+        heapFrame->self = nullptr; // Marks that it's on the heap.
+        heapFrame->outer = moveFrameToHeap(outer, scope.getParent());
         return heapFrame;
     }
 }

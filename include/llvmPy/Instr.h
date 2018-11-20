@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <llvmPy/PyObj.h>
 #include <llvmPy/RT/Frame.h>
+#include <llvmPy/RT/Scope.h>
 #include <map>
 
 #ifdef __cplusplus
@@ -74,6 +75,8 @@ public:
 private:
     llvm::LLVMContext &ctx;
 };
+
+Frame *moveFrameToHeap(Frame *stackFrame, Scope const &scope);
 
 }
 
