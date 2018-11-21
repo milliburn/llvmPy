@@ -5,7 +5,7 @@
 using namespace llvmPy;
 using namespace std;
 
-static constexpr int eof = std::istream::traits_type::eof();
+static constexpr char eof = static_cast<char>(std::istream::traits_type::eof());
 
 static std::map<std::string const, TokenType>
 buildKeywordMap()
@@ -41,7 +41,7 @@ Lexer::tokenize(std::vector<Token> & out)
 
     bool newline = true;
     bool comment = false;
-    int indent = 0;
+    size_t indent = 0;
 
     while (true) {
         reset();
@@ -56,7 +56,7 @@ Lexer::tokenize(std::vector<Token> & out)
             comment = true;
         }
 
-        if (is((char) eof)) {
+        if (is(eof)) {
             add(Token(tok_eof));
             comment = false;
             break;
@@ -114,7 +114,7 @@ Lexer::getError()
 bool
 Lexer::isEof()
 {
-    return _ch == (char) eof || _stream.eof();
+    return _ch == eof || _stream.eof();
 }
 
 void
@@ -143,7 +143,7 @@ Lexer::next()
         _ch = _buf[++_ibuf];
     } else if (_ibuf == _ilast - 1) {
         ++_ibuf;
-        _ch = (char) _stream.peek();
+        _ch = static_cast<char>(_stream.peek());
         _ilast = -1;
     } else {
         if (_ilast > -1) {
@@ -154,7 +154,7 @@ Lexer::next()
         }
 
         _stream.get();
-        _ch = (char) _stream.peek();
+        _ch = static_cast<char>(_stream.peek());
     }
 }
 
@@ -170,7 +170,7 @@ Lexer::reset()
 {
     _ibuf = 0;
     _ilast = -1;
-    _ch = (char) _stream.peek();
+    _ch = static_cast<char>(_stream.peek());
 }
 
 void
@@ -187,7 +187,7 @@ Lexer::pop()
     _ilast = tmp;
 
     if (_ibuf == _ilast) {
-        _ch = (char) _stream.peek();
+        _ch = static_cast<char>(_stream.peek());
     } else {
         _ch = _buf[_ibuf];
     }
@@ -331,7 +331,7 @@ Lexer::strlit()
 bool
 Lexer::ident()
 {
-    int start = _ibuf;
+    ssize_t start = _ibuf;
 
     if (!oneof(isalpha) && !is('_'))
         return false;
@@ -354,7 +354,7 @@ Lexer::syntax()
 {
     char a = _ch;
     if (oneof("<>!=+-*/")) {
-        int t;
+        size_t t;
 
         switch (a) {
         case '<': t = tok_lt; break;

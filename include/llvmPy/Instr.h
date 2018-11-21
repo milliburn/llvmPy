@@ -76,7 +76,7 @@ public:
             size_t N) const;
 
 private:
-    llvm::LLVMContext &ctx;
+    llvm::LLVMContext &_ctx;
 };
 
 Frame *moveFrameToHeap(Frame *frame, Scope const &scope);

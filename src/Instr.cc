@@ -1,11 +1,16 @@
-#include "llvm/ADT/APInt.h"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weverything"
+#pragma GCC diagnostic ignored "-Wpedantic"
+#include <llvm/ADT/APInt.h>
 #include <llvm/IR/DataLayout.h>
 #include <llvm/IR/Function.h>
 #include <llvm/IR/DerivedTypes.h>
+#include <llvm/IR/Constants.h>
+#pragma GCC diagnostic pop
+
 #include <llvmPy/Instr.h>
 #include <llvmPy/PyObj.h>
 #include <llvmPy/RT.h>
-#include <llvm/IR/Constants.h>
 #include <iostream>
 #include <stdlib.h>
 using namespace llvmPy;
@@ -13,12 +18,12 @@ using llvm::cast;
 using std::cerr;
 using std::endl;
 
-#define __used __attribute__((used))
+#define MARK_USED __attribute__((used))
 
 Types::Types(
         llvm::LLVMContext &ctx,
         llvm::DataLayout const &dl)
-        : ctx(ctx)
+        : _ctx(ctx)
 {
     i8Ptr = llvm::Type::getInt8PtrTy(ctx);
 
@@ -63,14 +68,14 @@ llvm::ConstantInt *
 Types::getInt32(int32_t value) const
 {
     return llvm::ConstantInt::get(
-            llvm::Type::getInt32Ty(ctx), (uint64_t) value);
+            llvm::Type::getInt32Ty(_ctx), static_cast<uint64_t>(value));
 }
 
 llvm::ConstantInt *
 Types::getInt64(int64_t value) const
 {
     return llvm::ConstantInt::get(
-            llvm::Type::getInt64Ty(ctx), (uint64_t) value);
+            llvm::Type::getInt64Ty(_ctx), static_cast<uint64_t>(value));
 }
 
 llvm::PointerType *
@@ -85,7 +90,7 @@ Types::getOpaqueFunc(size_t N) const
     std::vector<llvm::Type *> argTypes;
     argTypes.push_back(FramePtrPtr);
 
-    for (int i = 0; i < N; ++i) {
+    for (size_t i = 0; i < N; ++i) {
         argTypes.push_back(Ptr);
     }
 
@@ -101,7 +106,7 @@ Types::getFunc(
     std::vector<llvm::Type *> argTypes;
     argTypes.push_back(getPtr(getPtr(outer)));
 
-    for (int i = 0; i < N; ++i) {
+    for (size_t i = 0; i < N; ++i) {
         argTypes.push_back(Ptr);
     }
 
@@ -116,7 +121,7 @@ Types::getFuncFrame(
 {
     std::string frameName = "Frame." + name;
 
-    auto *structType = llvm::StructType::create(ctx, frameName);
+    auto *structType = llvm::StructType::create(_ctx, frameName);
 
     structType->setBody(
             { getPtr(structType),
@@ -127,31 +132,31 @@ Types::getFuncFrame(
     return structType;
 }
 
-extern "C" PyObj * __used
+extern "C" PyObj * MARK_USED
 llvmPy_add(PyObj &l, PyObj &r)
 {
     return l.py__add__(r);
 }
 
-extern "C" PyObj * __used
+extern "C" PyObj * MARK_USED
 llvmPy_sub(PyObj &l, PyObj &r)
 {
     return l.py__sub__(r);
 }
 
-extern "C" llvmPy::PyObj * __used
+extern "C" llvmPy::PyObj * MARK_USED
 llvmPy_mul(llvmPy::PyObj &l, llvmPy::PyObj &r)
 {
     return l.py__mul__(r);
 }
 
-extern "C" PyInt * __used
+extern "C" PyInt * MARK_USED
 llvmPy_int(llvmPy::PyObj &obj)
 {
     return new PyInt(obj.py__int__());
 }
 
-extern "C" llvmPy::PyNone * __used
+extern "C" llvmPy::PyNone * MARK_USED
 llvmPy_none()
 {
     return &PyNone::get();
@@ -190,7 +195,7 @@ llvmPy::moveFrameToHeap(Frame *frame, Scope const &scope)
     }
 }
 
-extern "C" PyFunc * __used
+extern "C" PyFunc * MARK_USED
 llvmPy_func(Frame *stackFrame, void *label)
 {
     // The `label` is that of the callee, but llvmPy_func() itself operates
@@ -208,7 +213,7 @@ llvmPy_func(Frame *stackFrame, void *label)
  * @param np Count of positional arguments passed by the caller.
  * @return Pointer to the function's IR.
  */
-extern "C" void * __used
+extern "C" void * MARK_USED
 llvmPy_fchk(Frame **callframe, llvmPy::PyFunc &pyfunc, int np)
 {
     *callframe = pyfunc.getFrame();
@@ -219,7 +224,7 @@ llvmPy_fchk(Frame **callframe, llvmPy::PyFunc &pyfunc, int np)
  * @brief Print the str() of `obj` to stdout.
  * @param obj The object to print.
  */
-extern "C" llvmPy::PyObj * __used
+extern "C" llvmPy::PyObj * MARK_USED
 llvmPy_print(llvmPy::PyObj &obj)
 {
     std::string str = obj.py__str__();
@@ -230,7 +235,7 @@ llvmPy_print(llvmPy::PyObj &obj)
 /**
  * @brief Return a PyStr representing the underlying string given.
  */
-extern "C" llvmPy::PyStr * __used
+extern "C" llvmPy::PyStr * MARK_USED
 llvmPy_str(llvmPy::PyObj &obj)
 {
     return new PyStr(obj.py__str__());
@@ -239,43 +244,43 @@ llvmPy_str(llvmPy::PyObj &obj)
 /**
  * TODO: Stop using methods for generating constants.
  */
-extern "C" llvmPy::PyBool * __used
+extern "C" llvmPy::PyBool * MARK_USED
 llvmPy_bool(llvmPy::PyObj &obj)
 {
     return &PyBool::get(obj.py__bool__());
 }
 
-extern "C" llvmPy::PyBool * __used
+extern "C" llvmPy::PyBool * MARK_USED
 llvmPy_lt(llvmPy::PyObj &l, llvmPy::PyObj &r)
 {
     return &PyBool::get(l.py__lt__(r));
 }
 
-extern "C" llvmPy::PyBool * __used
+extern "C" llvmPy::PyBool * MARK_USED
 llvmPy_le(llvmPy::PyObj &l, llvmPy::PyObj &r)
 {
     return &PyBool::get(l.py__le__(r));
 }
 
-extern "C" llvmPy::PyBool * __used
+extern "C" llvmPy::PyBool * MARK_USED
 llvmPy_eq(llvmPy::PyObj &l, llvmPy::PyObj &r)
 {
     return &PyBool::get(l.py__eq__(r));
 }
 
-extern "C" llvmPy::PyBool * __used
+extern "C" llvmPy::PyBool * MARK_USED
 llvmPy_ne(llvmPy::PyObj &l, llvmPy::PyObj &r)
 {
     return &PyBool::get(l.py__ne__(r));
 }
 
-extern "C" llvmPy::PyBool * __used
+extern "C" llvmPy::PyBool * MARK_USED
 llvmPy_ge(llvmPy::PyObj &l, llvmPy::PyObj &r)
 {
     return &PyBool::get(l.py__ge__(r));
 }
 
-extern "C" llvmPy::PyBool * __used
+extern "C" llvmPy::PyBool * MARK_USED
 llvmPy_gt(llvmPy::PyObj &l, llvmPy::PyObj &r)
 {
     return &PyBool::get(l.py__gt__(r));
@@ -286,7 +291,7 @@ llvmPy_gt(llvmPy::PyObj &l, llvmPy::PyObj &r)
  * but the result is immediately converted into a i1 value of 1 or 0 for
  * branching instructions.
  */
-extern "C" uint8_t __used
+extern "C" uint8_t MARK_USED
 llvmPy_truthy(llvmPy::PyObj &obj)
 {
     return static_cast<uint8_t>(obj.py__bool__() ? 1 : 0);

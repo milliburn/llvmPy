@@ -26,8 +26,8 @@ private:
     std::map<std::string const, TokenType> const _keywords;
     char _ch;
     char _buf[BUFFER_SIZE];
-    long _ibuf;
-    long _ilast;
+    ssize_t _ibuf;
+    ssize_t _ilast;
 
     long _line;
     long _col;
