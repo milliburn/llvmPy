@@ -33,6 +33,8 @@ public:
     virtual bool py__ne__(PyObj &rhs);
     virtual bool py__ge__(PyObj &rhs);
     virtual bool py__gt__(PyObj &rhs);
+
+    virtual PyObj *py__getattr__(std::string const &name);
 };
 
 } // namespace llvmPy

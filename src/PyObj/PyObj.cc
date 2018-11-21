@@ -89,3 +89,9 @@ PyObj::py__int__()
 {
     return 0;
 }
+
+PyObj *
+PyObj::py__getattr__(std::string const &name)
+{
+    return &PyNone::get();
+}

@@ -303,3 +303,9 @@ llvmPy_len(llvmPy::PyObj &obj)
     auto len = obj.py__len__();
     return new PyInt(len);
 }
+
+extern "C" llvmPy::PyObj *
+llvmPy_getattr(llvmPy::PyObj &object, char const *name)
+{
+    return nullptr;
+}

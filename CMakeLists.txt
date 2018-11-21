@@ -121,7 +121,7 @@ add_executable(
         test/Types/PyStr/type_PyStr.cc
         test/Builtins/truthy/instr_truthy.cc
         test/Builtins/bool/builtin_bool.cc
-        test/Builtins/func/instr_func.cc test/include/catch2.h test/include/fakeit.h)
+        test/Builtins/func/instr_func.cc test/include/catch2.h test/include/fakeit.h test/Builtins/getattr/instr_getattr.cc)
 
 # The test suites depend on an up-to-date llvmPy binary.
 add_dependencies(
