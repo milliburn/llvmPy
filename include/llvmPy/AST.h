@@ -182,6 +182,24 @@ private:
     std::vector<std::shared_ptr<Expr const>> _members;
 };
 
+class GetattrExpr final : public Expr {
+public:
+    GetattrExpr(
+            std::shared_ptr<Expr const> const &object,
+            std::string const &name);
+
+    void toStream(std::ostream &s) const override;
+
+    Expr const &getObject() const;
+
+    std::string const &getName() const;
+
+private:
+    std::shared_ptr<Expr const> _object;
+
+    std::string const _name;
+};
+
 class Stmt : public AST {
 public:
     virtual ~Stmt();

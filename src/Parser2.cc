@@ -4,6 +4,8 @@ using namespace llvmPy;
 // The "amount" of precedence to add for unary operators.
 static constexpr int UnaryPrecedenceOffset = 1;
 
+static constexpr int CallPrecedence = 16;
+
 static std::map<TokenType, int>
 initPrecedence()
 {
@@ -26,6 +28,8 @@ initPrecedence()
 
     map[tok_mul] = 12;
     map[tok_div] = 12;
+
+    map[tok_dot] = 16;
 
     map[tok_comma] = 17; // Tuple binding
 
@@ -167,16 +171,28 @@ Parser2::readExpr(int lastPrec, Expr *lhs)
                 rhs = readExpr(precedence, rhs);
                 assert(rhs);
 
-                auto *binary = new BinaryExpr(
-                        std::shared_ptr<Expr>(lhs),
-                        op->getTokenType(),
-                        std::shared_ptr<Expr>(rhs));
+                Expr *result;
 
-                return readExpr(lastPrec, binary);
+                if (op->getTokenType() == tok_dot) {
+                    result = new GetattrExpr(
+                            std::shared_ptr<Expr>(lhs),
+                            rhs->as<IdentExpr>().getName());
+                    delete(rhs);
+                } else {
+                    result = new BinaryExpr(
+                            std::shared_ptr<Expr>(lhs),
+                            op->getTokenType(),
+                            std::shared_ptr<Expr>(rhs));
+                }
 
+                return readExpr(lastPrec, result);
             }
 
         } else if (is(tok_lp)) {
+
+            if (CallPrecedence <= lastPrec) {
+                return lhs;
+            }
 
             auto *args = readSubExpr();
             auto *call = new CallExpr(std::shared_ptr<Expr>(lhs));
