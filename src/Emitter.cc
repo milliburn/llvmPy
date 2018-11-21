@@ -612,16 +612,19 @@ llvm::Value *
 Emitter::emit(RTScope &scope, UnaryExpr const &unary)
 {
     if (auto *integer = unary.getExpr().cast<IntegerExpr>()) {
-        auto const op = unary.getOperator();
         int64_t sign = 1;
 
-        if (op == tok_sub) {
+        switch (unary.getOperator()) {
+        case tok_sub:
             sign = -1;
-        }
-
-        if (op == tok_add) {
+            [[clang::fallthrough]];
+        case tok_add: {
             IntegerExpr expr(sign * integer->getValue());
             return emit(scope, expr);
+        }
+
+        default:
+            break;
         }
     }
 

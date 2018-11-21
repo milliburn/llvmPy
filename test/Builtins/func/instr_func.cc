@@ -15,8 +15,10 @@ allocFrame(size_t slotCount) {
 
 TEST_CASE("instr: llvmPy_func()", "[instr][func]") {
     SECTION("it stores the frame and function pointers") {
+        Mock<Scope> parentScope;
         Mock<Scope> scope;
         When(Method(scope, hasParent)).AlwaysReturn(false);
+        When(Method(scope, getParent)).AlwaysReturn(parentScope.get());
 
         Frame frame;
         frame.self = reinterpret_cast<Frame *>(123);
