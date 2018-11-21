@@ -3,7 +3,10 @@ set(name llvmPy)
 project(${name})
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -Wno-unused-variable")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
+                     -Wall -Werror -Weverything -pedantic \
+                     -Wno-unused-variable \
+                     -Wno-c++98-compat -Wno-c++98-compat-pedantic")
 
 # LLVM
 
