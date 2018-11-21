@@ -160,27 +160,21 @@ llvmPy_none()
 Frame *
 llvmPy::moveFrameToHeap(Frame *stackFrame, Scope const &scope)
 {
-    if (!stackFrame || !stackFrame->self) {
-        // The frame is already on the heap.
-        return stackFrame;
+    if (!stackFrame) {
+        return nullptr;
+    } else if (stackFrame->isPointingToHeap()) {
+        return stackFrame->self;
     } else {
-        // The frame is currently on the stack.
-
-        auto slotCount = scope.getSlotCount();
-
-        auto frameSize = (
-                sizeof(Frame) +
-                slotCount * sizeof(stackFrame->vars[0]));
-
+        assert(!stackFrame->isOnHeap());
+        auto const slotCount = scope.getSlotCount();
+        auto const frameSize = Frame::getSizeof(slotCount);
         auto *heapFrame = reinterpret_cast<Frame *>(malloc(frameSize));
-        memcpy(heapFrame, stackFrame, frameSize);
-        auto *outer = stackFrame->outer;
-        memset(stackFrame, 0, frameSize);
-        stackFrame->self = heapFrame;
-        heapFrame->self = nullptr; // Marks that it's on the heap.
+        stackFrame->moveToHeapFrame(heapFrame, slotCount);
 
         if (scope.hasParent()) {
-            heapFrame->outer = moveFrameToHeap(outer, scope.getParent());
+            heapFrame->outer = moveFrameToHeap(
+                    heapFrame->outer,
+                    scope.getParent());
         } else {
             heapFrame->outer = nullptr;
         }

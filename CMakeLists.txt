@@ -57,6 +57,7 @@ add_library(
         src/PyObj/PyNone.cc
         src/PyObj/PyObj.cc
         src/PyObj/PyStr.cc
+        src/RT/Frame.cc
         src/RT/RTScope.cc
         src/RT/RTModule.cc
         src/RT/Scope.cc

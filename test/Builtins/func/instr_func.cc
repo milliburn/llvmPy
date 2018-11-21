@@ -21,15 +21,20 @@ TEST_CASE("instr: llvmPy_func()", "[instr][func]") {
     When(Method(scope, getParent)).AlwaysReturn(parentScope.get());
 
     SECTION("it stores the frame and function pointers") {
-        Frame frame = { .self = nullptr, .outer = nullptr };
-        void *labelData[2] = { reinterpret_cast<void *>(&scope.get()), nullptr };
+        Frame frame;
+        frame.self = reinterpret_cast<Frame *>(123);
+        frame.setIsPointingToHeap();
+        void *labelData[2] = {
+                reinterpret_cast<void *>(&scope.get()),
+                nullptr
+        };
         auto *label = &labelData[1];
 
         PyFunc *pyfunc = llvmPy_func(&frame, label);
         Verify(Method(scope, getParent)).Once();
         VerifyNoOtherInvocations(scope);
         VerifyNoOtherInvocations(parentScope);
-        CHECK(pyfunc->getFrame() == &frame);
+        CHECK(pyfunc->getFrame() == reinterpret_cast<Frame *>(123));
         CHECK(pyfunc->getLabel() == label);
     }
 
@@ -51,10 +56,12 @@ TEST_CASE("instr: llvmPy_func()", "[instr][func]") {
             CHECK(actual == nullptr);
         }
 
-        SECTION("it should return the same frame if its self-pointer is null") {
-            Frame frame = { .self = nullptr, .outer = nullptr };
+        SECTION("it should return the same frame if it's already relocated") {
+            Frame frame;
+            frame.self = reinterpret_cast<Frame *>(123);
+            frame.setIsPointingToHeap();
             auto *actual = moveFrameToHeap(&frame, scope.get());
-            CHECK(actual == &frame);
+            CHECK(actual == reinterpret_cast<Frame *>(123));
         }
 
         SECTION("it should relocate a 1-deep frame") {
@@ -65,6 +72,8 @@ TEST_CASE("instr: llvmPy_func()", "[instr][func]") {
 
             Frame *in = allocFrame(slotCount);
 
+            CHECK(!in->isPointingToHeap());
+
             in->vars[0] = &i1;
             in->vars[1] = &i2;
 
@@ -74,7 +83,8 @@ TEST_CASE("instr: llvmPy_func()", "[instr][func]") {
 
             CHECK(out != in);
             CHECK(in->self == out);
-            CHECK(out->self == nullptr); // Marker
+            CHECK(in->isPointingToHeap());
+            CHECK(out->self == nullptr);
             CHECK(out->outer == nullptr);
             CHECK(in->vars[0] == nullptr);
             CHECK(out->vars[0] == &i1);
@@ -84,7 +94,26 @@ TEST_CASE("instr: llvmPy_func()", "[instr][func]") {
             Verify(Method(scope, getSlotCount)).Once();
             Verify(Method(scope, hasParent)).Once();
             VerifyNoOtherInvocations(scope);
-            VerifyNoOtherInvocations(parentScope);
+        }
+
+        SECTION("it should not attempt to relocate a frame twice") {
+            Mock<Scope> scope;
+            When(Method(scope, hasParent)).AlwaysReturn(false);
+            When(Method(scope, getSlotCount)).AlwaysReturn(1);
+
+            Frame *frame = allocFrame(1);
+            frame->vars[0] = &i1;
+
+            Frame *out1 = moveFrameToHeap(frame, scope.get());
+            Frame *out2 = moveFrameToHeap(frame, scope.get());
+
+            CHECK(frame->self == out1);
+            CHECK(out1->self == nullptr);
+            CHECK(out1 == out2);
+
+            Verify(Method(scope, getSlotCount)).Once();
+            Verify(Method(scope, hasParent)).Once();
+            VerifyNoOtherInvocations(scope);
         }
 
         SECTION("it should relocate a 3-deep frame") {
@@ -92,59 +121,68 @@ TEST_CASE("instr: llvmPy_func()", "[instr][func]") {
             Mock<Scope> mock2;
             Mock<Scope> mock3;
 
-            Frame *f1 = allocFrame(1);
-            Frame *f2 = allocFrame(1);
-            Frame *f3 = allocFrame(1);
+            Frame *f1s = allocFrame(1);
+            Frame *f2s = allocFrame(1);
+            Frame *f3s = allocFrame(1);
 
-            f1->vars[0] = &i1;
+            f1s->vars[0] = &i1;
             When(Method(mock1, getSlotCount)).AlwaysReturn(1);
             When(Method(mock1, hasParent)).AlwaysReturn(false);
 
-            f2->outer = f1;
-            f2->vars[0] = &i2;
+            f2s->outer = f1s;
+            f2s->vars[0] = &i2;
             When(Method(mock2, getSlotCount)).AlwaysReturn(1);
             When(Method(mock2, hasParent)).AlwaysReturn(true);
             When(Method(mock2, getParent)).AlwaysReturn(mock1.get());
 
-            f3->outer = f2;
-            f3->vars[0] = &i3;
+            f3s->outer = f2s;
+            f3s->vars[0] = &i3;
             When(Method(mock3, getSlotCount)).AlwaysReturn(1);
             When(Method(mock3, hasParent)).AlwaysReturn(true);
             When(Method(mock3, getParent)).AlwaysReturn(mock2.get());
 
             SECTION("entirely if all on stack") {
-                Frame *out = moveFrameToHeap(f3, mock3.get());
+                Frame *f3h = moveFrameToHeap(f3s, mock3.get());
 
-                CHECK(out != f3);
-                CHECK(out->self == nullptr);
-                CHECK(out->vars[0] == &i3);
+                CHECK(f3s->isPointingToHeap());
+                CHECK(f2s->isPointingToHeap());
+                CHECK(f1s->isPointingToHeap());
 
-                out = out->outer;
+                CHECK(f3s->self == f3h);
+                CHECK(f3h != f3s);
+                CHECK(f3h->self == nullptr);
+                CHECK(f3h->isOnHeap());
+                CHECK(f3h->vars[0] == &i3);
 
-                CHECK(out != f2);
-                CHECK(out->self == nullptr);
-                CHECK(out->vars[0] == &i2);
+                f3h = f3h->outer;
 
-                out = out->outer;
+                CHECK(f3h != f2s);
+                CHECK(f3h->self == nullptr);
+                CHECK(f3h->isOnHeap());
+                CHECK(f3h->vars[0] == &i2);
 
-                CHECK(out != f1);
-                CHECK(out->self == nullptr);
-                CHECK(out->outer == nullptr);
-                CHECK(out->vars[0] == &i1);
+                f3h = f3h->outer;
+
+                CHECK(f3h != f1s);
+                CHECK(f3h->self == nullptr);
+                CHECK(f3h->outer == nullptr);
+                CHECK(f3h->isOnHeap());
+                CHECK(f3h->vars[0] == &i1);
             }
 
             SECTION("partially if one has already been relocated") {
-                f2->self = nullptr;
-                Frame *out = moveFrameToHeap(f3, mock3.get());
+                f2s->setIsPointingToHeap();
+                Frame *f3h = moveFrameToHeap(f3s, mock3.get());
 
                 // Explicitly test that the frame copy did not extend
                 // beyond the first heap-allocated frame.
 
-                CHECK(out != f3);
-                CHECK(out->self == nullptr);
-                CHECK(out->outer == f2);
-                CHECK(out->vars[0] == &i3);
-                CHECK(f1->self == f1);
+                CHECK(f3h != f3s);
+                CHECK(f3s->self == f3h);
+                CHECK(f3s->isPointingToHeap());
+                CHECK(f3h->outer == f2s);
+                CHECK(f3h->vars[0] == &i3);
+                CHECK(f1s->self == f1s);
             }
         }
     }
