@@ -16,25 +16,21 @@ allocFrame(size_t slotCount) {
 TEST_CASE("instr: llvmPy_func()", "[instr][func]") {
     Mock<Scope> parentScope;
     Mock<Scope> scope;
-    Frame frame = { .self = nullptr, .outer = nullptr };
-    void *labelData[2] = { reinterpret_cast<void *>(&scope.get()), nullptr };
-    auto *label = &labelData[1];
 
     When(Method(scope, hasParent)).AlwaysReturn(true);
     When(Method(scope, getParent)).AlwaysReturn(parentScope.get());
 
     SECTION("it stores the frame and function pointers") {
+        Frame frame = { .self = nullptr, .outer = nullptr };
+        void *labelData[2] = { reinterpret_cast<void *>(&scope.get()), nullptr };
+        auto *label = &labelData[1];
+
         PyFunc *pyfunc = llvmPy_func(&frame, label);
         Verify(Method(scope, getParent)).Once();
         VerifyNoOtherInvocations(scope);
         VerifyNoOtherInvocations(parentScope);
         CHECK(pyfunc->getFrame() == &frame);
         CHECK(pyfunc->getLabel() == label);
-    }
-
-    SECTION("it relocates the frame from the stack to the heap "
-            "with moveFrameToHeap()") {
-
     }
 
     SECTION("the allocFrame() test helper nulls and self-initialises a frame") {

@@ -386,18 +386,6 @@ Emitter::createFunction(
         iArg++;
     }
 
-    // Zero-initialise the contents of assign statements. This will act
-    // as a sentinel to detect use before set.
-
-    // zeroInitialiseSlots(
-    //         stmt,
-    //         *innerScope,
-    //         entry,
-    //         innerFrameType,
-    //         innerFrameAlloca);
-
-    // Successive statements may leave the emitter at a different insert point.
-
     ir.SetInsertPoint(entry);
 
     emitStatement(*function, *innerScope, stmt, nullptr);
@@ -486,7 +474,6 @@ Emitter::emitStatement(
     } else if (auto *assign = stmt.cast<AssignStmt>()) {
         // slotGEP has to come after emission, as something like a lambda
         // may invalidate the existing stack pointer.
-        // TODO: Ensure there's a test for it.
         auto *value = emit(scope, assign->getValue());
         auto *slotGEP = findLexicalSlotGEP(assign->getName(), scope);
         ir.CreateStore(value, slotGEP);
@@ -577,78 +564,6 @@ Emitter::gatherSlotNames(Stmt const &stmt, std::set<std::string> &names)
 }
 
 void
-Emitter::zeroInitialiseSlots(
-        Stmt const &body,
-        RTScope &scope,
-        llvm::BasicBlock *insertPoint,
-        llvm::Type *frameType,
-        llvm::Value *frameAlloca)
-{
-    ir.SetInsertPoint(insertPoint);
-    if (body.isa<ExprStmt>()
-        || body.isa<PassStmt>()
-        || body.isa<BreakStmt>()
-        || body.isa<ContinueStmt>()
-        || body.isa<ReturnStmt>()) {
-        // Ignore.
-    } else if (auto *assign = body.cast<AssignStmt>()) {
-        zeroInitialiseSlot(assign->getName(), scope, frameType, frameAlloca);
-    } else if (auto *def = body.cast<DefStmt>()) {
-        zeroInitialiseSlot(def->getName(), scope, frameType, frameAlloca);
-    } else if (auto *compound = body.cast<CompoundStmt>()) {
-        for (auto const &stmt : compound->getStatements()) {
-            zeroInitialiseSlots(
-                    *stmt, scope, insertPoint, frameType, frameAlloca);
-        }
-    } else if (auto *loop = body.cast<WhileStmt>()) {
-        zeroInitialiseSlots(
-                loop->getBody(),
-                scope, insertPoint, frameType, frameAlloca);
-    } else if (auto *cond = body.cast<ConditionalStmt>()) {
-        zeroInitialiseSlots(
-                cond->getThenBranch(),
-                scope, insertPoint, frameType, frameAlloca);
-        zeroInitialiseSlots(
-                cond->getElseBranch(),
-                scope, insertPoint, frameType, frameAlloca);
-    } else {
-        assert(false && "Unhandled statement type");
-    }
-}
-
-void
-Emitter::zeroInitialiseSlot(
-        std::string const &name,
-        RTScope &scope,
-        llvm::Type *frameType,
-        llvm::Value *frameAlloca)
-{
-    return; // Ignore for now.
-
-    if (scope.getSlotValue(name)) {
-        // Slot already zero-initialised.
-        return;
-    }
-
-    auto index = scope.getSlotIndex(name);
-
-    auto *assignGEP = ir.CreateGEP(
-            frameType,
-            frameAlloca,
-            { types.getInt64(0),
-              types.getInt32(Frame::VarsIndex),
-              types.getInt64(index) },
-            tags.Var + "_" + name);
-
-    ir.CreateStore(llvm::Constant::getNullValue(types.Ptr), assignGEP);
-
-    // TODO: This would be invalidated if the pointer changes
-    // TODO: (i.e. if the callee's chain ends up lifting the frame
-    // TODO: to heap).
-    scope.setSlotValue(name, assignGEP);
-}
-
-void
 Emitter::emitDefStmt(
         llvm::Function &outer,
         RTScope &scope,
@@ -715,8 +630,6 @@ Emitter::findLexicalSlotGEP(
         RTScope &scope,
         llvm::Value *framePtrPtr)
 {
-    bool const isPrinting = false; // TODO: Remove the development aid.
-
     if (!framePtrPtr) {
         framePtrPtr = scope.getInnerFramePtrPtr();
     }
@@ -728,12 +641,6 @@ Emitter::findLexicalSlotGEP(
         assert(index >= 0); // Later -1 could mean it's not a frame value.
 
         auto *framePtr = ir.CreateLoad(framePtrPtr);
-
-        if (isPrinting) {
-            std::cerr << "framePtrBitCast = ";
-            framePtr->print(llvm::errs());
-            std::cerr << std::endl;
-        }
 
         auto *slotGEP = ir.CreateGEP(
                 framePtr,
@@ -748,22 +655,10 @@ Emitter::findLexicalSlotGEP(
 
         auto *framePtr = ir.CreateLoad(framePtrPtr);
 
-        if (isPrinting) {
-            std::cerr << "framePtr = ";
-            framePtr->print(llvm::errs());
-            std::cerr << std::endl;
-        }
-
         auto *outerFramePtrPtr = ir.CreateGEP(
                 framePtr,
                 { types.getInt64(0),
                   types.getInt32(Frame::OuterIndex) });
-
-        if (isPrinting) {
-            std::cerr << "outerFramePtrPtr = ";
-            outerFramePtrPtr->print(llvm::errs());
-            std::cerr << std::endl;
-        }
 
         auto *result = findLexicalSlotGEP(
                 name,

@@ -70,17 +70,6 @@ public:
             Stmt const &stmt,
             std::set<std::string> &names);
 
-    void zeroInitialiseSlots(
-            Stmt const &body, RTScope &scope,
-            llvm::BasicBlock *insertPoint, llvm::Type *frameType,
-            llvm::Value *frameAlloca);
-
-    void zeroInitialiseSlot(
-            std::string const &name,
-            RTScope &scope,
-            llvm::Type *frameType,
-            llvm::Value *frameAlloca);
-
     llvm::Value *findLexicalSlotGEP(
             std::string const &name,
             RTScope &scope,
