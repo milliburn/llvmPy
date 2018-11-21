@@ -9,7 +9,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
                      -Wno-c++98-compat -Wno-c++98-compat-pedantic \
                      -Wno-global-constructors -Wno-exit-time-destructors \
                      -Wno-c99-extensions \
-                     -Wno-padded -Wno-switch-enum")
+                     -Wno-padded -Wno-switch-enum \
+                     -Wno-disabled-macro-expansion")
 
 # LLVM
 
@@ -120,7 +121,7 @@ add_executable(
         test/Types/PyStr/type_PyStr.cc
         test/Builtins/truthy/instr_truthy.cc
         test/Builtins/bool/builtin_bool.cc
-        test/Builtins/func/instr_func.cc)
+        test/Builtins/func/instr_func.cc test/include/catch2.h test/include/fakeit.h)
 
 # The test suites depend on an up-to-date llvmPy binary.
 add_dependencies(
@@ -132,8 +133,9 @@ configure_file(
 
 target_include_directories(
         ${name}Test
+        PRIVATE test/include
         PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/src
-        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/library/FakeIt/single_header/catch)
+        PRIVATE library/FakeIt/single_header/catch)
 
 target_link_libraries(
         ${name}Test

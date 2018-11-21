@@ -1,7 +1,7 @@
 #include <llvmPy/Instr.h>
 #include <llvmPy/PyObj/PyObj.h>
-#include <catch2/catch.hpp>
-#include <fakeit.hpp>
+#include <catch2.h>
+#include <fakeit.h>
 using namespace llvmPy;
 using namespace fakeit;
 
