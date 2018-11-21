@@ -1,11 +1,17 @@
 #pragma once
-#include <memory>
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weverything"
+#pragma GCC diagnostic ignored "-Wpedantic"
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/ExecutionEngine/Orc/Core.h>
 #include <llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h>
 #include <llvm/ExecutionEngine/Orc/IRCompileLayer.h>
 #include <llvm/ExecutionEngine/Orc/CompileUtils.h>
 #include "llvm/ExecutionEngine/Orc/LambdaResolver.h"
+#pragma GCC diagnostic pop
+
+#include <memory>
 #include <vector>
 
 #ifdef __cplusplus

@@ -1,6 +1,12 @@
 #pragma once
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weverything"
+#pragma GCC diagnostic ignored "-Wpedantic"
 #include <llvm/IR/DataLayout.h>
 #include <llvm/IR/LLVMContext.h>
+#pragma GCC diagnostic pop
+
 #include <vector>
 #include <memory>
 

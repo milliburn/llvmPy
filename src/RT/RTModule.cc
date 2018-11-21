@@ -1,11 +1,15 @@
-#include <llvmPy/RT.h>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weverything"
+#pragma GCC diagnostic ignored "-Wpedantic"
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/GlobalVariable.h>
 #include <llvm/IR/Module.h>
+#pragma GCC diagnostic pop
+
+#include <llvmPy/RT.h>
 #include <llvmPy/Instr.h>
 #include <llvmPy/Compiler.h>
-#include <llvm/IR/GlobalVariable.h>
 #include <string>
-#include <llvm/IR/Constants.h>
-
 using namespace llvmPy;
 
 RTModule::RTModule(

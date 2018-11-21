@@ -1,5 +1,10 @@
 #pragma once
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weverything"
+#pragma GCC diagnostic ignored "-Wpedantic"
 #include <llvm/ADT/iterator_range.h>
+#pragma GCC diagnostic pop
 
 #ifdef __cplusplus
 namespace llvmPy {
