@@ -10,6 +10,8 @@
 #include <llvmPy/Instr.h>
 #include <llvmPy/Compiler.h>
 #include <string>
+#include <llvmPy/RT/RTModule.h>
+
 using namespace llvmPy;
 
 RTModule::RTModule(
@@ -190,6 +192,12 @@ llvm::Value *
 RTModule::llvmPy_len() const
 {
     return _ir.getOrInsertFunction("llvmPy_len", _types.llvmPy_len);
+}
+
+llvm::Value *
+RTModule::llvmPy_getattr() const
+{
+    return _ir.getOrInsertFunction("llvmPy_getattr", _types.llvmPy_getattr);
 }
 
 llvm::GlobalVariable *

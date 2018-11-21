@@ -44,6 +44,7 @@ static struct {
     string While = "while";
     string Loop = "loop";
     string Endwhile = "endwhile";
+    string Name = "name";
 } tags;
 
 Emitter::Emitter(Compiler &c) noexcept
@@ -99,6 +100,8 @@ Emitter::emit(RTScope &scope, Expr const &expr)
         return emit(scope, *unary);
     } else if (auto *binop = expr.cast<BinaryExpr>()) {
         return emit(scope, *binop);
+    } else if (auto *getattr = expr.cast<GetattrExpr>()) {
+        return emit(scope, *getattr, nullptr);
     } else {
         assert(false && "Unrecognised AST");
         return nullptr;
@@ -131,16 +134,32 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
         }
     }
 
-    llvm::Value *lhs = emit(scope, callee);
+    bool isGetattrCall = false;
+    llvm::Value *self = nullptr;
+    llvm::Value *lhs;
+
+    if (auto *getattr = call.getCallee().cast<GetattrExpr>()) {
+        isGetattrCall = true;
+        lhs = emit(scope, *getattr, &self);
+    } else {
+        lhs = emit(scope, callee);
+    }
+
     lhs->setName(tags.FuncObj);
     vector<llvm::Value *> argSlots;
     argSlots.push_back(nullptr); // Placeholder for the callFrame.
+
     size_t argCount = 0;
+
+    if (isGetattrCall) {
+        argSlots.push_back(self);
+        argCount += 1;
+    }
 
     for (auto &arg : args) {
         llvm::Value *value = emit(scope, *arg);
         argSlots.push_back(value);
-        argCount++;
+        argCount += 1;
     }
 
     // Call frame pointer.
@@ -685,4 +704,26 @@ Emitter::findLexicalSlotGEP(
         assert(false && "Slot not found");
         return nullptr;
     }
+}
+
+llvm::Value *
+Emitter::emit(
+        RTScope &scope,
+        GetattrExpr const &getattr,
+        llvm::Value **objectOut)
+{
+    auto &module = scope.getModule();
+    auto *object = emit(scope, getattr.getObject());
+    auto *name = _ir.CreateGlobalStringPtr(
+            getattr.getName(),
+            tags.Name + "." + getattr.getName());
+    auto *value = _ir.CreateCall(
+            module.llvmPy_getattr(),
+            { object, name });
+
+    if (objectOut) {
+        *objectOut = object;
+    }
+
+    return value;
 }

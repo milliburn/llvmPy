@@ -52,8 +52,8 @@ Types::Types(
     llvmPy_bool = llvm::FunctionType::get(Ptr, { Ptr }, false);
     llvmPy_truthy = llvm::FunctionType::get(
             llvm::Type::getInt1Ty(ctx), { Ptr }, false);
-
     llvmPy_len = llvm::FunctionType::get(Ptr, { Ptr }, false);
+    llvmPy_getattr = llvm::FunctionType::get(Ptr, { Ptr, i8Ptr }, false);
 
     llvm::FunctionType *cmp = llvmPy_binop;
     llvmPy_lt = cmp;
