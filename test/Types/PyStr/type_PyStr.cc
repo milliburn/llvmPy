@@ -5,6 +5,15 @@
 using namespace llvmPy;
 using namespace fakeit;
 
+static void
+checkMethodPtr(PyStr &s, std::string name, PyObj*(*method)(void**, PyStr &))
+{
+    PyFunc &f = s.py__getattr__(name)->as<PyFunc>();
+
+    CHECK(f.getFrame() == nullptr);
+    CHECK(f.getLabel() == reinterpret_cast<void *>(method));
+}
+
 TEST_CASE("type: PyStr", "[types][PyStr]") {
     PyStr s1(""), s2("a"), s3("test"), s4("4"), s5("-5"), s6("0");
     PyStr s7("True"), s8("False");
@@ -61,5 +70,21 @@ TEST_CASE("type: PyStr", "[types][PyStr]") {
         CHECK(s1.py__add__(s2)->as<PyStr>().getValue() == "a");
         CHECK(s2.py__add__(s2)->as<PyStr>().getValue() == "aa");
         CHECK(s2.py__add__(s3)->as<PyStr>().getValue() == "atest");
+    }
+
+    SECTION("py__getattr__() returns PyFunc instances of string methods") {
+        CHECK(!s1.py__getattr__("noSuchMethod"));
+        checkMethodPtr(s1, "upper", PyStr::py_upper);
+        checkMethodPtr(s1, "capitalize", PyStr::py_capitalize);
+    }
+
+    SECTION("py_upper(): convert string to uppercase") {
+        auto *result = PyStr::py_upper(nullptr, s7);
+        CHECK(result->as<PyStr>().getValue() == "TRUE");
+    }
+
+    SECTION("py_capitalize(): capitalize string") {
+        auto *result = PyStr::py_capitalize(nullptr, s3);
+        CHECK(result->as<PyStr>().getValue() == "Test");
     }
 }

@@ -23,4 +23,4 @@ print("test".upper().capitalize())
 # IR: [[capitalizeVal:%[^ ]+]] = call %PyObj* [[capitalizeFunc]](%Frame** %callframe1, %PyObj* [[upperVal]])
 # IR: @llvmPy_print(%PyObj* [[capitalizeVal]])
 
-# OUTPUT: "Test"
+# OUTPUT: Test

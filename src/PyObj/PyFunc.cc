@@ -23,7 +23,7 @@ std::string
 PyFunc::py__str__()
 {
     std::stringstream ss;
-    ss << "<PyFunc ";
+    ss << "<PyFunc 0x";
     ss << std::hex << std::uppercase << reinterpret_cast<uint64_t>(this);
     ss << ">";
     return ss.str();

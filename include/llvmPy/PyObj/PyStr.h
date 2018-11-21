@@ -27,6 +27,11 @@ public:
 
     PyObj *py__add__(PyObj &rhs) override;
 
+    PyObj *py__getattr__(std::string const &name) override;
+
+    static PyObj *py_upper(void **, PyStr &str);
+    static PyObj *py_capitalize(void **, PyStr &str);
+
 private:
     std::unique_ptr<std::string const> _value;
 };
