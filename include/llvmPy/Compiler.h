@@ -22,12 +22,12 @@ public:
     void addAndRunModule(std::unique_ptr<llvm::Module> module);
 
 public:
-    llvm::LLVMContext &getContext() { return ctx; }
+    llvm::LLVMContext &getContext() { return _ctx; }
     llvm::DataLayout const &getDataLayout() const;
 
 private:
-    llvm::LLVMContext ctx;
-    std::unique_ptr<CompilerImpl> const impl;
+    llvm::LLVMContext _ctx;
+    std::unique_ptr<CompilerImpl> const _impl;
 };
 
 } // namespace llvmPy

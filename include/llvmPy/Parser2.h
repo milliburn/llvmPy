@@ -56,14 +56,14 @@ protected:
     void back();
 
 private:
-    TTokenIter &iter;
-    TTokenIter iter_end;
+    TTokenIter &_iter;
+    TTokenIter _iterEnd;
     Token &token() const;
 
     int getPrecedence(TokenType tokenType) const;
     int getPrecedence(TokenExpr *tokenExpr) const;
 
-    std::map<TokenType, int> const precedences;
+    std::map<TokenType, int> const _precedences;
 
     void expectIndent(int indent);
 };

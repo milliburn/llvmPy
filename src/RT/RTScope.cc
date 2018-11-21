@@ -4,23 +4,23 @@ using namespace llvmPy;
 
 RTScope::RTScope(RTScope &parent)
 : Scope(parent),
-  module_(parent.getModule()),
-  innerFramePtrPtr(nullptr),
-  innerFrameType(nullptr),
-  outerFrameType(nullptr),
-  condStmtCount(0),
-  whileStmtCount(0)
+  _module(parent.getModule()),
+  _innerFramePtrPtr(nullptr),
+  _innerFrameType(nullptr),
+  _outerFrameType(nullptr),
+  _condStmtCount(0),
+  _whileStmtCount(0)
 {
 }
 
 RTScope::RTScope(RTModule &module)
 : Scope(),
-  module_(module),
-  innerFramePtrPtr(nullptr),
-  innerFrameType(nullptr),
-  outerFrameType(nullptr),
-  condStmtCount(0),
-  whileStmtCount(0)
+  _module(module),
+  _innerFramePtrPtr(nullptr),
+  _innerFrameType(nullptr),
+  _outerFrameType(nullptr),
+  _condStmtCount(0),
+  _whileStmtCount(0)
 {
 }
 
@@ -33,60 +33,60 @@ RTScope::createDerived()
 RTModule &
 RTScope::getModule() const
 {
-    return module_;
+    return _module;
 }
 
 llvm::Value *
 RTScope::getInnerFramePtrPtr() const
 {
-    return innerFramePtrPtr;
+    return _innerFramePtrPtr;
 }
 
 llvm::StructType *
 RTScope::getInnerFrameType() const
 {
-    assert(innerFrameType);
-    return innerFrameType;
+    assert(_innerFrameType);
+    return _innerFrameType;
 }
 
 void
 RTScope::setInnerFrameType(llvm::StructType *st)
 {
-    innerFrameType = st;
+    _innerFrameType = st;
 }
 
 llvm::StructType *
 RTScope::getOuterFrameType() const
 {
-    assert(outerFrameType);
-    return outerFrameType;
+    assert(_outerFrameType);
+    return _outerFrameType;
 }
 
 void
 RTScope::setOuterFrameType(llvm::StructType *st)
 {
-    outerFrameType = st;
+    _outerFrameType = st;
 }
 
 void
 RTScope::setInnerFramePtrPtr(llvm::Value *ptr)
 {
-    innerFramePtrPtr = ptr;
+    _innerFramePtrPtr = ptr;
 }
 
 bool
 RTScope::hasSlot(std::string const &name) const
 {
-    return slots.count(name) > 0;
+    return _slots.count(name) > 0;
 }
 
 void
 RTScope::declareSlot(std::string const &name)
 {
     if (!hasSlot(name)) {
-        slots[name] = {
+        _slots[name] = {
                 .value = nullptr,
-                .frameIndex = slots.size()
+                .frameIndex = _slots.size()
         };
     }
 }
@@ -95,49 +95,49 @@ llvm::Value *
 RTScope::getSlotValue(std::string const &name) const
 {
     assert(hasSlot(name));
-    return slots.at(name).value;
+    return _slots.at(name).value;
 }
 
 void
 RTScope::setSlotValue(std::string const &name, llvm::Value *value)
 {
     assert(hasSlot(name));
-    slots.at(name).value = value;
+    _slots.at(name).value = value;
 }
 
 size_t
 RTScope::getSlotIndex(std::string const &name) const
 {
     assert(hasSlot(name));
-    return slots.at(name).frameIndex;
+    return _slots.at(name).frameIndex;
 }
 
 size_t
 RTScope::getSlotCount() const
 {
-    return slots.size();
+    return _slots.size();
 }
 
 llvm::Value *
 RTScope::getInnerFramePtr() const
 {
-    return innerFramePtr;
+    return _innerFramePtr;
 }
 
 void
 RTScope::setInnerFramePtr(llvm::Value *ptr)
 {
-    innerFramePtr = ptr;
+    _innerFramePtr = ptr;
 }
 
 size_t
 RTScope::getNextCondStmtIndex()
 {
-    return condStmtCount++;
+    return _condStmtCount++;
 }
 
 size_t
 RTScope::getNextWhileStmtIndex()
 {
-    return whileStmtCount++;
+    return _whileStmtCount++;
 }

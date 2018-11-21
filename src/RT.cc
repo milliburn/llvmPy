@@ -8,7 +8,7 @@
 using namespace llvmPy;
 
 RT::RT(Compiler &compiler)
-: compiler(compiler)
+: _compiler(compiler)
 {
 }
 
@@ -16,6 +16,6 @@ void
 RT::import(RTModule &mod)
 {
     std::unique_ptr<llvm::Module> ptr(&mod.getModule());
-    compiler.addAndRunModule(std::move(ptr));
+    _compiler.addAndRunModule(std::move(ptr));
 }
 

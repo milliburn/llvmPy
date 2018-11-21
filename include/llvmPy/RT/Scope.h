@@ -21,7 +21,7 @@ public:
     virtual size_t getSlotCount() const = 0;
 
 private:
-    Scope * const parent_;
+    Scope * const _parent;
 };
 
 } // namespace llvmPy

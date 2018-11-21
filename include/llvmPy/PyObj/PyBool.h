@@ -18,7 +18,7 @@ public:
     bool py__bool__() override;
 
 private:
-    bool const value_;
+    bool const _value;
 };
 
 } // namespace llvmPy

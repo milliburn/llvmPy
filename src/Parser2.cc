@@ -44,7 +44,7 @@ Parser2::fromIter(
 Parser2::Parser2(
         Parser2::TTokenIter &iter,
         Parser2::TTokenIter end)
-: iter(iter), iter_end(end), precedences(initPrecedence())
+: _iter(iter), _iterEnd(end), _precedences(initPrecedence())
 {
 }
 
@@ -387,27 +387,27 @@ Parser2::is_a(TokenType tokenType)
 bool
 Parser2::isEnd()
 {
-    return iter == iter_end || iter->getTokenType() == tok_eof;
+    return _iter == _iterEnd || _iter->getTokenType() == tok_eof;
 }
 
 void
 Parser2::next()
 {
     if (!isEnd()) {
-        iter++;
+        _iter++;
     }
 }
 
 void
 Parser2::back()
 {
-    iter--;
+    _iter--;
 }
 
 Token &
 Parser2::token() const
 {
-    return *iter;
+    return *_iter;
 }
 
 Expr *
@@ -653,8 +653,8 @@ Parser2::findAssignStatement()
 int
 Parser2::getPrecedence(TokenType tokenType) const
 {
-    if (precedences.count(tokenType)) {
-        return precedences.at(tokenType);
+    if (_precedences.count(tokenType)) {
+        return _precedences.at(tokenType);
     } else {
         return 0;
     }

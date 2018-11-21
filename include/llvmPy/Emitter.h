@@ -91,10 +91,10 @@ public:
             iterator_range<std::string const *> const &args);
 
 private:
-    llvm::DataLayout const &dl;
-    llvm::LLVMContext &ctx;
-    llvm::IRBuilder<> ir;
-    Types const types;
+    llvm::DataLayout const &_dl;
+    llvm::LLVMContext &_ctx;
+    llvm::IRBuilder<> _ir;
+    Types const _types;
 
     bool lastInstructionWasTerminator() const;
 };

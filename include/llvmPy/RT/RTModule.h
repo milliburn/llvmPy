@@ -31,8 +31,8 @@ public:
             Types const &types);
 
 public:
-    llvm::Module &getModule() const { return ir; }
-    RTScope &getScope() { return scope; }
+    llvm::Module &getModule() const { return _ir; }
+    RTScope &getScope() { return _scope; }
 
 public:
     llvm::Value *llvmPy_add() const;
@@ -62,9 +62,9 @@ public:
     llvm::GlobalVariable *llvmPy_PyStr(std::string const &value);
 
 private:
-    llvm::Module &ir;
-    Types const &types;
-    RTScope scope;
+    llvm::Module &_ir;
+    Types const &_types;
+    RTScope _scope;
 
     llvm::GlobalVariable *getOrCreateGlobalExtern(std::string const &name) const;
     std::unordered_map<std::string, llvm::GlobalVariable *> strings_;

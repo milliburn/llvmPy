@@ -47,10 +47,10 @@ static struct {
 } tags;
 
 Emitter::Emitter(Compiler &c) noexcept
-: dl(c.getDataLayout()),
-  ctx(c.getContext()),
-  ir(ctx),
-  types(ctx, dl)
+: _dl(c.getDataLayout()),
+  _ctx(c.getContext()),
+  _ir(_ctx),
+  _types(_ctx, _dl)
 {
 }
 
@@ -59,9 +59,9 @@ Emitter::createModule(
         std::string const &name,
         Stmt const &stmt)
 {
-    auto *module = new llvm::Module(name, ctx);
-    module->setDataLayout(dl);
-    RTModule *rtModule = new RTModule(name, module, types);
+    auto *module = new llvm::Module(name, _ctx);
+    module->setDataLayout(_dl);
+    RTModule *rtModule = new RTModule(name, module, _types);
 
     createFunction(
             "__body__",
@@ -115,19 +115,19 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
     if (auto *lhsIdent = callee.cast<IdentExpr>()) {
         if (lhsIdent->getName() == "print") {
             llvm::Value *arg = emit(scope, *args[0]);
-            return ir.CreateCall(mod.llvmPy_print(), { arg });
+            return _ir.CreateCall(mod.llvmPy_print(), { arg });
         } else if (lhsIdent->getName() == "len") {
             llvm::Value *arg = emit(scope, *args[0]);
-            return ir.CreateCall(mod.llvmPy_len(), { arg });
+            return _ir.CreateCall(mod.llvmPy_len(), { arg });
         } else if (lhsIdent->getName() == "str") {
             llvm::Value *arg = emit(scope, *args[0]);
-            return ir.CreateCall(mod.llvmPy_str(), { arg });
+            return _ir.CreateCall(mod.llvmPy_str(), { arg });
         } else if (lhsIdent->getName() == "int") {
             llvm::Value *arg = emit(scope, *args[0]);
-            return ir.CreateCall(mod.llvmPy_int(), { arg });
+            return _ir.CreateCall(mod.llvmPy_int(), { arg });
         } else if (lhsIdent->getName() == "bool") {
             llvm::Value *arg = emit(scope, *args[0]);
-            return ir.CreateCall(mod.llvmPy_bool(), { arg });
+            return _ir.CreateCall(mod.llvmPy_bool(), { arg });
         }
     }
 
@@ -144,24 +144,24 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
     }
 
     // Call frame pointer.
-    auto *callFrameAlloca = ir.CreateAlloca(
-            types.FramePtr, nullptr, tags.CallFrame);
+    auto *callFrameAlloca = _ir.CreateAlloca(
+            _types.FramePtr, nullptr, tags.CallFrame);
 
     // Count of positional arguments.
-    llvm::Value *np = llvm::ConstantInt::get(types.PyIntValue, argCount);
+    llvm::Value *np = llvm::ConstantInt::get(_types.PyIntValue, argCount);
 
-    llvm::CallInst *inst = ir.CreateCall(
+    llvm::CallInst *inst = _ir.CreateCall(
             mod.llvmPy_fchk(),
             { callFrameAlloca, lhs, np },
             tags.FuncPtr);
 
     argSlots[0] = callFrameAlloca;
 
-    llvm::Value *funcBitCast = ir.CreateBitCast(
+    llvm::Value *funcBitCast = _ir.CreateBitCast(
             inst,
-            types.getPtr(types.getOpaqueFunc(argCount)));
+            _types.getPtr(_types.getOpaqueFunc(argCount)));
 
-    return ir.CreateCall(funcBitCast, argSlots, tags.RetVal);
+    return _ir.CreateCall(funcBitCast, argSlots, tags.RetVal);
 }
 
 llvm::Value *
@@ -169,7 +169,7 @@ Emitter::emit(RTScope &scope, IntegerExpr const &expr)
 {
     RTModule &mod = scope.getModule();
     auto *global = mod.llvmPy_PyInt(expr.getValue());
-    return ir.CreateLoad(global, global->getName());
+    return _ir.CreateLoad(global, global->getName());
 }
 
 llvm::Value *
@@ -188,7 +188,7 @@ Emitter::emit(RTScope &scope, IdentExpr const &ident)
     }
 
     auto *gep = findLexicalSlotGEP(name, scope, scope.getInnerFramePtrPtr());
-    return ir.CreateLoad(gep);
+    return _ir.CreateLoad(gep);
 }
 
 llvm::Value *
@@ -199,7 +199,7 @@ Emitter::emit(RTScope &scope, LambdaExpr const &lambda)
     ReturnStmt returnStmt(lambda.getExprPtr());
 
     // TODO: XXX?
-    auto *insertBlock = ir.GetInsertBlock();
+    auto *insertBlock = _ir.GetInsertBlock();
 
     auto *function = createFunction(
             tags.Lambda,
@@ -207,19 +207,19 @@ Emitter::emit(RTScope &scope, LambdaExpr const &lambda)
             returnStmt,
             lambda.args());
 
-    ir.SetInsertPoint(insertBlock);
+    _ir.SetInsertPoint(insertBlock);
 
     llvm::Value *innerFramePtrBitCast =
-            ir.CreateBitCast(
+            _ir.CreateBitCast(
                     scope.getInnerFramePtr(),
-                    types.FramePtr);
+                    _types.FramePtr);
 
     llvm::Value *functionPtrBitCast =
-            ir.CreateBitCast(
+            _ir.CreateBitCast(
                     function,
-                    types.i8Ptr);
+                    _types.i8Ptr);
 
-    return ir.CreateCall(
+    return _ir.CreateCall(
             mod.llvmPy_func(),
             { innerFramePtrBitCast,
               functionPtrBitCast });
@@ -230,7 +230,7 @@ Emitter::emit(RTScope &scope, StringExpr const &lit)
 {
     RTModule &mod = scope.getModule();
     auto *global = mod.llvmPy_PyStr(lit.getValue());
-    return ir.CreateLoad(global, global->getName());
+    return _ir.CreateLoad(global, global->getName());
 }
 
 llvm::Value *
@@ -255,7 +255,7 @@ Emitter::emit(RTScope &scope, BinaryExpr const &expr)
     default: return nullptr;
     }
 
-    return ir.CreateCall(f, { lhs, rhs });
+    return _ir.CreateCall(f, { lhs, rhs });
 }
 
 llvm::Function *
@@ -272,7 +272,7 @@ Emitter::createFunction(
     if (outerScope.getInnerFramePtrPtr()) {
         innerScope->setOuterFrameType(outerScope.getInnerFrameType());
     } else {
-        innerScope->setOuterFrameType(types.Frame);
+        innerScope->setOuterFrameType(_types.Frame);
     }
 
     std::set<std::string> slotNames;
@@ -288,14 +288,14 @@ Emitter::createFunction(
     gatherSlotNames(stmt, slotNames);
 
     innerScope->setInnerFrameType(
-            types.getFuncFrame(
+            _types.getFuncFrame(
                     name,
                     innerScope->getOuterFrameType(),
                     slotNames.size()));
 
     llvm::Function *function =
             llvm::Function::Create(
-                    types.getFunc(
+                    _types.getFunc(
                             name,
                             innerScope->getOuterFrameType(),
                             argCount),
@@ -327,42 +327,42 @@ Emitter::createFunction(
     }
 
     // Create function body.
-    auto *entry = llvm::BasicBlock::Create(ctx, "", function);
-    ir.SetInsertPoint(entry);
+    auto *entry = llvm::BasicBlock::Create(_ctx, "", function);
+    _ir.SetInsertPoint(entry);
 
     // Generate the frame for variables to be potentially lifted onto the
     // heap by a closure.
 
-    auto *frameAlloca = ir.CreateAlloca(
+    auto *frameAlloca = _ir.CreateAlloca(
             innerScope->getInnerFrameType(),
             nullptr,
             tags.InnerFrame);
 
     innerScope->setInnerFramePtr(frameAlloca);
 
-    auto *frameSelfPtrPtr = ir.CreateGEP(
+    auto *frameSelfPtrPtr = _ir.CreateGEP(
             frameAlloca,
-            { types.getInt64(0),
-              types.getInt32(Frame::SelfIndex) });
+            { _types.getInt64(0),
+              _types.getInt32(Frame::SelfIndex) });
 
     innerScope->setInnerFramePtrPtr(frameSelfPtrPtr);
 
-    auto *frameOuterPtrPtr = ir.CreateGEP(
+    auto *frameOuterPtrPtr = _ir.CreateGEP(
             frameAlloca,
-            { types.getInt64(0),
-              types.getInt32(Frame::OuterIndex) });
+            { _types.getInt64(0),
+              _types.getInt32(Frame::OuterIndex) });
 
-    ir.CreateStore(frameAlloca, frameSelfPtrPtr);
+    _ir.CreateStore(frameAlloca, frameSelfPtrPtr);
 
-    auto *outerFramePtr = ir.CreateLoad(
+    auto *outerFramePtr = _ir.CreateLoad(
             outerFramePtrPtrArg, tags.OuterFrame);
 
-    ir.CreateStore(outerFramePtr, frameOuterPtrPtr);
+    _ir.CreateStore(outerFramePtr, frameOuterPtrPtr);
 
     // TODO: Zero-initialize slots with llvm.memset or something.
 
     function->setPrefixData(
-            types.getInt64(reinterpret_cast<int64_t>(innerScope)));
+            _types.getInt64(reinterpret_cast<int64_t>(innerScope)));
 
     for (auto const &slotName : slotNames) {
         innerScope->declareSlot(slotName);
@@ -379,25 +379,25 @@ Emitter::createFunction(
             assert(innerScope->hasSlot(ident));
             auto slotIndex = innerScope->getSlotIndex(ident);
 
-            auto *argVarPtr = ir.CreateGEP(
+            auto *argVarPtr = _ir.CreateGEP(
                     frameAlloca,
-                    { types.getInt64(0),
-                      types.getInt32(Frame::VarsIndex),
-                      types.getInt64(static_cast<int64_t>(slotIndex)) },
+                    { _types.getInt64(0),
+                      _types.getInt32(Frame::VarsIndex),
+                      _types.getInt64(static_cast<int64_t>(slotIndex)) },
                     tags.Var + "_" + ident);
 
-            ir.CreateStore(&arg, argVarPtr);
+            _ir.CreateStore(&arg, argVarPtr);
         }
 
         iArg++;
     }
 
-    ir.SetInsertPoint(entry);
+    _ir.SetInsertPoint(entry);
 
     emitStatement(*function, *innerScope, stmt, nullptr);
 
     if (!lastInstructionWasTerminator()) {
-        ir.CreateRet(mod.llvmPy_None());
+        _ir.CreateRet(mod.llvmPy_None());
     }
 
     llvm::verifyFunction(*function);
@@ -420,34 +420,34 @@ Emitter::emitCondStmt(
     size_t condIndex = scope.getNextCondStmtIndex();
     std::string suffix = "." + std::to_string(condIndex);
 
-    auto *ifBB = llvm::BasicBlock::Create(ctx, tags.If + suffix);
-    auto *thenBB = llvm::BasicBlock::Create(ctx, tags.Then + suffix);
-    auto *elseBB = llvm::BasicBlock::Create(ctx, tags.Else + suffix);
-    auto *endifBB = llvm::BasicBlock::Create(ctx, tags.Endif + suffix);
+    auto *ifBB = llvm::BasicBlock::Create(_ctx, tags.If + suffix);
+    auto *thenBB = llvm::BasicBlock::Create(_ctx, tags.Then + suffix);
+    auto *elseBB = llvm::BasicBlock::Create(_ctx, tags.Else + suffix);
+    auto *endifBB = llvm::BasicBlock::Create(_ctx, tags.Endif + suffix);
 
-    ir.CreateBr(ifBB);
+    _ir.CreateBr(ifBB);
     ifBB->insertInto(&function);
-    ir.SetInsertPoint(ifBB);
+    _ir.SetInsertPoint(ifBB);
     auto *ifExprValue = emit(scope, cond.getCondition());
-    auto *truthyValue = ir.CreateCall(mod.llvmPy_truthy(), { ifExprValue });
-    ir.CreateCondBr(truthyValue, thenBB, elseBB);
+    auto *truthyValue = _ir.CreateCall(mod.llvmPy_truthy(), { ifExprValue });
+    _ir.CreateCondBr(truthyValue, thenBB, elseBB);
 
     thenBB->insertInto(&function);
-    ir.SetInsertPoint(thenBB);
+    _ir.SetInsertPoint(thenBB);
     emitStatement(function, scope, cond.getThenBranch(), loop);
     if (!lastInstructionWasTerminator()) {
-        ir.CreateBr(endifBB);
+        _ir.CreateBr(endifBB);
     }
 
     elseBB->insertInto(&function);
-    ir.SetInsertPoint(elseBB);
+    _ir.SetInsertPoint(elseBB);
     emitStatement(function, scope, cond.getElseBranch(), loop);
     if (!lastInstructionWasTerminator()) {
-        ir.CreateBr(endifBB);
+        _ir.CreateBr(endifBB);
     }
 
     endifBB->insertInto(&function);
-    ir.SetInsertPoint(endifBB);
+    _ir.SetInsertPoint(endifBB);
 }
 
 void
@@ -470,7 +470,7 @@ Emitter::emitStatement(
         emit(scope, expr->getExpr());
     } else if (auto *ret = stmt.cast<ReturnStmt>()) {
         auto *value = emit(scope, ret->getExpr());
-        ir.CreateRet(value);
+        _ir.CreateRet(value);
     } else if (auto *def = stmt.cast<DefStmt>()) {
         emitDefStmt(function, scope, *def);
     } else if (stmt.isa<PassStmt>()) {
@@ -482,7 +482,7 @@ Emitter::emitStatement(
         // may invalidate the existing stack pointer.
         auto *value = emit(scope, assign->getValue());
         auto *slotGEP = findLexicalSlotGEP(assign->getName(), scope);
-        ir.CreateStore(value, slotGEP);
+        _ir.CreateStore(value, slotGEP);
     } else if (auto *while_ = stmt.cast<WhileStmt>()) {
         emitWhileStmt(function, scope, *while_);
     } else if (stmt.isa<BreakStmt>()) {
@@ -505,49 +505,49 @@ Emitter::emitWhileStmt(
     auto whileIndex = scope.getNextWhileStmtIndex();
     std::string suffix = "." + std::to_string(whileIndex);
 
-    auto *condBB = llvm::BasicBlock::Create(ctx, tags.While + suffix);
-    auto *loopBB = llvm::BasicBlock::Create(ctx, tags.Loop + suffix);
-    auto *endwhileBB = llvm::BasicBlock::Create(ctx, tags.Endwhile + suffix);
+    auto *condBB = llvm::BasicBlock::Create(_ctx, tags.While + suffix);
+    auto *loopBB = llvm::BasicBlock::Create(_ctx, tags.Loop + suffix);
+    auto *endwhileBB = llvm::BasicBlock::Create(_ctx, tags.Endwhile + suffix);
 
     Loop loop = { .cond = condBB, .end = endwhileBB };
 
-    ir.CreateBr(condBB);
+    _ir.CreateBr(condBB);
 
     condBB->insertInto(&function);
-    ir.SetInsertPoint(condBB);
+    _ir.SetInsertPoint(condBB);
     auto *condExprValue = emit(scope, stmt.getCondition());
-    auto *truthyValue = ir.CreateCall(mod.llvmPy_truthy(), { condExprValue });
-    ir.CreateCondBr(truthyValue, loopBB, endwhileBB);
+    auto *truthyValue = _ir.CreateCall(mod.llvmPy_truthy(), { condExprValue });
+    _ir.CreateCondBr(truthyValue, loopBB, endwhileBB);
 
     loopBB->insertInto(&function);
-    ir.SetInsertPoint(loopBB);
+    _ir.SetInsertPoint(loopBB);
     emitStatement(function, scope, stmt.getBody(), &loop);
     if (!lastInstructionWasTerminator()) {
-        ir.CreateBr(condBB);
+        _ir.CreateBr(condBB);
     }
 
     endwhileBB->insertInto(&function);
-    ir.SetInsertPoint(endwhileBB);
+    _ir.SetInsertPoint(endwhileBB);
 }
 
 void
 Emitter::emitBreakStmt(Emitter::Loop const *loop)
 {
     assert(loop && loop->end);
-    ir.CreateBr(loop->end);
+    _ir.CreateBr(loop->end);
 }
 
 void
 Emitter::emitContinueStmt(Emitter::Loop const *loop)
 {
     assert(loop && loop->cond);
-    ir.CreateBr(loop->cond);
+    _ir.CreateBr(loop->cond);
 }
 
 bool
 Emitter::lastInstructionWasTerminator() const
 {
-    return ir.GetInsertBlock()->getTerminator() != nullptr;
+    return _ir.GetInsertBlock()->getTerminator() != nullptr;
 }
 
 void
@@ -578,7 +578,7 @@ Emitter::emitDefStmt(
     RTModule &mod = scope.getModule();
 
     // TODO: XXX?
-    auto *insertBlock = ir.GetInsertBlock();
+    auto *insertBlock = _ir.GetInsertBlock();
 
     auto *function = createFunction(
             def.getName(),
@@ -586,26 +586,26 @@ Emitter::emitDefStmt(
             def.getBody(),
             def.args());
 
-    ir.SetInsertPoint(insertBlock);
+    _ir.SetInsertPoint(insertBlock);
 
     llvm::Value *innerFramePtrBitCast =
-            ir.CreateBitCast(
+            _ir.CreateBitCast(
                     scope.getInnerFramePtr(),
-                    types.FramePtr);
+                    _types.FramePtr);
 
     llvm::Value *functionPtrBitCast =
-            ir.CreateBitCast(
+            _ir.CreateBitCast(
                     function,
-                    types.i8Ptr);
+                    _types.i8Ptr);
 
-    auto *value = ir.CreateCall(
+    auto *value = _ir.CreateCall(
             mod.llvmPy_func(),
             { innerFramePtrBitCast,
               functionPtrBitCast });
 
     auto *gep = findLexicalSlotGEP(def.getName(), scope);
 
-    ir.CreateStore(value, gep);
+    _ir.CreateStore(value, gep);
 }
 
 llvm::Value *
@@ -644,25 +644,25 @@ Emitter::findLexicalSlotGEP(
 
         assert(index >= 0); // Later -1 could mean it's not a frame value.
 
-        auto *framePtr = ir.CreateLoad(framePtrPtr);
+        auto *framePtr = _ir.CreateLoad(framePtrPtr);
 
-        auto *slotGEP = ir.CreateGEP(
+        auto *slotGEP = _ir.CreateGEP(
                 framePtr,
-                { types.getInt64(0),
-                  types.getInt32(Frame::VarsIndex),
-                  types.getInt64(index) },
+                { _types.getInt64(0),
+                  _types.getInt32(Frame::VarsIndex),
+                  _types.getInt64(index) },
                 tags.Var + "." + name);
 
         return slotGEP;
 
     } else if (scope.hasParent()) {
 
-        auto *framePtr = ir.CreateLoad(framePtrPtr);
+        auto *framePtr = _ir.CreateLoad(framePtrPtr);
 
-        auto *outerFramePtrPtr = ir.CreateGEP(
+        auto *outerFramePtrPtr = _ir.CreateGEP(
                 framePtr,
-                { types.getInt64(0),
-                  types.getInt32(Frame::OuterIndex) });
+                { _types.getInt64(0),
+                  _types.getInt32(Frame::OuterIndex) });
 
         auto *result = findLexicalSlotGEP(
                 name,

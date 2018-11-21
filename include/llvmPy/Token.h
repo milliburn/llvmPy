@@ -86,11 +86,11 @@ public:
     size_t getDepth() const;
 
 private:
-    TokenType const type;
+    TokenType const _type;
 
-    std::unique_ptr<std::string const> str;
+    std::unique_ptr<std::string const> _str;
 
-    size_t const depth;
+    size_t const _depth;
 };
 
 } // namespace llvmPy

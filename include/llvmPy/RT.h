@@ -15,7 +15,7 @@ public:
     void import(RTModule &mod);
 
 private:
-    Compiler &compiler;
+    Compiler &_compiler;
 };
 
 } // namespace llvmPy

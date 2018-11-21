@@ -18,8 +18,8 @@ public:
     void *getLabel() const;
 
 private:
-    Frame *frame_;
-    void * const label_;
+    Frame *_frame;
+    void * const _label;
 };
 
 } // namespace llvmPy

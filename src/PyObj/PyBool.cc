@@ -5,7 +5,7 @@ PyBool llvmPy_True(true);
 PyBool llvmPy_False(false);
 
 PyBool::PyBool(bool value) noexcept
-: value_(value)
+: _value(value)
 {
 
 }
@@ -13,13 +13,13 @@ PyBool::PyBool(bool value) noexcept
 bool
 PyBool::getValue() const
 {
-    return value_;
+    return _value;
 }
 
 std::string
 PyBool::py__str__()
 {
-    return value_ ? "True" : "False";
+    return _value ? "True" : "False";
 }
 
 PyBool &
@@ -31,5 +31,5 @@ PyBool::get(bool value)
 bool
 PyBool::py__bool__()
 {
-    return value_;
+    return _value;
 }

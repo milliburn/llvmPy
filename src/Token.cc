@@ -4,40 +4,40 @@ using namespace llvmPy;
 using namespace std;
 
 Token::Token(TokenType type)
-: type(type), str(nullptr), depth(0)
+: _type(type), _str(nullptr), _depth(0)
 {
 
 }
 
 Token::Token(TokenType type, std::unique_ptr<std::string> str)
-: type(type), str(std::move(str)), depth(0)
+: _type(type), _str(std::move(str)), _depth(0)
 {
 
 }
 
 Token::Token(TokenType type, size_t depth)
-: type(type), str(nullptr), depth(depth)
+: _type(type), _str(nullptr), _depth(depth)
 {
 }
 
 TokenType
 Token::getTokenType() const
 {
-    return type;
+    return _type;
 }
 
 std::string const &
 Token::getString() const
 {
-    assert(str);
-    return *str;
+    assert(_str);
+    return *_str;
 }
 
 size_t
 Token::getDepth() const
 {
     assert(getTokenType() == tok_indent);
-    return depth;
+    return _depth;
 }
 
 std::ostream &
