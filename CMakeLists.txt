@@ -5,8 +5,9 @@ project(${name})
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
                      -Wall -Werror -Weverything -pedantic \
-                     -Wno-unused-variable \
-                     -Wno-c++98-compat -Wno-c++98-compat-pedantic")
+                     -Wno-unused-variable -Wno-padded \
+                     -Wno-c++98-compat -Wno-c++98-compat-pedantic \
+                     -Wno-global-constructors -Wno-exit-time-destructors")
 
 # LLVM
 

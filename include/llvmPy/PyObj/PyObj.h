@@ -13,6 +13,8 @@ class PyObj : public Typed {
 public:
     PyObj();
 
+    virtual ~PyObj();
+
     virtual std::string py__str__();
 
     virtual bool py__bool__();

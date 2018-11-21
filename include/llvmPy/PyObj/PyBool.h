@@ -18,8 +18,17 @@ public:
     bool py__bool__() override;
 
 private:
-    bool const value;
+    bool const value_;
 };
 
 } // namespace llvmPy
+
+extern "C" {
+#endif // __cplusplus
+
+extern llvmPy::PyBool llvmPy_True;
+extern llvmPy::PyBool llvmPy_False;
+
+#ifdef __cplusplus
+}
 #endif // __cplusplus
