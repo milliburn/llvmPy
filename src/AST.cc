@@ -9,7 +9,7 @@ using std::endl;
 static constexpr int INDENT = 4;
 
 static void
-indentToStream(ostream &s, Stmt const &stmt, int indent)
+indentToStream(ostream &s, Stmt const &stmt, size_t indent)
 {
     std::stringstream ss;
     ss << stmt;
@@ -31,6 +31,12 @@ indentToStream(ostream &s, Stmt const &stmt, int indent)
         s << std::endl; // getline() discards the delimiter.
     }
 }
+
+AST::~AST() = default;
+
+Expr::~Expr() = default;
+
+Stmt::~Stmt() = default;
 
 std::string
 AST::toString() const
@@ -87,14 +93,14 @@ IntegerExpr::toStream(std::ostream &s) const
 }
 
 IdentExpr::IdentExpr(std::string const &name)
-: name(name)
+: name_(name)
 {
 }
 
 std::string const &
 IdentExpr::getName() const
 {
-    return name;
+    return name_;
 }
 
 void
@@ -104,7 +110,7 @@ IdentExpr::toStream(std::ostream &s) const
 }
 
 LambdaExpr::LambdaExpr(std::shared_ptr<Expr> const &expr)
-: expr(expr)
+: expr_(expr)
 {
 }
 
@@ -135,8 +141,8 @@ LambdaExpr::arg_end() const
 Expr const &
 LambdaExpr::getExpr() const
 {
-    assert(expr);
-    return *expr;
+    assert(expr_);
+    return *expr_;
 }
 
 void
@@ -161,7 +167,7 @@ BinaryExpr::BinaryExpr(
         std::shared_ptr<Expr const> const &lhs,
         TokenType op,
         std::shared_ptr<Expr const> const &rhs)
-: lhs(lhs), rhs(rhs), op(op)
+: lhs_(lhs), rhs_(rhs), op_(op)
 {
 }
 
@@ -176,21 +182,21 @@ BinaryExpr::toStream(std::ostream &s) const
 Expr const &
 BinaryExpr::getLeftOperand() const
 {
-    assert(lhs);
-    return *lhs;
+    assert(lhs_);
+    return *lhs_;
 }
 
 Expr const &
 BinaryExpr::getRightOperand() const
 {
-    assert(rhs);
-    return *rhs;
+    assert(rhs_);
+    return *rhs_;
 }
 
 TokenType
 BinaryExpr::getOperator() const
 {
-    return op;
+    return op_;
 }
 
 void
@@ -264,26 +270,26 @@ operator<< (std::ostream & s, Stmt const & stmt)
 }
 
 StringExpr::StringExpr(std::string const &value)
-: value(value)
+: value_(value)
 {
 }
 
 std::string const &
 StringExpr::getValue() const
 {
-    return value;
+    return value_;
 }
 
 CallExpr::CallExpr(std::shared_ptr<Expr> const &callee)
-: callee(callee)
+: callee_(callee)
 {
 }
 
 Expr const &
 CallExpr::getCallee() const
 {
-    assert(callee);
-    return *callee;
+    assert(callee_);
+    return *callee_;
 }
 
 std::vector<std::shared_ptr<Expr const>> const &
@@ -354,7 +360,7 @@ TokenExpr::getTokenType() const
 }
 
 UnaryExpr::UnaryExpr(TokenType op, std::shared_ptr<Expr const> const &expr)
-: op(op), expr(expr)
+: op_(op), expr_(expr)
 {
 }
 
@@ -369,14 +375,14 @@ UnaryExpr::toStream(std::ostream &s) const
 TokenType
 UnaryExpr::getOperator() const
 {
-    return op;
+    return op_;
 }
 
 Expr const &
 UnaryExpr::getExpr() const
 {
-    assert(expr);
-    return *expr;
+    assert(expr_);
+    return *expr_;
 }
 
 CompoundStmt::CompoundStmt()
@@ -616,6 +622,6 @@ DefStmt::addArgument(std::string const &name)
 std::shared_ptr<Expr const> const &
 LambdaExpr::getExprPtr() const
 {
-    assert(expr);
-    return expr;
+    assert(expr_);
+    return expr_;
 }

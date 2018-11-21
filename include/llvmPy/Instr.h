@@ -61,16 +61,19 @@ public:
     llvm::ConstantInt *getInt64(int64_t value) const;
     llvm::PointerType *getPtr(llvm::Type *type) const;
 
-    llvm::FunctionType *getOpaqueFunc(int N) const;
+    llvm::FunctionType *getOpaqueFunc(size_t N) const;
 
     llvm::FunctionType *
     getFunc(
             std::string const &name,
             llvm::StructType *outer,
-            int N) const;
+            size_t N) const;
 
     llvm::StructType *
-    getFuncFrame(std::string const &name, llvm::StructType *outer, int N) const;
+    getFuncFrame(
+            std::string const &name,
+            llvm::StructType *outer,
+            size_t N) const;
 
 private:
     llvm::LLVMContext &ctx;

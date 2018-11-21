@@ -1,10 +1,15 @@
-#include <llvmPy/Emitter.h>
-#include <llvmPy/RT.h>
-#include <llvmPy/Token.h>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weverything"
+#pragma GCC diagnostic ignored "-Wpedantic"
 #include <llvm/IR/Value.h>
 #include <llvm/IR/Verifier.h>
 #include <llvm/Support/Casting.h>
 #include <llvm/Support/raw_ostream.h>
+#pragma GCC diagnostic pop
+
+#include <llvmPy/Emitter.h>
+#include <llvmPy/RT.h>
+#include <llvmPy/Token.h>
 #include <llvmPy/Support/iterator_range.h>
 #include <iostream>
 #include <map>
@@ -130,7 +135,7 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
     lhs->setName(tags.FuncObj);
     vector<llvm::Value *> argSlots;
     argSlots.push_back(nullptr); // Placeholder for the callFrame.
-    int argCount = 0;
+    size_t argCount = 0;
 
     for (auto &arg : args) {
         llvm::Value *value = emit(scope, *arg);
@@ -139,7 +144,8 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
     }
 
     // Call frame pointer.
-    auto *callFrameAlloca = ir.CreateAlloca(types.FramePtr, 0, tags.CallFrame);
+    auto *callFrameAlloca = ir.CreateAlloca(
+            types.FramePtr, nullptr, tags.CallFrame);
 
     // Count of positional arguments.
     llvm::Value *np = llvm::ConstantInt::get(types.PyIntValue, argCount);
@@ -377,7 +383,7 @@ Emitter::createFunction(
                     frameAlloca,
                     { types.getInt64(0),
                       types.getInt32(Frame::VarsIndex),
-                      types.getInt64(slotIndex) },
+                      types.getInt64(static_cast<int64_t>(slotIndex)) },
                     tags.Var + "_" + ident);
 
             ir.CreateStore(&arg, argVarPtr);
@@ -606,18 +612,16 @@ llvm::Value *
 Emitter::emit(RTScope &scope, UnaryExpr const &unary)
 {
     if (auto *integer = unary.getExpr().cast<IntegerExpr>()) {
+        auto const op = unary.getOperator();
         int64_t sign = 1;
 
-        switch (unary.getOperator()) {
-        case tok_sub:
+        if (op == tok_sub) {
             sign = -1;
-        case tok_add: {
-            IntegerExpr expr(sign * integer->getValue());
-            return emit(scope, expr);
         }
 
-        default:
-            break;
+        if (op == tok_add) {
+            IntegerExpr expr(sign * integer->getValue());
+            return emit(scope, expr);
         }
     }
 
@@ -662,7 +666,7 @@ Emitter::findLexicalSlotGEP(
 
         auto *result = findLexicalSlotGEP(
                 name,
-                (RTScope &) scope.getParent(), // TODO
+                dynamic_cast<RTScope &>(scope.getParent()),
                 outerFramePtrPtr);
 
         if (!result) {

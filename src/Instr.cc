@@ -80,7 +80,7 @@ Types::getPtr(llvm::Type *type) const
 }
 
 llvm::FunctionType *
-Types::getOpaqueFunc(int N) const
+Types::getOpaqueFunc(size_t N) const
 {
     std::vector<llvm::Type *> argTypes;
     argTypes.push_back(FramePtrPtr);
@@ -96,7 +96,7 @@ llvm::FunctionType *
 Types::getFunc(
         std::string const &name,
         llvm::StructType *outer,
-        int N) const
+        size_t N) const
 {
     std::vector<llvm::Type *> argTypes;
     argTypes.push_back(getPtr(getPtr(outer)));
@@ -112,7 +112,7 @@ llvm::StructType *
 Types::getFuncFrame(
         std::string const &name,
         llvm::StructType *outer,
-        int N) const
+        size_t N) const
 {
     std::string frameName = "Frame." + name;
 

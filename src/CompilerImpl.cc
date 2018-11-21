@@ -1,8 +1,13 @@
-#include "CompilerImpl.h"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weverything"
+#pragma GCC diagnostic ignored "-Wpedantic"
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/SectionMemoryManager.h>
 #include <llvm/IR/Mangler.h>
+#pragma GCC diagnostic pop
+
+#include "CompilerImpl.h"
 #include <algorithm>
 #include <sstream>
 using namespace llvmPy;

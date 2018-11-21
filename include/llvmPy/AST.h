@@ -12,7 +12,7 @@ using ArgNamesIter = iterator_range<std::string const *>;
 
 class AST : public Typed {
 public:
-    virtual ~AST() = default;
+    virtual ~AST();
 
     virtual void toStream(std::ostream &s) const;
 
@@ -20,6 +20,9 @@ public:
 };
 
 class Expr : public AST {
+public:
+    virtual ~Expr();
+
 protected:
     Expr();
 };
@@ -33,7 +36,7 @@ public:
     std::string const &getValue() const;
 
 private:
-    std::string const value;
+    std::string const value_;
 };
 
 class DecimalExpr final : public Expr {
@@ -69,7 +72,7 @@ public:
     std::string const &getName() const;
 
 private:
-    std::string const name;
+    std::string const name_;
 };
 
 class LambdaExpr final : public Expr {
@@ -93,7 +96,7 @@ public:
 private:
     std::vector<std::string> args_;
 
-    std::shared_ptr<Expr const> expr;
+    std::shared_ptr<Expr const> expr_;
 };
 
 class UnaryExpr final : public Expr {
@@ -107,8 +110,8 @@ public:
     Expr const &getExpr() const;
 
 private:
-    TokenType const op;
-    std::shared_ptr<Expr const> expr;
+    TokenType const op_;
+    std::shared_ptr<Expr const> expr_;
 };
 
 class BinaryExpr final : public Expr {
@@ -127,9 +130,9 @@ public:
     TokenType getOperator() const;
 
 private:
-    std::shared_ptr<Expr const> lhs;
-    std::shared_ptr<Expr const> rhs;
-    TokenType const op;
+    std::shared_ptr<Expr const> lhs_;
+    std::shared_ptr<Expr const> rhs_;
+    TokenType const op_;
 };
 
 class CallExpr final : public Expr {
@@ -146,7 +149,7 @@ public:
     void addArgument(std::shared_ptr<Expr const> argument);
 
 private:
-    std::shared_ptr<Expr const> callee;
+    std::shared_ptr<Expr const> callee_;
 
     std::vector<std::shared_ptr<Expr const>> arguments;
 };
@@ -180,6 +183,9 @@ private:
 };
 
 class Stmt : public AST {
+public:
+    virtual ~Stmt();
+
 protected:
     Stmt();
 };

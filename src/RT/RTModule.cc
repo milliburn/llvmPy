@@ -146,7 +146,7 @@ RTModule::llvmPy_PyInt(int64_t value) const
         return var;
     } else {
         auto *pyint = new PyInt(value);
-        auto *pyintAddr = types.getInt64(reinterpret_cast<uint64_t>(pyint));
+        auto *pyintAddr = types.getInt64(reinterpret_cast<int64_t>(pyint));
         auto *pyintPtr = llvm::ConstantExpr::getIntToPtr(pyintAddr, types.Ptr);
         return new llvm::GlobalVariable(
                 ir,
@@ -166,7 +166,7 @@ RTModule::llvmPy_PyStr(std::string const &value)
         return var->second;
     } else {
         auto *obj = new PyStr(value);
-        auto *addr = types.getInt64(reinterpret_cast<uint64_t>(obj));
+        auto *addr = types.getInt64(reinterpret_cast<int64_t>(obj));
         auto *ptr = llvm::ConstantExpr::getIntToPtr(addr, types.Ptr);
         auto *global = new llvm::GlobalVariable(
                 ir,

@@ -9,7 +9,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
                      -Wno-c++98-compat -Wno-c++98-compat-pedantic \
                      -Wno-global-constructors -Wno-exit-time-destructors \
                      -Wno-c99-extensions \
-                     -Wno-padded")
+                     -Wno-padded -Wno-switch-enum")
 
 # LLVM
 
