@@ -28,7 +28,7 @@ public:
     PyObj *py__add__(PyObj &rhs) override;
 
 private:
-    std::unique_ptr<std::string const> value;
+    std::unique_ptr<std::string const> _value;
 };
 
 } // namespace llvmPy

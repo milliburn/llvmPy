@@ -13,24 +13,24 @@ using std::cout;
 using std::endl;
 using std::string;
 
-cl::opt<string> Cmd(
+static cl::opt<string> Cmd(
         "c",
         cl::desc("Program passed as string."),
         cl::value_desc("cmd"));
 
-cl::opt<bool> IsIR(
+static cl::opt<bool> IsIR(
         "ir",
         cl::desc("Print resulting LLVM IR and exit."));
 
-cl::opt<bool> IsParser(
+static cl::opt<bool> IsParser(
         "parser",
         cl::desc("Print resulting parser tree and exit."));
 
-cl::opt<bool> IsLexer(
+static cl::opt<bool> IsLexer(
         "lexer",
         cl::desc("Print tokens output by the lexer and exit."));
 
-cl::opt<string> Filename(
+static cl::opt<string> Filename(
         cl::Positional,
         cl::desc("file"));
 

@@ -1,7 +1,7 @@
 #include <llvmPy/Instr.h>
 #include <llvmPy/RT/Scope.h>
-#include <catch2/catch.hpp>
-#include <fakeit.hpp>
+#include <catch2.h>
+#include <fakeit.h>
 using namespace llvmPy;
 using namespace fakeit;
 
@@ -14,13 +14,12 @@ allocFrame(size_t slotCount) {
 }
 
 TEST_CASE("instr: llvmPy_func()", "[instr][func]") {
-    Mock<Scope> parentScope;
-    Mock<Scope> scope;
-
-    When(Method(scope, hasParent)).AlwaysReturn(true);
-    When(Method(scope, getParent)).AlwaysReturn(parentScope.get());
-
     SECTION("it stores the frame and function pointers") {
+        Mock<Scope> parentScope;
+        Mock<Scope> scope;
+        When(Method(scope, hasParent)).AlwaysReturn(false);
+        When(Method(scope, getParent)).AlwaysReturn(parentScope.get());
+
         Frame frame;
         frame.self = reinterpret_cast<Frame *>(123);
         frame.setIsPointingToHeap();
@@ -33,7 +32,6 @@ TEST_CASE("instr: llvmPy_func()", "[instr][func]") {
         PyFunc *pyfunc = llvmPy_func(&frame, label);
         Verify(Method(scope, getParent)).Once();
         VerifyNoOtherInvocations(scope);
-        VerifyNoOtherInvocations(parentScope);
         CHECK(pyfunc->getFrame() == reinterpret_cast<Frame *>(123));
         CHECK(pyfunc->getLabel() == label);
     }
@@ -52,11 +50,15 @@ TEST_CASE("instr: llvmPy_func()", "[instr][func]") {
         PyInt i1(1), i2(2), i3(3), i4(4);
 
         SECTION("it should return null and do nothing if the frame is null") {
+            Mock<Scope> scope;
+            When(Method(scope, hasParent)).AlwaysReturn(false);
             auto *actual = moveFrameToHeap(nullptr, scope.get());
             CHECK(actual == nullptr);
         }
 
         SECTION("it should return the same frame if it's already relocated") {
+            Mock<Scope> scope;
+            When(Method(scope, hasParent)).AlwaysReturn(false);
             Frame frame;
             frame.self = reinterpret_cast<Frame *>(123);
             frame.setIsPointingToHeap();

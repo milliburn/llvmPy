@@ -3,20 +3,20 @@
 using namespace llvmPy;
 
 PyFunc::PyFunc(Frame *frame, void *label)
-: frame_(frame), label_(label)
+: _frame(frame), _label(label)
 {
 }
 
 Frame *
 PyFunc::getFrame() const
 {
-    return frame_;
+    return _frame;
 }
 
 void *
 PyFunc::getLabel() const
 {
-    return label_;
+    return _label;
 }
 
 std::string
@@ -24,7 +24,7 @@ PyFunc::py__str__()
 {
     std::stringstream ss;
     ss << "<PyFunc ";
-    ss << std::hex << std::uppercase << (uint64_t) this;
+    ss << std::hex << std::uppercase << reinterpret_cast<uint64_t>(this);
     ss << ">";
     return ss.str();
 }

@@ -71,16 +71,14 @@ public:
     size_t getNextWhileStmtIndex();
 
 private:
-    RTModule &module;
-    llvm::Value *innerFramePtr;
-    llvm::Value *innerFramePtrPtr;
-    llvm::StructType *innerFrameType;
-    llvm::StructType *outerFrameType;
-    size_t condStmtCount;
-    size_t whileStmtCount;
-
-    std::unordered_map<std::string, Slot> slots;
-
+    RTModule &_module;
+    llvm::Value *_innerFramePtr;
+    llvm::Value *_innerFramePtrPtr;
+    llvm::StructType *_innerFrameType;
+    llvm::StructType *_outerFrameType;
+    size_t _condStmtCount;
+    size_t _whileStmtCount;
+    std::unordered_map<std::string, Slot> _slots;
 };
 
 } // namespace llvmPy

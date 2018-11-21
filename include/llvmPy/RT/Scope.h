@@ -14,14 +14,14 @@ public:
 
     virtual ~Scope();
 
-    __mock_virtual bool hasParent() const;
+    MOCK_VIRTUAL bool hasParent() const;
 
-    __mock_virtual Scope &getParent() const;
+    MOCK_VIRTUAL Scope &getParent() const;
 
     virtual size_t getSlotCount() const = 0;
 
 private:
-    Scope * const parent;
+    Scope * const _parent;
 };
 
 } // namespace llvmPy

@@ -12,7 +12,7 @@ using ArgNamesIter = iterator_range<std::string const *>;
 
 class AST : public Typed {
 public:
-    virtual ~AST() = default;
+    virtual ~AST();
 
     virtual void toStream(std::ostream &s) const;
 
@@ -20,6 +20,9 @@ public:
 };
 
 class Expr : public AST {
+public:
+    virtual ~Expr();
+
 protected:
     Expr();
 };
@@ -33,31 +36,31 @@ public:
     std::string const &getValue() const;
 
 private:
-    std::string const value;
+    std::string const _value;
 };
 
 class DecimalExpr final : public Expr {
 public:
-    explicit DecimalExpr(double v);
+    explicit DecimalExpr(double value);
 
     void toStream(std::ostream &s) const override;
 
     double getValue() const;
 
 private:
-    double const value;
+    double const _value;
 };
 
 class IntegerExpr final : public Expr {
 public:
-    explicit IntegerExpr(long v);
+    explicit IntegerExpr(long value);
 
     void toStream(std::ostream &s) const override;
 
     int64_t getValue() const;
 
 private:
-    long const value;
+    long const _value;
 };
 
 class IdentExpr final : public Expr {
@@ -69,7 +72,7 @@ public:
     std::string const &getName() const;
 
 private:
-    std::string const name;
+    std::string const _name;
 };
 
 class LambdaExpr final : public Expr {
@@ -91,9 +94,9 @@ public:
     void addArgument(std::string const &argument);
 
 private:
-    std::vector<std::string> args_;
+    std::vector<std::string> _args;
 
-    std::shared_ptr<Expr const> expr;
+    std::shared_ptr<Expr const> _expr;
 };
 
 class UnaryExpr final : public Expr {
@@ -107,8 +110,8 @@ public:
     Expr const &getExpr() const;
 
 private:
-    TokenType const op;
-    std::shared_ptr<Expr const> expr;
+    TokenType const _operator;
+    std::shared_ptr<Expr const> _expr;
 };
 
 class BinaryExpr final : public Expr {
@@ -127,9 +130,9 @@ public:
     TokenType getOperator() const;
 
 private:
-    std::shared_ptr<Expr const> lhs;
-    std::shared_ptr<Expr const> rhs;
-    TokenType const op;
+    std::shared_ptr<Expr const> _lhs;
+    std::shared_ptr<Expr const> _rhs;
+    TokenType const _operator;
 };
 
 class CallExpr final : public Expr {
@@ -146,9 +149,9 @@ public:
     void addArgument(std::shared_ptr<Expr const> argument);
 
 private:
-    std::shared_ptr<Expr const> callee;
+    std::shared_ptr<Expr const> _callee;
 
-    std::vector<std::shared_ptr<Expr const>> arguments;
+    std::vector<std::shared_ptr<Expr const>> _arguments;
 };
 
 class TokenExpr final : public Expr {
@@ -160,7 +163,7 @@ public:
     TokenType getTokenType() const;
 
 private:
-    TokenType tokenType;
+    TokenType _tokenType;
 };
 
 /** A group consists of expressions separated by comma (a tuple). */
@@ -176,10 +179,13 @@ public:
     void addMember(std::shared_ptr<Expr> member);
 
 private:
-    std::vector<std::shared_ptr<Expr const>> members;
+    std::vector<std::shared_ptr<Expr const>> _members;
 };
 
 class Stmt : public AST {
+public:
+    virtual ~Stmt();
+
 protected:
     Stmt();
 };
@@ -193,7 +199,7 @@ public:
     Expr const &getExpr() const;
 
 private:
-    std::shared_ptr<Expr const> expr;
+    std::shared_ptr<Expr const> _expr;
 };
 
 class AssignStmt final : public Stmt {
@@ -211,8 +217,8 @@ public:
     std::shared_ptr<Expr const> const &getValuePtr() const;
 
 private:
-    std::string const name;
-    std::shared_ptr<Expr const> value;
+    std::string const _name;
+    std::shared_ptr<Expr const> _value;
 };
 
 class DefStmt final : public Stmt {
@@ -235,9 +241,9 @@ public:
     Stmt const &getBody() const;
 
 private:
-    std::string const name;
-    std::vector<std::string> args_;
-    std::shared_ptr<Stmt const> body;
+    std::string const _name;
+    std::vector<std::string> _args;
+    std::shared_ptr<Stmt const> _body;
 };
 
 class ReturnStmt final : public Stmt {
@@ -251,7 +257,7 @@ public:
     std::shared_ptr<Expr const> const &getExprPtr() const;
 
 private:
-    std::shared_ptr<Expr const> expr;
+    std::shared_ptr<Expr const> _expr;
 };
 
 class CompoundStmt final : public Stmt {
@@ -265,7 +271,7 @@ public:
     void addStatement(std::shared_ptr<Stmt const> const &stmt);
 
 private:
-    std::vector<std::shared_ptr<Stmt const>> statements;
+    std::vector<std::shared_ptr<Stmt const>> _statements;
 };
 
 class PassStmt final : public Stmt {
@@ -292,9 +298,9 @@ public:
     Stmt const &getElseBranch() const;
 
 private:
-    std::shared_ptr<Expr const> condition;
-    std::shared_ptr<Stmt const> thenBranch;
-    std::shared_ptr<Stmt const> elseBranch;
+    std::shared_ptr<Expr const> _condition;
+    std::shared_ptr<Stmt const> _thenBranch;
+    std::shared_ptr<Stmt const> _elseBranch;
 };
 
 class WhileStmt final : public Stmt {
@@ -311,8 +317,8 @@ public:
     Stmt const &getBody() const;
 
 private:
-    std::shared_ptr<Expr const> condition;
-    std::shared_ptr<Stmt const> body;
+    std::shared_ptr<Expr const> _condition;
+    std::shared_ptr<Stmt const> _body;
 };
 
 class BreakStmt final : public Stmt {

@@ -5,7 +5,7 @@
 using namespace llvmPy;
 using namespace std;
 
-static constexpr int eof = std::istream::traits_type::eof();
+static constexpr char eof = static_cast<char>(std::istream::traits_type::eof());
 
 static std::map<std::string const, TokenType>
 buildKeywordMap()
@@ -25,23 +25,23 @@ buildKeywordMap()
 }
 
 Lexer::Lexer(std::istream & stream)
-: stream(stream), keywords(buildKeywordMap())
+: _stream(stream), _keywords(buildKeywordMap())
 {
-    ibuf = 0;
-    ilast = -1;
-    line = 0;
-    col = 0;
-    error = "";
+    _ibuf = 0;
+    _ilast = -1;
+    _line = 0;
+    _col = 0;
+    _error = "";
 }
 
 bool
 Lexer::tokenize(std::vector<Token> & out)
 {
-    tokens.clear();
+    _tokens.clear();
 
     bool newline = true;
     bool comment = false;
-    int indent = 0;
+    size_t indent = 0;
 
     while (true) {
         reset();
@@ -56,7 +56,7 @@ Lexer::tokenize(std::vector<Token> & out)
             comment = true;
         }
 
-        if (is((char) eof)) {
+        if (is(eof)) {
             add(Token(tok_eof));
             comment = false;
             break;
@@ -83,7 +83,7 @@ Lexer::tokenize(std::vector<Token> & out)
         if (ident()) continue;
     }
 
-    out = std::move(tokens);
+    out = std::move(_tokens);
     return true;
 }
 
@@ -114,7 +114,7 @@ Lexer::getError()
 bool
 Lexer::isEof()
 {
-    return ch == (char) eof || stream.eof();
+    return _ch == eof || _stream.eof();
 }
 
 void
@@ -122,81 +122,81 @@ Lexer::add(Token token)
 {
     if (token.getTokenType() == tok_eol) {
         // Ignore empty lines at start of file.
-        if (tokens.empty()) return;
+        if (_tokens.empty()) return;
 
         // Ignore empty lines in the middle of the file.
-        if (tokens.back().getTokenType() == tok_eol) return;
+        if (_tokens.back().getTokenType() == tok_eol) return;
     } else if (token.getTokenType() == tok_eof) {
         // Ignore empty lines at end of file.
-        if (!tokens.empty() && tokens.back().getTokenType() == tok_eol) {
-            tokens.pop_back();
+        if (!_tokens.empty() && _tokens.back().getTokenType() == tok_eol) {
+            _tokens.pop_back();
         }
     }
 
-    tokens.emplace_back(std::move(token));
+    _tokens.emplace_back(std::move(token));
 }
 
 void
 Lexer::next()
 {
-    if (ibuf < ilast - 1) {
-        ch = buf[++ibuf];
-    } else if (ibuf == ilast - 1) {
-        ++ibuf;
-        ch = (char) stream.peek();
-        ilast = -1;
+    if (_ibuf < _ilast - 1) {
+        _ch = _buf[++_ibuf];
+    } else if (_ibuf == _ilast - 1) {
+        ++_ibuf;
+        _ch = static_cast<char>(_stream.peek());
+        _ilast = -1;
     } else {
-        if (ilast > -1) {
+        if (_ilast > -1) {
             // Don't touch the buffer unless a state was pushed.
             // Very long tokens (e.g. strings) will have their own
             // buffering mechanism.
-            buf[ibuf++] = ch;
+            _buf[_ibuf++] = _ch;
         }
 
-        stream.get();
-        ch = (char) stream.peek();
+        _stream.get();
+        _ch = static_cast<char>(_stream.peek());
     }
 }
 
 void
 Lexer::next(std::stringstream & ss)
 {
-    ss << ch;
+    ss << _ch;
     next();
 }
 
 void
 Lexer::reset()
 {
-    ibuf = 0;
-    ilast = -1;
-    ch = (char) stream.peek();
+    _ibuf = 0;
+    _ilast = -1;
+    _ch = static_cast<char>(_stream.peek());
 }
 
 void
 Lexer::push()
 {
-    ilast = ibuf;
+    _ilast = _ibuf;
 }
 
 void
 Lexer::pop()
 {
-    auto tmp = ibuf;
-    ibuf = ilast;
-    ilast = tmp;
+    auto tmp = _ibuf;
+    _ibuf = _ilast;
+    _ilast = tmp;
 
-    if (ibuf == ilast) {
-        ch = (char) stream.peek();
+    if (_ibuf == _ilast) {
+        _ch = static_cast<char>(_stream.peek());
     } else {
-        ch = buf[ibuf];
+        _ch = _buf[_ibuf];
     }
 }
 
 bool
 Lexer::is(char c)
 {
-    if (ch == c) {
+    if (_ch == c) {
         next();
         return true;
     } else {
@@ -207,7 +207,7 @@ Lexer::is(char c)
 bool
 Lexer::is(char c, std::stringstream & ss)
 {
-    char cc = ch;
+    char cc = _ch;
 
     if (is(c)) {
         ss << cc;
@@ -220,7 +220,7 @@ Lexer::is(char c, std::stringstream & ss)
 bool
 Lexer::oneof(char const * chs)
 {
-    if (strchr(chs, ch)) {
+    if (strchr(chs, _ch)) {
         next();
         return true;
     } else {
@@ -231,7 +231,7 @@ Lexer::oneof(char const * chs)
 bool
 Lexer::oneof(char const * chs, std::stringstream & ss)
 {
-    char const * ptr = strchr(chs, ch);
+    char const * ptr = strchr(chs, _ch);
     if (ptr) {
         ss << *ptr;
         next();
@@ -244,7 +244,7 @@ Lexer::oneof(char const * chs, std::stringstream & ss)
 bool
 Lexer::oneof(int (* cls)(int))
 {
-    if (cls(ch)) {
+    if (cls(_ch)) {
         next();
         return true;
     }
@@ -255,7 +255,7 @@ Lexer::oneof(int (* cls)(int))
 bool
 Lexer::oneof(int (* cls)(int), std::stringstream & ss)
 {
-    char cc = ch;
+    char cc = _ch;
 
     if (oneof(cls)) {
         ss << cc;
@@ -331,14 +331,14 @@ Lexer::strlit()
 bool
 Lexer::ident()
 {
-    int start = ibuf;
+    ssize_t start = _ibuf;
 
     if (!oneof(isalpha) && !is('_'))
         return false;
 
     while (oneof(isalnum) || is('_'));
 
-    auto str = std::make_unique<std::string>(&buf[start], ibuf - start);
+    auto str = std::make_unique<std::string>(&_buf[start], _ibuf - start);
 
     if (auto kw = getKeyword(*str)) {
         add(Token(kw));
@@ -352,9 +352,9 @@ Lexer::ident()
 bool
 Lexer::syntax()
 {
-    char a = ch;
+    char a = _ch;
     if (oneof("<>!=+-*/")) {
-        int t;
+        size_t t;
 
         switch (a) {
         case '<': t = tok_lt; break;
@@ -407,8 +407,8 @@ Lexer::syntax()
 TokenType
 Lexer::getKeyword(std::string const &kw)
 {
-    if (keywords.count(kw)) {
-        return keywords.at(kw);
+    if (_keywords.count(kw)) {
+        return _keywords.at(kw);
     } else {
         return tok_unknown;
     }

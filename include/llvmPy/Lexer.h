@@ -21,17 +21,17 @@ public:
     bool isEof();
 
 private:
-    std::istream & stream;
-    std::vector<Token> tokens;
-    std::map<std::string const, TokenType> const keywords;
-    char ch;
-    char buf[BUFFER_SIZE];
-    long ibuf;
-    long ilast;
+    std::istream &_stream;
+    std::vector<Token> _tokens;
+    std::map<std::string const, TokenType> const _keywords;
+    char _ch;
+    char _buf[BUFFER_SIZE];
+    ssize_t _ibuf;
+    ssize_t _ilast;
 
-    long line;
-    long col;
-    std::string error;
+    long _line;
+    long _col;
+    std::string _error;
 
     void add(Token);
 

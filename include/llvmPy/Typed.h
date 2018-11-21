@@ -8,7 +8,7 @@ namespace llvmPy {
 class Typed {
 public:
     // Ensure the class is polymorphic.
-    virtual ~Typed() = default;
+    virtual ~Typed();
 
     template<class K>
     bool isa() {

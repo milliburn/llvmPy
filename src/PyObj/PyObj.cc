@@ -6,12 +6,14 @@ using namespace llvmPy;
 
 PyObj::PyObj() = default;
 
+PyObj::~PyObj() = default;
+
 std::string
 PyObj::py__str__()
 {
     std::stringstream ss;
     ss << "<PyObj 0x";
-    ss << std::hex << std::uppercase << (uint64_t) this;
+    ss << std::hex << std::uppercase << reinterpret_cast<uint64_t>(this);
     ss << ">";
     return ss.str();
 }

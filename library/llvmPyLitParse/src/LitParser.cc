@@ -14,59 +14,59 @@ LitTestResult::LitTestResult(
         std::string const &output,
         int currentProgress,
         int maxProgress)
-: resultCode(resultCode),
-  suiteName(suiteName),
-  testName(testName),
-  output(output),
-  currentProgress(currentProgress),
-  maxProgress(maxProgress)
+: _resultCode(resultCode),
+  _suiteName(suiteName),
+  _testName(testName),
+  _output(output),
+  _currentProgress(currentProgress),
+  _maxProgress(maxProgress)
 {
 }
 
 LitResultCode
 LitTestResult::getResultCode() const
 {
-    return resultCode;
+    return _resultCode;
 }
 
 std::string
 LitTestResult::getSuiteName() const
 {
-    return suiteName;
+    return _suiteName;
 }
 
 std::string
 LitTestResult::getTestName() const
 {
-    return testName;
+    return _testName;
 }
 
 std::string
 LitTestResult::getOutput() const
 {
-    return output;
+    return _output;
 }
 
 int
 LitTestResult::getCurrentProgress() const
 {
-    return currentProgress;
+    return _currentProgress;
 }
 
 int
 LitTestResult::getMaxProgress() const
 {
-    return maxProgress;
+    return _maxProgress;
 }
 
 LitParser::LitParser(std::istream &stream)
-: stream(stream)
+: _stream(stream)
 {
     next();
 }
 
 LitParser::LitParser(std::string const &input)
-: stream(*new std::istringstream(input)) // XXX
+: _stream(*new std::istringstream(input)) // XXX
 {
     next();
 }
@@ -74,7 +74,7 @@ LitParser::LitParser(std::string const &input)
 std::vector<LitTestResult *>
 LitParser::getResults() const
 {
-    return results;
+    return _results;
 }
 
 LitTestResult *
@@ -138,7 +138,7 @@ LitParser::parse()
     while (true) {
         LitTestResult *result = parseNext();
         if (result) {
-            results.push_back(result);
+            _results.push_back(result);
         }
 
         if (isEof()) {
@@ -150,13 +150,13 @@ LitParser::parse()
 char
 LitParser::get()
 {
-    return ch;
+    return _ch;
 }
 
 void
 LitParser::next()
 {
-    ch = (char) stream.get();
+    _ch = static_cast<char>(_stream.get());
 }
 
 bool
@@ -174,7 +174,7 @@ LitParser::isEol()
 bool
 LitParser::isEof()
 {
-    return ch == (char) eof;
+    return _ch == static_cast<char>(eof);
 }
 
 bool
@@ -287,11 +287,11 @@ LitParser::isOutput(std::string *output)
     ss << get();
 
     while (true) {
-        stream.getline(line, sizeof(line));
-        if (isLogDelineator(line)) {
+        _stream.getline(_line, sizeof(_line));
+        if (isLogDelineator(_line)) {
             break;
         } else {
-            ss << line << "\n";
+            ss << _line << "\n";
         }
     }
 

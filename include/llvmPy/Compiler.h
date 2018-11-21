@@ -1,6 +1,12 @@
 #pragma once
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weverything"
+#pragma GCC diagnostic ignored "-Wpedantic"
 #include <llvm/IR/DataLayout.h>
 #include <llvm/IR/LLVMContext.h>
+#pragma GCC diagnostic pop
+
 #include <vector>
 #include <memory>
 
@@ -16,12 +22,12 @@ public:
     void addAndRunModule(std::unique_ptr<llvm::Module> module);
 
 public:
-    llvm::LLVMContext &getContext() { return ctx; }
+    llvm::LLVMContext &getContext() { return _ctx; }
     llvm::DataLayout const &getDataLayout() const;
 
 private:
-    llvm::LLVMContext ctx;
-    std::unique_ptr<CompilerImpl> const impl;
+    llvm::LLVMContext _ctx;
+    std::unique_ptr<CompilerImpl> const _impl;
 };
 
 } // namespace llvmPy

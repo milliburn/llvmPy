@@ -1,117 +1,121 @@
-#include <llvmPy/RT.h>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weverything"
+#pragma GCC diagnostic ignored "-Wpedantic"
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/GlobalVariable.h>
 #include <llvm/IR/Module.h>
+#pragma GCC diagnostic pop
+
+#include <llvmPy/RT.h>
 #include <llvmPy/Instr.h>
 #include <llvmPy/Compiler.h>
-#include <llvm/IR/GlobalVariable.h>
 #include <string>
-#include <llvm/IR/Constants.h>
-
 using namespace llvmPy;
 
 RTModule::RTModule(
         std::string const &name,
         llvm::Module *module,
         Types const &types)
-        : ir(*module),
-          types(types),
-          scope(*this)
+        : _ir(*module),
+          _types(types),
+          _scope(*this)
 {
 }
 
 llvm::Value *
 RTModule::llvmPy_add() const
 {
-    return ir.getOrInsertFunction("llvmPy_add", types.llvmPy_add);
+    return _ir.getOrInsertFunction("llvmPy_add", _types.llvmPy_add);
 }
 
 llvm::Value *
 RTModule::llvmPy_sub() const
 {
-    return ir.getOrInsertFunction("llvmPy_sub", types.llvmPy_sub);
+    return _ir.getOrInsertFunction("llvmPy_sub", _types.llvmPy_sub);
 }
 
 llvm::Value *
 RTModule::llvmPy_mul() const
 {
-    return ir.getOrInsertFunction("llvmPy_mul", types.llvmPy_binop);
+    return _ir.getOrInsertFunction("llvmPy_mul", _types.llvmPy_binop);
 }
 
 llvm::Value *
 RTModule::llvmPy_int() const
 {
-    return ir.getOrInsertFunction("llvmPy_int", types.llvmPy_int);
+    return _ir.getOrInsertFunction("llvmPy_int", _types.llvmPy_int);
 }
 
 llvm::Value *
 RTModule::llvmPy_none() const
 {
-    return ir.getOrInsertFunction("llvmPy_none", types.llvmPy_none);
+    return _ir.getOrInsertFunction("llvmPy_none", _types.llvmPy_none);
 }
 
 llvm::Value *
 RTModule::llvmPy_func() const
 {
-    return ir.getOrInsertFunction("llvmPy_func", types.llvmPy_func);
+    return _ir.getOrInsertFunction("llvmPy_func", _types.llvmPy_func);
 }
 
 llvm::Value *
 RTModule::llvmPy_fchk() const
 {
-    return ir.getOrInsertFunction("llvmPy_fchk", types.llvmPy_fchk);
+    return _ir.getOrInsertFunction("llvmPy_fchk", _types.llvmPy_fchk);
 }
 
 llvm::Value *
 RTModule::llvmPy_print() const
 {
-    return ir.getOrInsertFunction("llvmPy_print", types.llvmPy_print);
+    return _ir.getOrInsertFunction("llvmPy_print", _types.llvmPy_print);
 }
 
 llvm::Value *
 RTModule::llvmPy_str() const
 {
-    return ir.getOrInsertFunction("llvmPy_str", types.llvmPy_str);
+    return _ir.getOrInsertFunction("llvmPy_str", _types.llvmPy_str);
 }
 
 llvm::Value *
 RTModule::llvmPy_bool() const
 {
-    return ir.getOrInsertFunction("llvmPy_bool", types.llvmPy_bool);
+    return _ir.getOrInsertFunction("llvmPy_bool", _types.llvmPy_bool);
 }
 
 llvm::Value *
 RTModule::llvmPy_lt() const
 {
-    return ir.getOrInsertFunction("llvmPy_lt", types.llvmPy_lt);
+    return _ir.getOrInsertFunction("llvmPy_lt", _types.llvmPy_lt);
 }
 
 llvm::Value *
 RTModule::llvmPy_le() const
 {
-    return ir.getOrInsertFunction("llvmPy_le", types.llvmPy_le);
+    return _ir.getOrInsertFunction("llvmPy_le", _types.llvmPy_le);
 }
 
 llvm::Value *
 RTModule::llvmPy_eq() const
 {
-    return ir.getOrInsertFunction("llvmPy_eq", types.llvmPy_eq);
+    return _ir.getOrInsertFunction("llvmPy_eq", _types.llvmPy_eq);
 }
 
 llvm::Value *
 RTModule::llvmPy_ne() const
 {
-    return ir.getOrInsertFunction("llvmPy_ne", types.llvmPy_ne);
+    return _ir.getOrInsertFunction("llvmPy_ne", _types.llvmPy_ne);
 }
 
 llvm::Value *
 RTModule::llvmPy_ge() const
 {
-    return ir.getOrInsertFunction("llvmPy_ge", types.llvmPy_ge);
+    return _ir.getOrInsertFunction("llvmPy_ge", _types.llvmPy_ge);
 }
 
 llvm::Value *
 RTModule::llvmPy_gt() const
 {
-    return ir.getOrInsertFunction("llvmPy_gt", types.llvmPy_gt);
+    return _ir.getOrInsertFunction("llvmPy_gt", _types.llvmPy_gt);
 }
 
 llvm::GlobalVariable *
@@ -138,15 +142,15 @@ RTModule::llvmPy_PyInt(int64_t value) const
     std::string sign = value < 0 ? "_" : "";
     std::string name = "PyInt." + sign + std::to_string(abs(value));
 
-    if (auto *var = ir.getGlobalVariable(name, true)) {
+    if (auto *var = _ir.getGlobalVariable(name, true)) {
         return var;
     } else {
         auto *pyint = new PyInt(value);
-        auto *pyintAddr = types.getInt64(reinterpret_cast<uint64_t>(pyint));
-        auto *pyintPtr = llvm::ConstantExpr::getIntToPtr(pyintAddr, types.Ptr);
+        auto *pyintAddr = _types.getInt64(reinterpret_cast<int64_t>(pyint));
+        auto *pyintPtr = llvm::ConstantExpr::getIntToPtr(pyintAddr, _types.Ptr);
         return new llvm::GlobalVariable(
-                ir,
-                types.Ptr,
+                _ir,
+                _types.Ptr,
                 true,
                 llvm::GlobalVariable::LinkageTypes::PrivateLinkage,
                 pyintPtr,
@@ -162,11 +166,11 @@ RTModule::llvmPy_PyStr(std::string const &value)
         return var->second;
     } else {
         auto *obj = new PyStr(value);
-        auto *addr = types.getInt64(reinterpret_cast<uint64_t>(obj));
-        auto *ptr = llvm::ConstantExpr::getIntToPtr(addr, types.Ptr);
+        auto *addr = _types.getInt64(reinterpret_cast<int64_t>(obj));
+        auto *ptr = llvm::ConstantExpr::getIntToPtr(addr, _types.Ptr);
         auto *global = new llvm::GlobalVariable(
-                ir,
-                types.Ptr,
+                _ir,
+                _types.Ptr,
                 true,
                 llvm::GlobalVariable::LinkageTypes::PrivateLinkage,
                 ptr,
@@ -179,24 +183,24 @@ RTModule::llvmPy_PyStr(std::string const &value)
 llvm::Value *
 RTModule::llvmPy_truthy() const
 {
-    return ir.getOrInsertFunction("llvmPy_truthy", types.llvmPy_truthy);
+    return _ir.getOrInsertFunction("llvmPy_truthy", _types.llvmPy_truthy);
 }
 
 llvm::Value *
 RTModule::llvmPy_len() const
 {
-    return ir.getOrInsertFunction("llvmPy_len", types.llvmPy_len);
+    return _ir.getOrInsertFunction("llvmPy_len", _types.llvmPy_len);
 }
 
 llvm::GlobalVariable *
 RTModule::getOrCreateGlobalExtern(std::string const &name) const
 {
-    if (auto *var = ir.getGlobalVariable(name)) {
+    if (auto *var = _ir.getGlobalVariable(name)) {
         return var;
     } else {
         return new llvm::GlobalVariable(
-                ir,
-                types.PyObj,
+                _ir,
+                _types.PyObj,
                 true,
                 llvm::GlobalVariable::LinkageTypes::ExternalLinkage,
                 nullptr,
