@@ -134,19 +134,17 @@ TEST_CASE("instr: llvmPy_func()", "[instr][func]") {
             }
 
             SECTION("partially if one has already been relocated") {
-                f1->self = nullptr;
+                f2->self = nullptr;
                 Frame *out = moveFrameToHeap(f3, mock3.get());
+
+                // Explicitly test that the frame copy did not extend
+                // beyond the first heap-allocated frame.
 
                 CHECK(out != f3);
                 CHECK(out->self == nullptr);
+                CHECK(out->outer == f2);
                 CHECK(out->vars[0] == &i3);
-
-                out = out->outer;
-
-                CHECK(out != f2);
-                CHECK(out->self == nullptr);
-                CHECK(out->outer == f1);
-                CHECK(out->vars[0] == &i2);
+                CHECK(f1->self == f1);
             }
         }
     }
