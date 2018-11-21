@@ -2,12 +2,12 @@
 #include <sstream>
 using namespace llvmPy;
 
-PyFunc::PyFunc(FrameN *frame, void *label)
+PyFunc::PyFunc(Frame *frame, void *label)
 : frame_(frame), label_(label)
 {
 }
 
-FrameN *
+Frame *
 PyFunc::getFrame() const
 {
     return frame_;

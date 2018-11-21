@@ -2,7 +2,7 @@ Tests in this directory are in the process of restructuring. The following folde
 
 - `Builtins`, with subfolders for builtin functions as well as bytecode support functions.
 - `Generic`, with subfolders for the implementations of particular algorithms and other real-world-like scenarios.
-- `Patterns`, with subfolders for particular common usage scenarios. 
+- `Internals`, with subfolders for particular inner workings that make up llvmPy. 
 - `Syntax`, with subfolders for particular syntactical features.
 - `Types`, with subfolders for individual core types.
 

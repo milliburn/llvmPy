@@ -23,7 +23,7 @@ static struct {
     string PosArgCount = "";
     string FuncPtr = "";
     string RetVal = "";
-    string Arg = "";
+    string Arg = "arg";
     string OuterFrame = "outer";
     string OuterFramePtr = "outerptr";
     string InnerFrame = "frame";
@@ -134,28 +134,26 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
 
     for (auto &arg : args) {
         llvm::Value *value = emit(scope, *arg);
-        value->setName(tags.Arg);
         argSlots.push_back(value);
         argCount++;
     }
 
     // Call frame pointer.
-    llvm::AllocaInst *callFrame = ir.CreateAlloca(
-            types.FrameNPtr, 0, tags.CallFrame);
+    auto *callFrameAlloca = ir.CreateAlloca(types.FramePtr, 0, tags.CallFrame);
 
     // Count of positional arguments.
     llvm::Value *np = llvm::ConstantInt::get(types.PyIntValue, argCount);
 
     llvm::CallInst *inst = ir.CreateCall(
             mod.llvmPy_fchk(),
-            { callFrame, lhs, np },
+            { callFrameAlloca, lhs, np },
             tags.FuncPtr);
 
-    argSlots[0] = callFrame;
+    argSlots[0] = callFrameAlloca;
 
     llvm::Value *funcBitCast = ir.CreateBitCast(
             inst,
-            llvm::PointerType::getUnqual(types.getFuncN(argCount)));
+            types.getPtr(types.getOpaqueFunc(argCount)));
 
     return ir.CreateCall(funcBitCast, argSlots, tags.RetVal);
 }
@@ -183,27 +181,8 @@ Emitter::emit(RTScope &scope, IdentExpr const &ident)
         return mod.llvmPy_False();
     }
 
-    if (scope.hasSlot(name)) {
-        auto *slot = scope.getSlotValue(name);
-        return ir.CreateLoad(slot);
-    } else if (scope.getParent().hasSlot(name)) {
-        auto slotIndex = scope.getParent().getSlotIndex(ident.getName());
-
-        llvm::Value *outerFramePtr = ir.CreateLoad(scope.getOuterFramePtr());
-
-        llvm::Value *outerFrameSlotGEP = ir.CreateGEP(
-                outerFramePtr,
-                { types.getInt64(0),
-                  types.getInt32(2),
-                  types.getInt64(slotIndex) });
-
-        llvm::Value *outerSlot = ir.CreateLoad(outerFrameSlotGEP);
-
-        return outerSlot;
-    } else {
-        cerr << "Slot " << ident.getName() << " not found!" << endl;
-        exit(127);
-    }
+    auto *gep = findLexicalSlotGEP(name, scope, scope.getInnerFramePtrPtr());
+    return ir.CreateLoad(gep);
 }
 
 llvm::Value *
@@ -227,7 +206,7 @@ Emitter::emit(RTScope &scope, LambdaExpr const &lambda)
     llvm::Value *innerFramePtrBitCast =
             ir.CreateBitCast(
                     scope.getInnerFramePtr(),
-                    types.FrameNPtr);
+                    types.FramePtr);
 
     llvm::Value *functionPtrBitCast =
             ir.CreateBitCast(
@@ -282,32 +261,38 @@ Emitter::createFunction(
 {
     RTModule &mod = outerScope.getModule();
 
-    // Names of slots in the frame.
-    std::set<std::string> slotNames;
+    RTScope *innerScope = outerScope.createDerived();
 
-    vector<llvm::Type *> argTypes;
-
-    if (outerScope.getInnerFramePtr()) {
-        llvm::Value *outerFramePtr = outerScope.getInnerFramePtr();
-        argTypes.push_back(
-                llvm::PointerType::getUnqual(outerFramePtr->getType()));
+    if (outerScope.getInnerFramePtrPtr()) {
+        innerScope->setOuterFrameType(outerScope.getInnerFrameType());
     } else {
-        argTypes.push_back(types.FrameNPtrPtr);
+        innerScope->setOuterFrameType(types.Frame);
     }
+
+    std::set<std::string> slotNames;
+    size_t argCount = 0;
 
     for (auto &argName : args) {
         if (!slotNames.count(argName)) {
             slotNames.insert(argName);
-            argTypes.push_back(types.Ptr);
+            argCount += 1;
         }
     }
 
+    gatherSlotNames(stmt, slotNames);
+
+    innerScope->setInnerFrameType(
+            types.getFuncFrame(
+                    name,
+                    innerScope->getOuterFrameType(),
+                    slotNames.size()));
+
     llvm::Function *function =
             llvm::Function::Create(
-                    llvm::FunctionType::get(
-                            types.Ptr,
-                            argTypes,
-                            false),
+                    types.getFunc(
+                            name,
+                            innerScope->getOuterFrameType(),
+                            argCount),
                     llvm::Function::ExternalLinkage,
                     name,
                     &mod.getModule());
@@ -324,7 +309,7 @@ Emitter::createFunction(
             arg.setName(tags.OuterFramePtr);
             outerFramePtrPtrArg = &arg;
         } else {
-            arg.setName("arg_" + *argNames);
+            arg.setName(tags.Arg + "." + *argNames);
             ++argNames;
         }
 
@@ -339,47 +324,39 @@ Emitter::createFunction(
     auto *entry = llvm::BasicBlock::Create(ctx, "", function);
     ir.SetInsertPoint(entry);
 
-    gatherSlotNames(stmt, slotNames);
+    // Generate the frame for variables to be potentially lifted onto the
+    // heap by a closure.
 
-    // Dereference the outer frame.
-    llvm::Value *outerFramePtr =
-            ir.CreateLoad(outerFramePtrPtrArg, tags.OuterFrame);
+    auto *frameAlloca = ir.CreateAlloca(
+            innerScope->getInnerFrameType(),
+            nullptr,
+            tags.InnerFrame);
 
-    // Generate the frame.
-    llvm::StructType *innerFrameType = types.getFrameN(slotNames.size());
-    llvm::AllocaInst *innerFrameAlloca = ir.CreateAlloca(
-            innerFrameType, nullptr, tags.InnerFrame);
+    innerScope->setInnerFramePtr(frameAlloca);
 
-    // Store the frame's self-pointer.
-    llvm::Value *frameSelfPtrGEP =
-            ir.CreateGEP(
-                    innerFrameType,
-                    innerFrameAlloca,
-                    { types.getInt64(0),
-                      types.getInt32(0) });
-    ir.CreateStore(innerFrameAlloca, frameSelfPtrGEP);
+    auto *frameSelfPtrPtr = ir.CreateGEP(
+            frameAlloca,
+            { types.getInt64(0),
+              types.getInt32(Frame::SelfIndex) });
 
-    // Store the frame's outer pointer.
+    innerScope->setInnerFramePtrPtr(frameSelfPtrPtr);
 
-    llvm::Value *frameOuterPtrGEP =
-            ir.CreateGEP(
-                    innerFrameType,
-                    innerFrameAlloca,
-                    { types.getInt64(0),
-                      types.getInt32(1) });
+    auto *frameOuterPtrPtr = ir.CreateGEP(
+            frameAlloca,
+            { types.getInt64(0),
+              types.getInt32(Frame::OuterIndex) });
 
-    llvm::Value *frameOuterPtrGEPBitCast =
-            ir.CreateBitCast(
-                    frameOuterPtrGEP,
-                    llvm::PointerType::getUnqual(
-                            outerFramePtr->getType()));
+    ir.CreateStore(frameAlloca, frameSelfPtrPtr);
 
-    ir.CreateStore(outerFramePtr, frameOuterPtrGEPBitCast);
+    auto *outerFramePtr = ir.CreateLoad(
+            outerFramePtrPtrArg, tags.OuterFrame);
 
-    RTScope *innerScope =
-            outerScope.createDerived(
-                    innerFrameAlloca,
-                    outerFramePtrPtrArg);
+    ir.CreateStore(outerFramePtr, frameOuterPtrPtr);
+
+    // TODO: Zero-initialize slots with llvm.memset or something.
+
+    function->setPrefixData(
+            types.getInt64(reinterpret_cast<int64_t>(innerScope)));
 
     for (auto const &slotName : slotNames) {
         innerScope->declareSlot(slotName);
@@ -396,35 +373,18 @@ Emitter::createFunction(
             assert(innerScope->hasSlot(ident));
             auto slotIndex = innerScope->getSlotIndex(ident);
 
-            llvm::Value *assignGEP = ir.CreateGEP(
-                    innerFrameType,
-                    innerFrameAlloca,
+            auto *argVarPtr = ir.CreateGEP(
+                    frameAlloca,
                     { types.getInt64(0),
-                      types.getInt32(2),
+                      types.getInt32(Frame::VarsIndex),
                       types.getInt64(slotIndex) },
                     tags.Var + "_" + ident);
-            ir.CreateStore(&arg, assignGEP);
 
-            // TODO: This would be invalidated if the pointer changes
-            // TODO: (i.e. if the callee's chain ends up lifting the frame
-            // TODO: to heap).
-            innerScope->setSlotValue(ident, assignGEP);
+            ir.CreateStore(&arg, argVarPtr);
         }
 
         iArg++;
     }
-
-    // Zero-initialise the contents of assign statements. This will act
-    // as a sentinel to detect use before set.
-
-    zeroInitialiseSlots(
-            stmt,
-            *innerScope,
-            entry,
-            innerFrameType,
-            innerFrameAlloca);
-
-    // Successive statements may leave the emitter at a different insert point.
 
     ir.SetInsertPoint(entry);
 
@@ -451,10 +411,13 @@ Emitter::emitCondStmt(
     // If the BBs were immediately linked, the function would end up with
     // a non-linear BBs as any compound statement might itself create more.
 
-    auto *ifBB = llvm::BasicBlock::Create(ctx, tags.If);
-    auto *thenBB = llvm::BasicBlock::Create(ctx, tags.Then);
-    auto *elseBB = llvm::BasicBlock::Create(ctx, tags.Else);
-    auto *endifBB = llvm::BasicBlock::Create(ctx, tags.Endif);
+    size_t condIndex = scope.getNextCondStmtIndex();
+    std::string suffix = "." + std::to_string(condIndex);
+
+    auto *ifBB = llvm::BasicBlock::Create(ctx, tags.If + suffix);
+    auto *thenBB = llvm::BasicBlock::Create(ctx, tags.Then + suffix);
+    auto *elseBB = llvm::BasicBlock::Create(ctx, tags.Else + suffix);
+    auto *endifBB = llvm::BasicBlock::Create(ctx, tags.Endif + suffix);
 
     ir.CreateBr(ifBB);
     ifBB->insertInto(&function);
@@ -509,9 +472,11 @@ Emitter::emitStatement(
     } else if (auto *cond = stmt.cast<ConditionalStmt>()) {
         emitCondStmt(function, scope, *cond, loop);
     } else if (auto *assign = stmt.cast<AssignStmt>()) {
-        auto *slot = scope.getSlotValue(assign->getName());
+        // slotGEP has to come after emission, as something like a lambda
+        // may invalidate the existing stack pointer.
         auto *value = emit(scope, assign->getValue());
-        ir.CreateStore(value, slot);
+        auto *slotGEP = findLexicalSlotGEP(assign->getName(), scope);
+        ir.CreateStore(value, slotGEP);
     } else if (auto *while_ = stmt.cast<WhileStmt>()) {
         emitWhileStmt(function, scope, *while_);
     } else if (stmt.isa<BreakStmt>()) {
@@ -531,9 +496,12 @@ Emitter::emitWhileStmt(
 {
     RTModule &mod = scope.getModule();
 
-    auto *condBB = llvm::BasicBlock::Create(ctx, tags.While);
-    auto *loopBB = llvm::BasicBlock::Create(ctx, tags.Loop);
-    auto *endwhileBB = llvm::BasicBlock::Create(ctx, tags.Endwhile);
+    auto whileIndex = scope.getNextWhileStmtIndex();
+    std::string suffix = "." + std::to_string(whileIndex);
+
+    auto *condBB = llvm::BasicBlock::Create(ctx, tags.While + suffix);
+    auto *loopBB = llvm::BasicBlock::Create(ctx, tags.Loop + suffix);
+    auto *endwhileBB = llvm::BasicBlock::Create(ctx, tags.Endwhile + suffix);
 
     Loop loop = { .cond = condBB, .end = endwhileBB };
 
@@ -566,7 +534,7 @@ Emitter::emitBreakStmt(Emitter::Loop const *loop)
 void
 Emitter::emitContinueStmt(Emitter::Loop const *loop)
 {
-    assert(loop);
+    assert(loop && loop->cond);
     ir.CreateBr(loop->cond);
 }
 
@@ -596,76 +564,6 @@ Emitter::gatherSlotNames(Stmt const &stmt, std::set<std::string> &names)
 }
 
 void
-Emitter::zeroInitialiseSlots(
-        Stmt const &body,
-        RTScope &scope,
-        llvm::BasicBlock *insertPoint,
-        llvm::Type *frameType,
-        llvm::Value *frameAlloca)
-{
-    ir.SetInsertPoint(insertPoint);
-    if (body.isa<ExprStmt>()
-        || body.isa<PassStmt>()
-        || body.isa<BreakStmt>()
-        || body.isa<ContinueStmt>()
-        || body.isa<ReturnStmt>()) {
-        // Ignore.
-    } else if (auto *assign = body.cast<AssignStmt>()) {
-        zeroInitialiseSlot(assign->getName(), scope, frameType, frameAlloca);
-    } else if (auto *def = body.cast<DefStmt>()) {
-        zeroInitialiseSlot(def->getName(), scope, frameType, frameAlloca);
-    } else if (auto *compound = body.cast<CompoundStmt>()) {
-        for (auto const &stmt : compound->getStatements()) {
-            zeroInitialiseSlots(
-                    *stmt, scope, insertPoint, frameType, frameAlloca);
-        }
-    } else if (auto *loop = body.cast<WhileStmt>()) {
-        zeroInitialiseSlots(
-                loop->getBody(),
-                scope, insertPoint, frameType, frameAlloca);
-    } else if (auto *cond = body.cast<ConditionalStmt>()) {
-        zeroInitialiseSlots(
-                cond->getThenBranch(),
-                scope, insertPoint, frameType, frameAlloca);
-        zeroInitialiseSlots(
-                cond->getElseBranch(),
-                scope, insertPoint, frameType, frameAlloca);
-    } else {
-        assert(false && "Unhandled statement type");
-    }
-}
-
-void
-Emitter::zeroInitialiseSlot(
-        std::string const &name,
-        RTScope &scope,
-        llvm::Type *frameType,
-        llvm::Value *frameAlloca)
-{
-    if (scope.getSlotValue(name)) {
-        // Slot already zero-initialised.
-        return;
-    }
-
-    auto index = scope.getSlotIndex(name);
-
-    auto *assignGEP = ir.CreateGEP(
-            frameType,
-            frameAlloca,
-            { types.getInt64(0),
-              types.getInt32(2),
-              types.getInt64(index) },
-            tags.Var + "_" + name);
-
-    ir.CreateStore(llvm::Constant::getNullValue(types.Ptr), assignGEP);
-
-    // TODO: This would be invalidated if the pointer changes
-    // TODO: (i.e. if the callee's chain ends up lifting the frame
-    // TODO: to heap).
-    scope.setSlotValue(name, assignGEP);
-}
-
-void
 Emitter::emitDefStmt(
         llvm::Function &outer,
         RTScope &scope,
@@ -677,7 +575,7 @@ Emitter::emitDefStmt(
     auto *insertBlock = ir.GetInsertBlock();
 
     auto *function = createFunction(
-            tags.Def + "_" + def.getName(),
+            def.getName(),
             scope,
             def.getBody(),
             def.args());
@@ -687,7 +585,7 @@ Emitter::emitDefStmt(
     llvm::Value *innerFramePtrBitCast =
             ir.CreateBitCast(
                     scope.getInnerFramePtr(),
-                    types.FrameNPtr);
+                    types.FramePtr);
 
     llvm::Value *functionPtrBitCast =
             ir.CreateBitCast(
@@ -699,7 +597,9 @@ Emitter::emitDefStmt(
             { innerFramePtrBitCast,
               functionPtrBitCast });
 
-    ir.CreateStore(value, scope.getSlotValue(def.getName()));
+    auto *gep = findLexicalSlotGEP(def.getName(), scope);
+
+    ir.CreateStore(value, gep);
 }
 
 llvm::Value *
@@ -722,4 +622,60 @@ Emitter::emit(RTScope &scope, UnaryExpr const &unary)
     }
 
     assert(false && "Not Implemented");
+}
+
+llvm::Value *
+Emitter::findLexicalSlotGEP(
+        std::string const &name,
+        RTScope &scope,
+        llvm::Value *framePtrPtr)
+{
+    if (!framePtrPtr) {
+        framePtrPtr = scope.getInnerFramePtrPtr();
+    }
+
+    if (scope.hasSlot(name)) {
+
+        auto index = static_cast<int64_t>(scope.getSlotIndex(name));
+
+        assert(index >= 0); // Later -1 could mean it's not a frame value.
+
+        auto *framePtr = ir.CreateLoad(framePtrPtr);
+
+        auto *slotGEP = ir.CreateGEP(
+                framePtr,
+                { types.getInt64(0),
+                  types.getInt32(Frame::VarsIndex),
+                  types.getInt64(index) },
+                tags.Var + "." + name);
+
+        return slotGEP;
+
+    } else if (scope.hasParent()) {
+
+        auto *framePtr = ir.CreateLoad(framePtrPtr);
+
+        auto *outerFramePtrPtr = ir.CreateGEP(
+                framePtr,
+                { types.getInt64(0),
+                  types.getInt32(Frame::OuterIndex) });
+
+        auto *result = findLexicalSlotGEP(
+                name,
+                (RTScope &) scope.getParent(), // TODO
+                outerFramePtrPtr);
+
+        if (!result) {
+            // Clean up the unused instructions.
+            // TODO: Does it leak memory?
+            framePtr->eraseFromParent();
+            outerFramePtrPtr->deleteValue();
+        }
+
+        return result;
+
+    } else {
+        assert(false && "Slot not found");
+        return nullptr;
+    }
 }

@@ -70,16 +70,10 @@ public:
             Stmt const &stmt,
             std::set<std::string> &names);
 
-    void zeroInitialiseSlots(
-            Stmt const &body, RTScope &scope,
-            llvm::BasicBlock *insertPoint, llvm::Type *frameType,
-            llvm::Value *frameAlloca);
-
-    void zeroInitialiseSlot(
+    llvm::Value *findLexicalSlotGEP(
             std::string const &name,
             RTScope &scope,
-            llvm::Type *frameType,
-            llvm::Value *frameAlloca);
+            llvm::Value *framePtrPtr = nullptr);
 
     RTModule *createModule(std::string const &name, Stmt const &stmt);
     RTModule *createModule(std::string const &name);

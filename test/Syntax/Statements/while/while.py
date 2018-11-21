@@ -8,17 +8,17 @@
 i = 0
 print("Start: " + str(i))
 
-# IR-LABEL: while:
+# IR-LABEL: while.0:
 # IR: [[RESULT:%[a-z_0-9]+]] = call %PyObj* @llvmPy_lt
 # IR-NEXT: [[TRUTHY:%[a-z_0-9]+]] = call i1 @llvmPy_truthy(%PyObj* [[RESULT]])
-# IR-NEXT: br i1 [[TRUTHY]], label %loop, label %endwhile
-# IR-LABEL: loop:
+# IR-NEXT: br i1 [[TRUTHY]], label %loop.0, label %endwhile.0
+# IR-LABEL: loop.0:
 while i < 4:
     print("Loop " + str(i))
     i = i + 1
-    # IR: br label %while
+    # IR: br label %while.0
 
-# IR-LABEL: endwhile:
+# IR-LABEL: endwhile.0:
 print("End: " + str(i))
 
 # LEXER-LABEL: >0 i = 0n

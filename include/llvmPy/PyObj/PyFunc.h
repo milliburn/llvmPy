@@ -9,16 +9,16 @@ namespace llvmPy {
 
 class PyFunc : public PyObj {
 public:
-    PyFunc(FrameN *frame, void *label);
+    PyFunc(Frame *frame, void *label);
 
     std::string py__str__() override;
 
-    FrameN *getFrame() const;
+    Frame *getFrame() const;
 
     void *getLabel() const;
 
 private:
-    FrameN *frame_;
+    Frame *frame_;
     void * const label_;
 };
 

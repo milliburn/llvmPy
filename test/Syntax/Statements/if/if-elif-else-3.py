@@ -1,4 +1,4 @@
-# RUN: %S/../test.sh %s
+# RUN: test-output.sh %s
 
 x = 1
 
@@ -9,9 +9,9 @@ if x == 1:
 
 print("D")
 
-# CHECK-LABEL: Test Case 1
-# CHECK-NEXT: A
-# CHECK-NEXT: D
+# OUTPUT-LABEL: Test Case 1
+# OUTPUT-NEXT: A
+# OUTPUT-NEXT: D
 
 print("Test Case 2")
 
@@ -20,8 +20,8 @@ if x != 1:
 
 print("D")
 
-# CHECK-LABEL: Test Case 2
-# CHECK-NEXT: D
+# OUTPUT-LABEL: Test Case 2
+# OUTPUT-NEXT: D
 
 print("Test Case 3")
 
@@ -32,9 +32,9 @@ else:
 
 print("D")
 
-# CHECK-LABEL: Test Case 3
-# CHECK-NEXT: A
-# CHECK-NEXT: D
+# OUTPUT-LABEL: Test Case 3
+# OUTPUT-NEXT: A
+# OUTPUT-NEXT: D
 
 print("Test Case 4")
 
@@ -45,9 +45,9 @@ else:
 
 print("D")
 
-# CHECK-LABEL: Test Case 4
-# CHECK-NEXT: B
-# CHECK-NEXT: D
+# OUTPUT-LABEL: Test Case 4
+# OUTPUT-NEXT: B
+# OUTPUT-NEXT: D
 
 print("Test Case 5")
 
@@ -60,9 +60,9 @@ else:
 
 print("D")
 
-# CHECK-LABEL: Test Case 5
-# CHECK-NEXT: A
-# CHECK-NEXT: D
+# OUTPUT-LABEL: Test Case 5
+# OUTPUT-NEXT: A
+# OUTPUT-NEXT: D
 
 print("Test Case 6")
 
@@ -75,9 +75,9 @@ else:
 
 print("D")
 
-# CHECK-LABEL: Test Case 6
-# CHECK-NEXT: A
-# CHECK-NEXT: D
+# OUTPUT-LABEL: Test Case 6
+# OUTPUT-NEXT: A
+# OUTPUT-NEXT: D
 
 print("Test Case 7")
 
@@ -90,9 +90,9 @@ else:
 
 print("D")
 
-# CHECK-LABEL: Test Case 7
-# CHECK-NEXT: B
-# CHECK-NEXT: D
+# OUTPUT-LABEL: Test Case 7
+# OUTPUT-NEXT: B
+# OUTPUT-NEXT: D
 
 print("Test Case 8")
 
@@ -105,9 +105,9 @@ else:
 
 print("D")
 
-# CHECK-LABEL: Test Case 8
-# CHECK-NEXT: C
-# CHECK-NEXT: D
+# OUTPUT-LABEL: Test Case 8
+# OUTPUT-NEXT: C
+# OUTPUT-NEXT: D
 
 print("Test Case 9")
 
@@ -118,5 +118,5 @@ elif x != 1:
 
 print("D")
 
-# CHECK-LABEL: Test Case 9
-# CHECK-NEXT: D
+# OUTPUT-LABEL: Test Case 9
+# OUTPUT-NEXT: D

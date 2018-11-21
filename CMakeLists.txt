@@ -35,7 +35,11 @@ add_library(
         include/llvmPy/PyObj/PyObj.h
         include/llvmPy/PyObj/PyStr.h
         include/llvmPy/RT/Frame.h
+        include/llvmPy/RT/RTModule.h
+        include/llvmPy/RT/RTScope.h
+        include/llvmPy/RT/Scope.h
         include/llvmPy/Support/iterator_range.h
+        include/llvmPy/Support/Testing.h
         include/llvmPy/AST.h
         include/llvmPy/Compiler.h
         include/llvmPy/Emitter.h
@@ -53,7 +57,10 @@ add_library(
         src/PyObj/PyNone.cc
         src/PyObj/PyObj.cc
         src/PyObj/PyStr.cc
+        src/RT/Frame.cc
         src/RT/RTScope.cc
+        src/RT/RTModule.cc
+        src/RT/Scope.cc
         src/AST.cc
         src/Compiler.cc
         src/CompilerImpl.h
@@ -106,7 +113,8 @@ add_executable(
         test/Builtins/str/builtin_str.cc
         test/Types/PyStr/type_PyStr.cc
         test/Builtins/truthy/instr_truthy.cc
-        test/Builtins/bool/builtin_bool.cc)
+        test/Builtins/bool/builtin_bool.cc
+        test/Builtins/func/instr_func.cc)
 
 # The test suites depend on an up-to-date llvmPy binary.
 add_dependencies(

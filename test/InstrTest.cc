@@ -44,20 +44,12 @@ TEST_CASE("Instr") {
         CHECK(rv1 == rv2);
     }
 
-    SECTION("llvmPy_func: will store the frame and function pointers") {
-        auto frame = reinterpret_cast<FrameN*>(123);
-        auto label = reinterpret_cast<void *>(888);
-        PyFunc *pyfunc = llvmPy_func(frame, label);
-        CHECK(pyfunc->getFrame() == frame);
-        CHECK(pyfunc->getLabel() == label);
-    }
-
     SECTION("llvmPy_fchk: will return the LLVM function and frame pointers") {
-        auto frame = reinterpret_cast<FrameN*>(123);
+        auto frame = reinterpret_cast<Frame*>(123);
         auto label = reinterpret_cast<void *>(888);
 
         PyFunc f(frame, label);
-        FrameN *callframe;
+        Frame *callframe;
         void *rv = llvmPy_fchk(&callframe, f, 0);
         CHECK(rv == label);
         CHECK(callframe == frame);

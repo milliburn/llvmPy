@@ -1,44 +1,33 @@
 #include <assert.h>
-#include <llvmPy/RT.h>
+#include <llvmPy/RT/RTScope.h>
 using namespace llvmPy;
 
-RTScope::RTScope(
-        RTModule &module,
-        RTScope &parent,
-        llvm::Value *innerFramePtr,
-        llvm::Value *outerFramePtr)
-        : module(module),
-          parent(&parent),
-          outerFramePtr(outerFramePtr),
-          innerFramePtr(innerFramePtr)
+RTScope::RTScope(RTScope &parent)
+: Scope(parent),
+  module(parent.getModule()),
+  innerFramePtrPtr(nullptr),
+  innerFrameType(nullptr),
+  outerFrameType(nullptr),
+  condStmtCount(0),
+  whileStmtCount(0)
 {
-
 }
 
 RTScope::RTScope(RTModule &module)
-        : module(module),
-          parent(nullptr),
-          outerFramePtr(nullptr),
-          innerFramePtr(nullptr)
+: Scope(),
+  module(module),
+  innerFramePtrPtr(nullptr),
+  innerFrameType(nullptr),
+  outerFrameType(nullptr),
+  condStmtCount(0),
+  whileStmtCount(0)
 {
 }
 
 RTScope *
-RTScope::createDerived(
-        llvm::Value *innerFramePtr,
-        llvm::Value *outerFramePtr)
+RTScope::createDerived()
 {
-    return new RTScope(module, *this, innerFramePtr, outerFramePtr);
-}
-
-RTScope &
-RTScope::getParent() const
-{
-    if (!hasParent()) {
-        throw "Cannot return parent of top-level RTScope.";
-    }
-
-    return *parent;
+    return new RTScope(*this);
 }
 
 RTModule &
@@ -47,22 +36,42 @@ RTScope::getModule() const
     return module;
 }
 
-bool
-RTScope::hasParent() const
+llvm::Value *
+RTScope::getInnerFramePtrPtr() const
 {
-    return parent != nullptr;
+    return innerFramePtrPtr;
 }
 
-llvm::Value *
-RTScope::getOuterFramePtr() const
+llvm::StructType *
+RTScope::getInnerFrameType() const
 {
-    return outerFramePtr;
+    assert(innerFrameType);
+    return innerFrameType;
 }
 
-llvm::Value *
-RTScope::getInnerFramePtr() const
+void
+RTScope::setInnerFrameType(llvm::StructType *st)
 {
-    return innerFramePtr;
+    innerFrameType = st;
+}
+
+llvm::StructType *
+RTScope::getOuterFrameType() const
+{
+    assert(outerFrameType);
+    return outerFrameType;
+}
+
+void
+RTScope::setOuterFrameType(llvm::StructType *st)
+{
+    outerFrameType = st;
+}
+
+void
+RTScope::setInnerFramePtrPtr(llvm::Value *ptr)
+{
+    innerFramePtrPtr = ptr;
 }
 
 bool
@@ -101,4 +110,34 @@ RTScope::getSlotIndex(std::string const &name) const
 {
     assert(hasSlot(name));
     return slots.at(name).frameIndex;
+}
+
+size_t
+RTScope::getSlotCount() const
+{
+    return slots.size();
+}
+
+llvm::Value *
+RTScope::getInnerFramePtr() const
+{
+    return innerFramePtr;
+}
+
+void
+RTScope::setInnerFramePtr(llvm::Value *ptr)
+{
+    innerFramePtr = ptr;
+}
+
+size_t
+RTScope::getNextCondStmtIndex()
+{
+    return condStmtCount++;
+}
+
+size_t
+RTScope::getNextWhileStmtIndex()
+{
+    return whileStmtCount++;
 }

@@ -24,11 +24,9 @@ Types::Types(
 
     PyObj = llvm::StructType::create(ctx, "PyObj");
     Ptr = llvm::PointerType::getUnqual(PyObj);
-    FrameN = llvm::StructType::create(ctx, "FrameN");
-    FrameNPtr = llvm::PointerType::getUnqual(FrameN);
-    FrameNPtrPtr = llvm::PointerType::getUnqual(FrameNPtr);
-    Func = llvm::FunctionType::get(Ptr, { FrameNPtrPtr }, false);
-    FuncPtr = llvm::PointerType::getUnqual(Func);
+    Frame = llvm::StructType::create(ctx, "Frame");
+    FramePtr = getPtr(Frame);
+    FramePtrPtr = getPtr(FramePtr);
 
     PyIntValue = llvm::IntegerType::get(ctx, dl.getPointerSizeInBits());
 
@@ -37,10 +35,13 @@ Types::Types(
     llvmPy_sub = llvmPy_binop;
     llvmPy_int = llvm::FunctionType::get(Ptr, { Ptr }, false);
     llvmPy_none = llvm::FunctionType::get(Ptr, {}, false);
-    llvmPy_func = llvm::FunctionType::get(
-            Ptr, { FrameNPtr, i8Ptr }, false);
+    llvmPy_func = llvm::FunctionType::get(Ptr, { FramePtr, i8Ptr }, false);
     llvmPy_fchk = llvm::FunctionType::get(
-            i8Ptr, { FrameNPtrPtr, Ptr, PyIntValue }, false);
+            i8Ptr,
+            { FramePtrPtr,
+              Ptr,
+              PyIntValue },
+            false);
     llvmPy_print = llvm::FunctionType::get(Ptr, { Ptr }, false);
     llvmPy_str = llvm::FunctionType::get(Ptr, { Ptr }, false);
     llvmPy_bool = llvm::FunctionType::get(Ptr, { Ptr }, false);
@@ -58,44 +59,6 @@ Types::Types(
     llvmPy_gt = cmp;
 }
 
-llvm::StructType *
-Types::getFrameN() const
-{
-    return FrameN;
-}
-
-llvm::StructType *
-Types::getFrameN(int N) const
-{
-    if (frameN.count(N)) {
-        return frameN[N];
-    }
-
-    llvm::StructType *st = llvm::StructType::create(
-            ctx, "Frame" + std::to_string(N));
-    st->setBody(
-            {
-                    llvm::PointerType::getUnqual(st),
-                    FrameNPtr,
-                    llvm::ArrayType::get(Ptr, N)
-            },
-            true);
-    frameN[N] = st;
-    return st;
-}
-
-llvm::PointerType *
-Types::getFrameNPtr() const
-{
-    return FrameNPtr;
-}
-
-llvm::PointerType *
-Types::getFrameNPtr(int N) const
-{
-    return llvm::PointerType::getUnqual(getFrameN(N));
-}
-
 llvm::ConstantInt *
 Types::getInt32(int32_t value) const
 {
@@ -110,25 +73,58 @@ Types::getInt64(int64_t value) const
             llvm::Type::getInt64Ty(ctx), (uint64_t) value);
 }
 
-llvm::FunctionType *
-Types::getFuncN(int N) const
+llvm::PointerType *
+Types::getPtr(llvm::Type *type) const
 {
-    if (funcN.count(N)) {
-        return funcN[N];
-    }
+    return llvm::PointerType::getUnqual(type);
+}
 
+llvm::FunctionType *
+Types::getOpaqueFunc(int N) const
+{
     std::vector<llvm::Type *> argTypes;
-    argTypes.push_back(FrameNPtrPtr);
+    argTypes.push_back(FramePtrPtr);
 
     for (int i = 0; i < N; ++i) {
         argTypes.push_back(Ptr);
     }
 
-    auto *ft = llvm::FunctionType::get(Ptr, argTypes, false);
+    return llvm::FunctionType::get(Ptr, argTypes, false);
+}
 
-    funcN[N] = ft;
+llvm::FunctionType *
+Types::getFunc(
+        std::string const &name,
+        llvm::StructType *outer,
+        int N) const
+{
+    std::vector<llvm::Type *> argTypes;
+    argTypes.push_back(getPtr(getPtr(outer)));
 
-    return ft;
+    for (int i = 0; i < N; ++i) {
+        argTypes.push_back(Ptr);
+    }
+
+    return llvm::FunctionType::get(Ptr, argTypes, false);
+}
+
+llvm::StructType *
+Types::getFuncFrame(
+        std::string const &name,
+        llvm::StructType *outer,
+        int N) const
+{
+    std::string frameName = "Frame." + name;
+
+    auto *structType = llvm::StructType::create(ctx, frameName);
+
+    structType->setBody(
+            { getPtr(structType),
+              getPtr(outer),
+              llvm::ArrayType::get(Ptr, N), },
+            true);
+
+    return structType;
 }
 
 extern "C" PyObj * __used
@@ -161,10 +157,50 @@ llvmPy_none()
     return &PyNone::get();
 }
 
-extern "C" PyFunc * __used
-llvmPy_func(FrameN *frame, void *label)
+Frame *
+llvmPy::moveFrameToHeap(Frame *frame, Scope const &scope)
 {
-    return new PyFunc(frame, label);
+    if (!frame) {
+        return nullptr;
+    } else if (frame->isPointingToHeap()) {
+        return frame->self;
+    } else if (frame->isOnHeap()) {
+        return frame;
+    } else {
+        auto const slotCount = scope.getSlotCount();
+        auto const frameSize = Frame::getSizeof(slotCount);
+        auto *heapFrame = reinterpret_cast<Frame *>(malloc(frameSize));
+        frame->moveToHeapFrame(heapFrame, slotCount);
+
+        if (scope.hasParent() && heapFrame->outer) {
+            // TODO: XXX
+            // TODO: Right now the createFunction() that emits the module's
+            // TODO: __body__ needs an upper scope, but that doesn't have a
+            // TODO: corresponding frame. Hence we can't fully require that
+            // TODO: the outer pointer exist at this stage.
+            assert(heapFrame->outer);
+            heapFrame->outer = moveFrameToHeap(
+                    heapFrame->outer,
+                    scope.getParent());
+        } else {
+            heapFrame->outer = nullptr;
+        }
+
+        return heapFrame;
+    }
+}
+
+extern "C" PyFunc * __used
+llvmPy_func(Frame *stackFrame, void *label)
+{
+    // The `label` is that of the callee, but llvmPy_func() itself operates
+    // within the caller; hence the scope->getParent().
+
+    auto *scope = reinterpret_cast<Scope const **>(label)[-1];
+    auto &parent = scope->getParent();
+    Frame *heapFrame = moveFrameToHeap(stackFrame, parent);
+    auto *pyfunc = new PyFunc(heapFrame, label);
+    return pyfunc;
 }
 
 /**
@@ -173,7 +209,7 @@ llvmPy_func(FrameN *frame, void *label)
  * @return Pointer to the function's IR.
  */
 extern "C" void * __used
-llvmPy_fchk(FrameN **callframe, llvmPy::PyFunc &pyfunc, int np)
+llvmPy_fchk(Frame **callframe, llvmPy::PyFunc &pyfunc, int np)
 {
     *callframe = pyfunc.getFrame();
     return pyfunc.getLabel();
