@@ -42,12 +42,12 @@ public:
     int getMaxProgress() const;
 
 private:
-    LitResultCode resultCode;
-    std::string suiteName;
-    std::string testName;
-    std::string output;
-    int const currentProgress;
-    int const maxProgress;
+    LitResultCode resultCode_;
+    std::string suiteName_;
+    std::string testName_;
+    std::string output_;
+    int const currentProgress_;
+    int const maxProgress_;
 };
 
 /**
@@ -63,10 +63,10 @@ public:
     std::vector<LitTestResult *> getResults() const;
 
 private:
-    std::istream &stream;
-    std::vector<LitTestResult *> results;
-    char line[1024];
-    char ch;
+    std::istream &stream_;
+    std::vector<LitTestResult *> results_;
+    char line_[1024];
+    char ch_;
 
     char get();
     void next();

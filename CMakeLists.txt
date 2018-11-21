@@ -5,9 +5,11 @@ project(${name})
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
                      -Wall -Werror -Weverything -pedantic \
-                     -Wno-unused-variable -Wno-padded \
+                     -Wno-unused-variable -Wno-unused-parameter \
                      -Wno-c++98-compat -Wno-c++98-compat-pedantic \
-                     -Wno-global-constructors -Wno-exit-time-destructors")
+                     -Wno-global-constructors -Wno-exit-time-destructors \
+                     -Wno-c99-extensions \
+                     -Wno-padded")
 
 # LLVM
 
@@ -74,7 +76,7 @@ add_library(
         src/Lexer.cc
         src/Parser2.cc
         src/RT.cc
-        src/Token.cc)
+        src/Token.cc src/Support/Typed.cc)
 
 set_target_properties(
         lib${name}

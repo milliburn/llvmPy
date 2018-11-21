@@ -3,12 +3,12 @@
 using namespace llvmPy;
 
 Scope::Scope()
-: parent(nullptr)
+: parent_(nullptr)
 {
 }
 
 Scope::Scope(Scope &parent)
-: parent(&parent)
+: parent_(&parent)
 {
 }
 
@@ -17,12 +17,12 @@ Scope::~Scope() = default;
 bool
 Scope::hasParent() const
 {
-    return parent != nullptr;
+    return parent_ != nullptr;
 }
 
 Scope &
 Scope::getParent() const
 {
     assert(hasParent());
-    return *parent;
+    return *parent_;
 }

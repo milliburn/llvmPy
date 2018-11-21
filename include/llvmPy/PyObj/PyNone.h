@@ -18,4 +18,12 @@ public:
 };
 
 } // namespace llvmPy
+
+extern "C" {
+#endif // __cplusplus
+
+extern llvmPy::PyNone llvmPy_None;
+
+#ifdef __cplusplus
+}
 #endif // __cplusplus

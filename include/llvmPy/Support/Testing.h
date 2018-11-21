@@ -3,7 +3,7 @@
 // __mock_virtual methods can be stubbed and spied in tests.
 
 #ifndef NDEBUG
-#define __mock_virtual virtual
+#define MOCK_VIRTUAL virtual
 #else
-#define __mock_virtual
+#define MOCK_VIRTUAL
 #endif

@@ -27,7 +27,7 @@ public:
 private:
     static constexpr int InvalidCmp = ~0;
 
-    int64_t value;
+    int64_t value_;
     int cmp(PyObj &rhs, bool throwIfInvalid);
 };
 

@@ -3,20 +3,20 @@
 using namespace llvmPy;
 
 PyInt::PyInt(int64_t value)
-: value(value)
+: value_(value)
 {
 }
 
 int64_t
 PyInt::getValue() const
 {
-    return value;
+    return value_;
 }
 
 std::string
 PyInt::py__str__()
 {
-    return std::to_string(value);
+    return std::to_string(value_);
 }
 
 PyObj *
@@ -96,11 +96,11 @@ PyInt::py__gt__(PyObj &rhs)
 bool
 PyInt::py__bool__()
 {
-    return value != 0;
+    return value_ != 0;
 }
 
 int64_t
 PyInt::py__int__()
 {
-    return value;
+    return value_;
 }

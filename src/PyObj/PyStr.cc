@@ -2,7 +2,7 @@
 using namespace llvmPy;
 
 PyStr::PyStr(std::unique_ptr<std::string const> value) noexcept
-: value(std::move(value))
+: value_(std::move(value))
 {
 }
 
@@ -14,25 +14,25 @@ PyStr::PyStr(std::string const &value) noexcept
 std::string const &
 PyStr::getValue() const
 {
-    return *value;
+    return *value_;
 }
 
 std::string
 PyStr::py__str__()
 {
-    return *value;
+    return *value_;
 }
 
 bool
 PyStr::py__bool__()
 {
-    return !value->empty();
+    return !value_->empty();
 }
 
 int64_t
 PyStr::py__len__()
 {
-    return static_cast<int64_t>(value->size());
+    return static_cast<int64_t>(value_->size());
 }
 
 PyObj *

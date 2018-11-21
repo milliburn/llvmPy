@@ -4,7 +4,7 @@ using namespace llvmPy;
 
 RTScope::RTScope(RTScope &parent)
 : Scope(parent),
-  module(parent.getModule()),
+  module_(parent.getModule()),
   innerFramePtrPtr(nullptr),
   innerFrameType(nullptr),
   outerFrameType(nullptr),
@@ -15,7 +15,7 @@ RTScope::RTScope(RTScope &parent)
 
 RTScope::RTScope(RTModule &module)
 : Scope(),
-  module(module),
+  module_(module),
   innerFramePtrPtr(nullptr),
   innerFrameType(nullptr),
   outerFrameType(nullptr),
@@ -33,7 +33,7 @@ RTScope::createDerived()
 RTModule &
 RTScope::getModule() const
 {
-    return module;
+    return module_;
 }
 
 llvm::Value *

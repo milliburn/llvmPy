@@ -71,7 +71,7 @@ public:
     size_t getNextWhileStmtIndex();
 
 private:
-    RTModule &module;
+    RTModule &module_;
     llvm::Value *innerFramePtr;
     llvm::Value *innerFramePtrPtr;
     llvm::StructType *innerFrameType;
