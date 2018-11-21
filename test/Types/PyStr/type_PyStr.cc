@@ -79,12 +79,17 @@ TEST_CASE("type: PyStr", "[types][PyStr]") {
     }
 
     SECTION("py_upper(): convert string to uppercase") {
-        auto *result = PyStr::py_upper(nullptr, s7);
-        CHECK(result->as<PyStr>().getValue() == "TRUE");
+        auto *r1 = PyStr::py_upper(nullptr, s1);
+        CHECK(r1->as<PyStr>().getValue() == "");
+        auto *r7 = PyStr::py_upper(nullptr, s7);
+        CHECK(r7->as<PyStr>().getValue() == "TRUE");
+
     }
 
     SECTION("py_capitalize(): capitalize string") {
-        auto *result = PyStr::py_capitalize(nullptr, s3);
-        CHECK(result->as<PyStr>().getValue() == "Test");
+        auto *r1 = PyStr::py_capitalize(nullptr, s1);
+        CHECK(r1->as<PyStr>().getValue() == "");
+        auto *r3 = PyStr::py_capitalize(nullptr, s3);
+        CHECK(r3->as<PyStr>().getValue() == "Test");
     }
 }
