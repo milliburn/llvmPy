@@ -33,7 +33,7 @@ Frame::setIsPointingToHeap()
 void
 Frame::moveToHeapFrame(Frame *heapFrame, size_t N)
 {
-    assert(outer != FrameIsHeap);
+    assert(!isPointingToHeap());
     auto const size = getSizeof(N);
     memcpy(heapFrame, this, size);
     heapFrame->self = nullptr;

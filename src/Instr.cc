@@ -158,20 +158,27 @@ llvmPy_none()
 }
 
 Frame *
-llvmPy::moveFrameToHeap(Frame *stackFrame, Scope const &scope)
+llvmPy::moveFrameToHeap(Frame *frame, Scope const &scope)
 {
-    if (!stackFrame) {
+    if (!frame) {
         return nullptr;
-    } else if (stackFrame->isPointingToHeap()) {
-        return stackFrame->self;
+    } else if (frame->isPointingToHeap()) {
+        return frame->self;
+    } else if (frame->isOnHeap()) {
+        return frame;
     } else {
-        assert(!stackFrame->isOnHeap());
         auto const slotCount = scope.getSlotCount();
         auto const frameSize = Frame::getSizeof(slotCount);
         auto *heapFrame = reinterpret_cast<Frame *>(malloc(frameSize));
-        stackFrame->moveToHeapFrame(heapFrame, slotCount);
+        frame->moveToHeapFrame(heapFrame, slotCount);
 
-        if (scope.hasParent()) {
+        if (scope.hasParent() && heapFrame->outer) {
+            // TODO: XXX
+            // TODO: Right now the createFunction() that emits the module's
+            // TODO: __body__ needs an upper scope, but that doesn't have a
+            // TODO: corresponding frame. Hence we can't fully require that
+            // TODO: the outer pointer exist at this stage.
+            assert(heapFrame->outer);
             heapFrame->outer = moveFrameToHeap(
                     heapFrame->outer,
                     scope.getParent());

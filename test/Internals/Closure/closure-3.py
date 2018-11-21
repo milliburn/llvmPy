@@ -11,8 +11,9 @@ def adder():
     def b(y):
         return y + 2
 
-    return a(y)  # + b(x)
+    # The arguments are intentionally swapped by name.
+    return a(y) + b(x)
 
 print("Start")      # OUTPUT-LABEL: Start
-print(adder())      # OUTPUT-NEXT: 6
+print(adder())      # OUTPUT-NEXT: 7
 print("End")        # OUTPUT-LABEL: End

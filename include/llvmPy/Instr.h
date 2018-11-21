@@ -76,7 +76,7 @@ private:
     llvm::LLVMContext &ctx;
 };
 
-Frame *moveFrameToHeap(Frame *stackFrame, Scope const &scope);
+Frame *moveFrameToHeap(Frame *frame, Scope const &scope);
 
 }
 
