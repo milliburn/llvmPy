@@ -44,6 +44,7 @@ static struct {
     string While = "while";
     string Loop = "loop";
     string Endwhile = "endwhile";
+    string Name = "name";
 } tags;
 
 Emitter::Emitter(Compiler &c) noexcept
@@ -99,6 +100,8 @@ Emitter::emit(RTScope &scope, Expr const &expr)
         return emit(scope, *unary);
     } else if (auto *binop = expr.cast<BinaryExpr>()) {
         return emit(scope, *binop);
+    } else if (auto *getattr = expr.cast<GetattrExpr>()) {
+        return emit(scope, *getattr);
     } else {
         assert(false && "Unrecognised AST");
         return nullptr;
@@ -131,7 +134,8 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
         }
     }
 
-    llvm::Value *lhs = emit(scope, callee);
+    auto *lhs = emit(scope, callee);
+
     lhs->setName(tags.FuncObj);
     vector<llvm::Value *> argSlots;
     argSlots.push_back(nullptr); // Placeholder for the callFrame.
@@ -140,12 +144,12 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
     for (auto &arg : args) {
         llvm::Value *value = emit(scope, *arg);
         argSlots.push_back(value);
-        argCount++;
+        argCount += 1;
     }
 
     // Call frame pointer.
-    auto *callFrameAlloca = _ir.CreateAlloca(
-            _types.FramePtr, nullptr, tags.CallFrame);
+    auto *callFrameAlloca = scope.getCallFramePtr();
+    assert(callFrameAlloca);
 
     // Count of positional arguments.
     llvm::Value *np = llvm::ConstantInt::get(_types.PyIntValue, argCount);
@@ -363,6 +367,13 @@ Emitter::createFunction(
 
     function->setPrefixData(
             _types.getInt64(reinterpret_cast<int64_t>(innerScope)));
+
+    auto *callFramePtrPtr = _ir.CreateAlloca(
+            _types.FramePtr,
+            nullptr,
+            tags.CallFrame);
+
+    innerScope->setCallFramePtr(callFramePtrPtr);
 
     for (auto const &slotName : slotNames) {
         innerScope->declareSlot(slotName);
@@ -685,4 +696,22 @@ Emitter::findLexicalSlotGEP(
         assert(false && "Slot not found");
         return nullptr;
     }
+}
+
+llvm::Value *
+Emitter::emit(RTScope &scope, GetattrExpr const &getattr)
+{
+    auto &module = scope.getModule();
+
+    auto *object = emit(scope, getattr.getObject());
+
+    StringExpr str(getattr.getName());
+
+    auto *name = emit(scope, str);
+
+    auto *value = _ir.CreateCall(
+            module.llvmPy_getattr(),
+            { object, name });
+
+    return value;
 }

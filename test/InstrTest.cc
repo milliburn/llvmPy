@@ -44,17 +44,6 @@ TEST_CASE("Instr") {
         CHECK(rv1 == rv2);
     }
 
-    SECTION("llvmPy_fchk: will return the LLVM function and frame pointers") {
-        auto frame = reinterpret_cast<Frame*>(123);
-        auto label = reinterpret_cast<void *>(888);
-
-        PyFunc f(frame, label);
-        Frame *callframe;
-        void *rv = llvmPy_fchk(&callframe, f, 0);
-        CHECK(rv == label);
-        CHECK(callframe == frame);
-    }
-    
     SECTION("llvmPy_len: will return the __len__ of the object") {
         PyStr s1(""), s2("test");
         CHECK(llvmPy_len(s1)->as<PyInt>().getValue() == 0);

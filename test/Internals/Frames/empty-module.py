@@ -11,5 +11,6 @@
 #  IR-NEXT:     store %Frame.__body__* %frame, %Frame.__body__** %1
 #  IR-NEXT:     %outer = load %Frame*, %Frame** %outerptr
 #  IR-NEXT:     store %Frame* %outer, %Frame** %2
+#  IR-NEXT:     %callframe = alloca %Frame*
 #  IR-NEXT:     ret %PyObj* @llvmPy_None
 #  IR-NEXT: }

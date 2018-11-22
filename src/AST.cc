@@ -625,3 +625,28 @@ LambdaExpr::getExprPtr() const
     assert(_expr);
     return _expr;
 }
+
+void
+GetattrExpr::toStream(std::ostream &s) const
+{
+    s << getObject() << '.' << getName();
+}
+
+GetattrExpr::GetattrExpr(
+        std::shared_ptr<Expr const> const &object,
+        std::string const &name)
+: _object(object), _name(name)
+{
+}
+
+Expr const &
+GetattrExpr::getObject() const
+{
+    return *_object;
+}
+
+std::string const &
+GetattrExpr::getName() const
+{
+    return _name;
+}

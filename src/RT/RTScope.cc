@@ -141,3 +141,15 @@ RTScope::getNextWhileStmtIndex()
 {
     return _whileStmtCount++;
 }
+
+void
+RTScope::setCallFramePtr(llvm::Value *ptr)
+{
+    _callframePtr = ptr;
+}
+
+llvm::Value *
+RTScope::getCallFramePtr() const
+{
+    return _callframePtr;
+}

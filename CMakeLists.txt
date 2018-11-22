@@ -36,6 +36,7 @@ add_subdirectory(library)
 add_library(
         lib${name}
         include/llvmPy/PyObj/PyBool.h
+        include/llvmPy/PyObj/PyClass.h
         include/llvmPy/PyObj/PyFunc.h
         include/llvmPy/PyObj/PyInt.h
         include/llvmPy/PyObj/PyNone.h
@@ -59,15 +60,18 @@ add_library(
         include/llvmPy/Typed.h
         include/llvmPy.h
         src/PyObj/PyBool.cc
+        src/PyObj/PyClass.cc
         src/PyObj/PyFunc.cc
         src/PyObj/PyInt.cc
         src/PyObj/PyNone.cc
         src/PyObj/PyObj.cc
         src/PyObj/PyStr.cc
+        include/llvmPy/RT/Call.h
         src/RT/Frame.cc
         src/RT/RTScope.cc
         src/RT/RTModule.cc
         src/RT/Scope.cc
+        src/Support/Typed.cc
         src/AST.cc
         src/Compiler.cc
         src/CompilerImpl.h
@@ -77,7 +81,7 @@ add_library(
         src/Lexer.cc
         src/Parser2.cc
         src/RT.cc
-        src/Token.cc src/Support/Typed.cc)
+        src/Token.cc)
 
 set_target_properties(
         lib${name}
@@ -121,7 +125,11 @@ add_executable(
         test/Types/PyStr/type_PyStr.cc
         test/Builtins/truthy/instr_truthy.cc
         test/Builtins/bool/builtin_bool.cc
-        test/Builtins/func/instr_func.cc test/include/catch2.h test/include/fakeit.h)
+        test/Builtins/func/instr_func.cc
+        test/include/catch2.h
+        test/include/fakeit.h
+        test/Builtins/getattr/instr_getattr.cc
+        test/Builtins/fchk/instr_fchk.cc)
 
 # The test suites depend on an up-to-date llvmPy binary.
 add_dependencies(

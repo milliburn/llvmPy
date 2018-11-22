@@ -7,6 +7,12 @@ namespace llvmPy {
 
 class Typed {
 public:
+    Typed() noexcept;
+
+    Typed(Typed const &copy) noexcept;
+
+    Typed(Typed &&move) noexcept;
+
     // Ensure the class is polymorphic.
     virtual ~Typed();
 

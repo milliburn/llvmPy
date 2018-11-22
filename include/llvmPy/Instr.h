@@ -49,6 +49,7 @@ public:
     llvm::FunctionType *llvmPy_bool;
     llvm::FunctionType *llvmPy_truthy;
     llvm::FunctionType *llvmPy_len;
+    llvm::FunctionType *llvmPy_getattr;
 
     llvm::FunctionType *llvmPy_lt;
     llvm::FunctionType *llvmPy_le;
@@ -95,7 +96,7 @@ llvmPy::PyObj *llvmPy_mul(llvmPy::PyObj &, llvmPy::PyObj &);
 llvmPy::PyInt *llvmPy_int(llvmPy::PyObj &);
 llvmPy::PyNone *llvmPy_none();
 llvmPy::PyFunc *llvmPy_func(llvmPy::Frame *stackFrame, void *label);
-void *llvmPy_fchk(llvmPy::Frame **callframe, llvmPy::PyFunc &pyfunc, int np);
+void *llvmPy_fchk(llvmPy::Frame **callframe, llvmPy::PyFunc &func, int np);
 llvmPy::PyObj *llvmPy_print(llvmPy::PyObj &);
 llvmPy::PyStr *llvmPy_str(llvmPy::PyObj &);
 llvmPy::PyBool *llvmPy_bool(llvmPy::PyObj &);
@@ -110,6 +111,7 @@ llvmPy::PyBool *llvmPy_gt(llvmPy::PyObj &l, llvmPy::PyObj &r);
 llvmPy::PyInt *llvmPy_len(llvmPy::PyObj &);
 
 uint8_t llvmPy_truthy(llvmPy::PyObj &);
+llvmPy::PyObj *llvmPy_getattr(llvmPy::PyObj &object, llvmPy::PyStr &name);
 
 } // extern "C"
 

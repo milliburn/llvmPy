@@ -6,6 +6,10 @@ using namespace llvmPy;
 
 PyObj::PyObj() = default;
 
+PyObj::PyObj(PyObj const &copy) noexcept = default;
+
+PyObj::PyObj(PyObj &&move) noexcept = default;
+
 PyObj::~PyObj() = default;
 
 std::string
@@ -88,4 +92,16 @@ int64_t
 PyObj::py__int__()
 {
     return 0;
+}
+
+PyObj *
+PyObj::py__getattr__(std::string const &name)
+{
+    return &PyNone::get();
+}
+
+bool
+PyObj::isInstance() const
+{
+    return true;
 }

@@ -52,8 +52,8 @@ Types::Types(
     llvmPy_bool = llvm::FunctionType::get(Ptr, { Ptr }, false);
     llvmPy_truthy = llvm::FunctionType::get(
             llvm::Type::getInt1Ty(ctx), { Ptr }, false);
-
     llvmPy_len = llvm::FunctionType::get(Ptr, { Ptr }, false);
+    llvmPy_getattr = llvm::FunctionType::get(Ptr, { Ptr, Ptr }, false);
 
     llvm::FunctionType *cmp = llvmPy_binop;
     llvmPy_lt = cmp;
@@ -204,7 +204,7 @@ llvmPy_func(Frame *stackFrame, void *label)
     auto *scope = reinterpret_cast<Scope const **>(label)[-1];
     auto &parent = scope->getParent();
     Frame *heapFrame = moveFrameToHeap(stackFrame, parent);
-    auto *pyfunc = new PyFunc(heapFrame, label);
+    auto *pyfunc = PyFunc::newUserFunction(label, heapFrame);
     return pyfunc;
 }
 
@@ -214,10 +214,30 @@ llvmPy_func(Frame *stackFrame, void *label)
  * @return Pointer to the function's IR.
  */
 extern "C" void * MARK_USED
-llvmPy_fchk(Frame **callframe, llvmPy::PyFunc &pyfunc, int np)
+llvmPy_fchk(Frame **callframe, llvmPy::PyFunc &func, int np)
 {
-    *callframe = pyfunc.getFrame();
-    return pyfunc.getLabel();
+    switch (func.getType()) {
+    case PyFuncType::LibraryFunction:
+        *callframe = nullptr;
+        break;
+
+    case PyFuncType::LibraryMethod:
+        *callframe = reinterpret_cast<Frame *>(func.getSelf());
+        break;
+
+    case PyFuncType::UserFunction:
+        *callframe = func.getFrame();
+        break;
+
+    case PyFuncType::UserMethod:
+        *callframe = reinterpret_cast<Frame *>(
+                const_cast<Call *>(
+                        &func.getCallFrame()));
+        // TODO: Return the label for the unpacking function.
+        return nullptr; // TODO: XXX
+    }
+
+    return func.getLabel();
 }
 
 /**
@@ -302,4 +322,22 @@ llvmPy_len(llvmPy::PyObj &obj)
 {
     auto len = obj.py__len__();
     return new PyInt(len);
+}
+
+extern "C" llvmPy::PyObj *
+llvmPy_getattr(llvmPy::PyObj &object, llvmPy::PyStr &name)
+{
+    PyObj *attr = object.py__getattr__(name.str());
+
+    if (auto *func = attr->cast<PyFunc>()) {
+        if (object.isInstance()) {
+            assert(!func->isMethod());
+            assert(!func->isBound());
+            return func->bind(object);
+        } else {
+            return attr;
+        }
+    } else {
+        return attr;
+    }
 }
