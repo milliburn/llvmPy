@@ -101,7 +101,7 @@ Emitter::emit(RTScope &scope, Expr const &expr)
     } else if (auto *binop = expr.cast<BinaryExpr>()) {
         return emit(scope, *binop);
     } else if (auto *getattr = expr.cast<GetattrExpr>()) {
-        return emit(scope, *getattr, nullptr);
+        return emit(scope, *getattr);
     } else {
         assert(false && "Unrecognised AST");
         return nullptr;
@@ -134,27 +134,12 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
         }
     }
 
-    bool isGetattrCall = false;
-    llvm::Value *self = nullptr;
-    llvm::Value *lhs;
-
-    if (auto *getattr = call.getCallee().cast<GetattrExpr>()) {
-        isGetattrCall = true;
-        lhs = emit(scope, *getattr, &self);
-    } else {
-        lhs = emit(scope, callee);
-    }
+    auto *lhs = emit(scope, callee);
 
     lhs->setName(tags.FuncObj);
     vector<llvm::Value *> argSlots;
     argSlots.push_back(nullptr); // Placeholder for the callFrame.
-
     size_t argCount = 0;
-
-    if (isGetattrCall) {
-        argSlots.push_back(self);
-        argCount += 1;
-    }
 
     for (auto &arg : args) {
         llvm::Value *value = emit(scope, *arg);
@@ -707,10 +692,7 @@ Emitter::findLexicalSlotGEP(
 }
 
 llvm::Value *
-Emitter::emit(
-        RTScope &scope,
-        GetattrExpr const &getattr,
-        llvm::Value **objectOut)
+Emitter::emit(RTScope &scope, GetattrExpr const &getattr)
 {
     auto &module = scope.getModule();
 
@@ -723,10 +705,6 @@ Emitter::emit(
     auto *value = _ir.CreateCall(
             module.llvmPy_getattr(),
             { object, name });
-
-    if (objectOut) {
-        *objectOut = object;
-    }
 
     return value;
 }
