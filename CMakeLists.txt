@@ -64,10 +64,12 @@ add_library(
         src/PyObj/PyNone.cc
         src/PyObj/PyObj.cc
         src/PyObj/PyStr.cc
+        include/llvmPy/RT/Call.h
         src/RT/Frame.cc
         src/RT/RTScope.cc
         src/RT/RTModule.cc
         src/RT/Scope.cc
+        src/Support/Typed.cc
         src/AST.cc
         src/Compiler.cc
         src/CompilerImpl.h
@@ -77,7 +79,7 @@ add_library(
         src/Lexer.cc
         src/Parser2.cc
         src/RT.cc
-        src/Token.cc src/Support/Typed.cc)
+        src/Token.cc )
 
 set_target_properties(
         lib${name}
