@@ -10,6 +10,7 @@ class PyObj;
  */
 struct Call {
     Frame *frame;
+    void *label;
     PyObj *self;
 };
 

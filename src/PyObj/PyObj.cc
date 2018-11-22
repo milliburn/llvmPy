@@ -99,3 +99,9 @@ PyObj::py__getattr__(std::string const &name)
 {
     return &PyNone::get();
 }
+
+bool
+PyObj::isInstance() const
+{
+    return true;
+}

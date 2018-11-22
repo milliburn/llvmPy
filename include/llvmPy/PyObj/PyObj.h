@@ -39,6 +39,11 @@ public:
     virtual bool py__gt__(PyObj &rhs);
 
     virtual PyObj *py__getattr__(std::string const &name);
+
+    /** Return true if this is an instance of a class, i.e. method calls
+     *  should automatically bind the self-argument.
+     */
+    virtual bool isInstance() const;
 };
 
 } // namespace llvmPy

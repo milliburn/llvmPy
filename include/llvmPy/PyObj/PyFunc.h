@@ -9,10 +9,10 @@
 namespace llvmPy {
 
 enum class PyFuncType {
-    LibraryFunction,
-    LibraryMethod,
-    UserFunction,
-    UserMethod,
+    LibraryFunction,    ///< no frame
+    LibraryMethod,      ///< self-argument passed through call frame
+    UserFunction,       ///< frame pointer directly in call frame
+    UserMethod,         ///< self-argument passed as first parameter
 };
 
 std::ostream &operator<< (std::ostream &, PyFuncType const &);
@@ -38,6 +38,8 @@ public:
 
     void *getLabel() const;
 
+    PyObj *getSelf() const;
+
     Call const &getCallFrame() const;
 
     bool isBound() const;
@@ -46,8 +48,6 @@ private:
     PyFunc(PyFuncType, void *, Frame *, PyObj *);
 
     PyFuncType const _type;
-
-    void * const _label;
 
     Call const _call;
 };

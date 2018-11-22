@@ -50,8 +50,7 @@ PyFunc::PyFunc(PyFunc &&move) noexcept = default;
 
 PyFunc::PyFunc(PyFuncType type, void *label, Frame *frame, PyObj *self)
 : _type(type),
-  _label(label),
-  _call({ .frame = frame, .self = self })
+  _call({ .frame = frame, .label = label, .self = self })
 {
 }
 
@@ -70,13 +69,19 @@ PyFunc::getFrame() const
 void *
 PyFunc::getLabel() const
 {
-    return _label;
+    return _call.label;
 }
 
 Call const &
 PyFunc::getCallFrame() const
 {
     return _call;
+}
+
+PyObj *
+PyFunc::getSelf() const
+{
+    return _call.self;
 }
 
 std::string
