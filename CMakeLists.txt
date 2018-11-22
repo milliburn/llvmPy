@@ -39,6 +39,7 @@ add_library(
         include/llvmPy/PyObj/PyClass.h
         include/llvmPy/PyObj/PyFunc.h
         include/llvmPy/PyObj/PyInt.h
+        include/llvmPy/PyObj/PyModule.h
         include/llvmPy/PyObj/PyNone.h
         include/llvmPy/PyObj/PyObj.h
         include/llvmPy/PyObj/PyStr.h
@@ -63,6 +64,7 @@ add_library(
         src/PyObj/PyClass.cc
         src/PyObj/PyFunc.cc
         src/PyObj/PyInt.cc
+        src/PyObj/PyModule.cc
         src/PyObj/PyNone.cc
         src/PyObj/PyObj.cc
         src/PyObj/PyStr.cc
