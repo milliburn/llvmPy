@@ -204,7 +204,7 @@ llvmPy_func(Frame *stackFrame, void *label)
     auto *scope = reinterpret_cast<Scope const **>(label)[-1];
     auto &parent = scope->getParent();
     Frame *heapFrame = moveFrameToHeap(stackFrame, parent);
-    auto *pyfunc = new PyFunc(heapFrame, label);
+    auto *pyfunc = PyFunc::newUserFunction(label, heapFrame);
     return pyfunc;
 }
 

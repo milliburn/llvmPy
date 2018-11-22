@@ -39,11 +39,6 @@ PyFunc::newUserMethod(void *label, Frame *frame, PyObj *obj)
     return new PyFunc(PyFuncType::UserMethod, label, frame, obj);
 }
 
-PyFunc::PyFunc(Frame *frame, void *label)
-: PyFunc(PyFuncType::LibraryFunction, label, frame, nullptr)
-{
-}
-
 PyFunc::PyFunc(PyFunc const &copy) noexcept = default;
 
 PyFunc::PyFunc(PyFunc &&move) noexcept = default;

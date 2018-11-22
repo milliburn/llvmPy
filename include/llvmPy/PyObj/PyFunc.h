@@ -24,8 +24,6 @@ public:
     static PyFunc *newUserFunction(void *label, Frame *frame);
     static PyFunc *newUserMethod(void *label, Frame *frame, PyObj *obj);
 
-    PyFunc(Frame *frame, void *label);
-
     PyFunc(PyFunc const &copy) noexcept;
 
     PyFunc(PyFunc &&move) noexcept;
