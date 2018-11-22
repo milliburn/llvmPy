@@ -13,6 +13,10 @@ class PyObj : public Typed {
 public:
     PyObj();
 
+    PyObj(PyObj const &copy) noexcept;
+
+    PyObj(PyObj &&move) noexcept;
+
     virtual ~PyObj();
 
     virtual std::string py__str__();

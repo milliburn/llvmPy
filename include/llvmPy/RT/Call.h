@@ -2,13 +2,14 @@
 #ifdef __cplusplus
 namespace llvmPy {
 
+struct Frame;
 class PyObj;
 
 /**
  * The Call Frame Descriptor.
  */
 struct Call {
-    void *label;
+    Frame *frame;
     PyObj *self;
 };
 

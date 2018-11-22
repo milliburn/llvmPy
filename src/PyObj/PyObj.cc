@@ -6,6 +6,10 @@ using namespace llvmPy;
 
 PyObj::PyObj() = default;
 
+PyObj::PyObj(PyObj const &copy) noexcept = default;
+
+PyObj::PyObj(PyObj &&move) noexcept = default;
+
 PyObj::~PyObj() = default;
 
 std::string
