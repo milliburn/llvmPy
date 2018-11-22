@@ -53,7 +53,7 @@ Types::Types(
     llvmPy_truthy = llvm::FunctionType::get(
             llvm::Type::getInt1Ty(ctx), { Ptr }, false);
     llvmPy_len = llvm::FunctionType::get(Ptr, { Ptr }, false);
-    llvmPy_getattr = llvm::FunctionType::get(Ptr, { Ptr, i8Ptr }, false);
+    llvmPy_getattr = llvm::FunctionType::get(Ptr, { Ptr, Ptr }, false);
 
     llvm::FunctionType *cmp = llvmPy_binop;
     llvmPy_lt = cmp;
@@ -305,7 +305,7 @@ llvmPy_len(llvmPy::PyObj &obj)
 }
 
 extern "C" llvmPy::PyObj *
-llvmPy_getattr(llvmPy::PyObj &object, char const *name)
+llvmPy_getattr(llvmPy::PyObj &object, llvmPy::PyStr &name)
 {
-    return nullptr;
+    return object.py__getattr__(name.str());
 }

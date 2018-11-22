@@ -15,6 +15,8 @@ public:
 
     std::string const &getValue() const;
 
+    std::string const &str() const;
+
     std::string py__str__() override;
 
     int64_t py__len__() override;
@@ -30,6 +32,7 @@ public:
     PyObj *py__getattr__(std::string const &name) override;
 
     static PyObj *py_upper(void **, PyStr &str);
+
     static PyObj *py_capitalize(void **, PyStr &str);
 
 private:

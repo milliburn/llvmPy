@@ -42,6 +42,12 @@ PyStr::getValue() const
     return *_value;
 }
 
+std::string const &
+PyStr::str() const
+{
+    return *_value;
+}
+
 std::string
 PyStr::py__str__()
 {

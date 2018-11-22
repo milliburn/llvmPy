@@ -713,10 +713,13 @@ Emitter::emit(
         llvm::Value **objectOut)
 {
     auto &module = scope.getModule();
+
     auto *object = emit(scope, getattr.getObject());
-    auto *name = _ir.CreateGlobalStringPtr(
-            getattr.getName(),
-            tags.Name + "." + getattr.getName());
+
+    StringExpr str(getattr.getName());
+
+    auto *name = emit(scope, str);
+
     auto *value = _ir.CreateCall(
             module.llvmPy_getattr(),
             { object, name });

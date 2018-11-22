@@ -111,7 +111,7 @@ llvmPy::PyBool *llvmPy_gt(llvmPy::PyObj &l, llvmPy::PyObj &r);
 llvmPy::PyInt *llvmPy_len(llvmPy::PyObj &);
 
 uint8_t llvmPy_truthy(llvmPy::PyObj &);
-llvmPy::PyObj *llvmPy_getattr(llvmPy::PyObj &object, char const *name);
+llvmPy::PyObj *llvmPy_getattr(llvmPy::PyObj &object, llvmPy::PyStr &name);
 
 } // extern "C"
 
