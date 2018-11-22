@@ -6,7 +6,7 @@ using namespace llvmPy;
 using namespace fakeit;
 
 static void
-checkMethodPtr(PyStr &s, std::string name, PyObj*(*method)(void**, PyStr &))
+checkMethodPtr(PyStr &s, std::string name, PyObj*(*method)(PyStr **))
 {
     PyFunc &f = s.py__getattr__(name)->as<PyFunc>();
 
@@ -79,17 +79,19 @@ TEST_CASE("type: PyStr", "[types][PyStr]") {
     }
 
     SECTION("py_upper(): convert string to uppercase") {
-        auto *r1 = PyStr::py_upper(nullptr, s1);
+        auto *s1p = &s1, *s7p = &s7;
+        auto *r1 = PyStr::py_upper(&s1p);
         CHECK(r1->as<PyStr>().getValue() == "");
-        auto *r7 = PyStr::py_upper(nullptr, s7);
+        auto *r7 = PyStr::py_upper(&s7p);
         CHECK(r7->as<PyStr>().getValue() == "TRUE");
 
     }
 
     SECTION("py_capitalize(): capitalize string") {
-        auto *r1 = PyStr::py_capitalize(nullptr, s1);
+        auto *s1p = &s1, *s3p = &s3;
+        auto *r1 = PyStr::py_capitalize(&s1p);
         CHECK(r1->as<PyStr>().getValue() == "");
-        auto *r3 = PyStr::py_capitalize(nullptr, s3);
+        auto *r3 = PyStr::py_capitalize(&s3p);
         CHECK(r3->as<PyStr>().getValue() == "Test");
     }
 }

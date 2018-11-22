@@ -15,10 +15,10 @@ llvmPy::operator<<(std::ostream &s, PyFuncType const &t)
     return s;
 }
 
-PyFunc
-PyFunc::createLibraryFunction(void *label)
+PyFunc *
+PyFunc::newLibraryFunction(void *label)
 {
-    return PyFunc(PyFuncType::LibraryFunction, label, nullptr, nullptr);
+    return new PyFunc(PyFuncType::LibraryFunction, label, nullptr, nullptr);
 }
 
 PyFunc *
@@ -27,10 +27,10 @@ PyFunc::newLibraryMethod(void *label, PyObj *obj)
     return new PyFunc(PyFuncType::LibraryMethod, label, nullptr, obj);
 }
 
-PyFunc
-PyFunc::createUserFunction(void *label, Frame *frame)
+PyFunc *
+PyFunc::newUserFunction(void *label, Frame *frame)
 {
-    return PyFunc(PyFuncType::UserFunction, label, frame, nullptr);
+    return new PyFunc(PyFuncType::UserFunction, label, frame, nullptr);
 }
 
 PyFunc *

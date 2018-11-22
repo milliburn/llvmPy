@@ -31,9 +31,9 @@ public:
 
     PyObj *py__getattr__(std::string const &name) override;
 
-    static PyObj *py_upper(void **, PyStr &str);
+    static PyObj *py_upper(PyStr **self);
 
-    static PyObj *py_capitalize(void **, PyStr &str);
+    static PyObj *py_capitalize(PyStr **self);
 
 private:
     std::unique_ptr<std::string const> _value;

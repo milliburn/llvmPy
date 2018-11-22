@@ -15,10 +15,10 @@ TEST_CASE("instr: llvmPy_fchk()", "[instr][fchk]") {
 
         SECTION("library function: callframe is set to null") {
             callframe = reinterpret_cast<Frame *>(987);
-            PyFunc func = PyFunc::createLibraryFunction(label);
-            void *result = llvmPy_fchk(&callframe, func, 0);
+            PyFunc *func = PyFunc::newLibraryFunction(label);
+            void *result = llvmPy_fchk(&callframe, *func, 0);
             CHECK(callframe == nullptr);
-            CHECK(result == func.getLabel());
+            CHECK(result == func->getLabel());
         }
 
         SECTION("library method: callframe is the self pointer") {
@@ -29,8 +29,8 @@ TEST_CASE("instr: llvmPy_fchk()", "[instr][fchk]") {
         }
 
         SECTION("user function: callframe is the frame pointer") {
-            PyFunc func = PyFunc::createUserFunction(label, frame);
-            void *result = llvmPy_fchk(&callframe, func, 0);
+            PyFunc *func = PyFunc::newUserFunction(label, frame);
+            void *result = llvmPy_fchk(&callframe, *func, 0);
             CHECK(callframe == frame);
             CHECK(result == label);
         }

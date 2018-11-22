@@ -33,19 +33,19 @@ TEST_CASE("instr: llvmPy_getattr()", "[instr][getattr]") {
         auto * const frame = reinterpret_cast<Frame *>(456);
 
         SECTION("library function attribute: no binding") {
-            PyFunc func = PyFunc::createLibraryFunction(label);
-            When(Method(obj, py__getattr__)).Return(&func);
+            PyFunc *func = PyFunc::newLibraryFunction(label);
+            When(Method(obj, py__getattr__)).Return(func);
             When(Method(obj, isInstance)).Return(false);
             PyFunc &result = llvmPy_getattr(obj.get(), name)->as<PyFunc>();
-            CHECK(&result == &func);
+            CHECK(&result == func);
         }
 
         SECTION("library method attribute: bind self") {
-            PyFunc func = PyFunc::createLibraryFunction(label);
-            When(Method(obj, py__getattr__)).Return(&func);
+            PyFunc *func = PyFunc::newLibraryFunction(label);
+            When(Method(obj, py__getattr__)).Return(func);
             When(Method(obj, isInstance)).Return(true);
             auto &result = llvmPy_getattr(obj.get(), name)->as<PyFunc>();
-            CHECK(&result != &func);
+            CHECK(&result != func);
             CHECK(result.getType() == PyFuncType::LibraryMethod);
             CHECK(result.isBound());
             CHECK(result.getCallFrame().self == &obj.get());
@@ -54,19 +54,19 @@ TEST_CASE("instr: llvmPy_getattr()", "[instr][getattr]") {
         }
 
         SECTION("user function attribute: no binding") {
-            PyFunc func = PyFunc::createUserFunction(label, frame);
-            When(Method(obj, py__getattr__)).Return(&func);
+            PyFunc *func = PyFunc::newUserFunction(label, frame);
+            When(Method(obj, py__getattr__)).Return(func);
             When(Method(obj, isInstance)).Return(false);
             auto &result = llvmPy_getattr(obj.get(), name)->as<PyFunc>();
-            CHECK(&result == &func);
+            CHECK(&result == func);
         }
 
         SECTION("user method attribute: bind self") {
-            PyFunc func = PyFunc::createUserFunction(label, frame);
-            When(Method(obj, py__getattr__)).Return(&func);
+            PyFunc *func = PyFunc::newUserFunction(label, frame);
+            When(Method(obj, py__getattr__)).Return(func);
             When(Method(obj, isInstance)).Return(true);
             auto &result = llvmPy_getattr(obj.get(), name)->as<PyFunc>();
-            CHECK(&result != &func);
+            CHECK(&result != func);
             CHECK(result.getType() == PyFuncType::UserMethod);
             CHECK(result.isBound());
             CHECK(result.getCallFrame().self == &obj.get());

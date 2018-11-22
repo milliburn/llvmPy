@@ -10,7 +10,8 @@ getMethod(std::string const &name)
 {
 #define decl(name) \
         {#name, \
-         new PyFunc(nullptr, reinterpret_cast<void *>(PyStr::py_##name))}
+         PyFunc::newLibraryFunction( \
+            reinterpret_cast<void *>(PyStr::py_##name))}
 
     static std::unordered_map<std::string, PyFunc *> methods = {
             decl(upper),
@@ -97,8 +98,10 @@ PyStr::py__getattr__(std::string const &name)
 }
 
 PyObj *
-PyStr::py_upper(void **, PyStr &str)
+PyStr::py_upper(PyStr **self)
 {
+    PyStr &str = **self;
+
     if (str.getValue().empty()) {
         return &str;
     }
@@ -113,8 +116,10 @@ PyStr::py_upper(void **, PyStr &str)
 }
 
 PyObj *
-PyStr::py_capitalize(void **, PyStr &str)
+PyStr::py_capitalize(PyStr **self)
 {
+    PyStr &str = **self;
+
     if (str.getValue().empty()) {
         return &str;
     }

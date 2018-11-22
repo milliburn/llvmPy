@@ -19,9 +19,9 @@ std::ostream &operator<< (std::ostream &, PyFuncType const &);
 
 class PyFunc : public PyObj {
 public:
-    static PyFunc createLibraryFunction(void *label);
+    static PyFunc *newLibraryFunction(void *label);
     static PyFunc *newLibraryMethod(void *label, PyObj *obj);
-    static PyFunc createUserFunction(void *label, Frame *frame);
+    static PyFunc *newUserFunction(void *label, Frame *frame);
     static PyFunc *newUserMethod(void *label, Frame *frame, PyObj *obj);
 
     PyFunc(Frame *frame, void *label);
