@@ -96,7 +96,7 @@ llvmPy::PyObj *llvmPy_mul(llvmPy::PyObj &, llvmPy::PyObj &);
 llvmPy::PyInt *llvmPy_int(llvmPy::PyObj &);
 llvmPy::PyNone *llvmPy_none();
 llvmPy::PyFunc *llvmPy_func(llvmPy::Frame *stackFrame, void *label);
-void *llvmPy_fchk(llvmPy::Frame **callframe, llvmPy::PyFunc &pyfunc, int np);
+void *llvmPy_fchk(llvmPy::Frame **callframe, llvmPy::PyFunc &func, int np);
 llvmPy::PyObj *llvmPy_print(llvmPy::PyObj &);
 llvmPy::PyStr *llvmPy_str(llvmPy::PyObj &);
 llvmPy::PyBool *llvmPy_bool(llvmPy::PyObj &);

@@ -43,7 +43,7 @@ TEST_CASE("Instr") {
         CHECK(rv1->isa<PyNone>());
         CHECK(rv1 == rv2);
     }
-    
+
     SECTION("llvmPy_len: will return the __len__ of the object") {
         PyStr s1(""), s2("test");
         CHECK(llvmPy_len(s1)->as<PyInt>().getValue() == 0);

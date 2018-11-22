@@ -21,16 +21,4 @@ print("test".upper().capitalize())
 # IR: [[capitalizeVal:%[^ ]+]] = call %PyObj* [[capitalizeFunc]](%Frame** %callframe1)
 # IR: @llvmPy_print(%PyObj* [[capitalizeVal]])
 
-# IR-LABEL: define @llvmPy_lmcall0(%Frame** %outerptr) {
-# IR-NEXT:      %outer = load %Frame*, %Frame** %outerptr
-# IR-NEXT:      %desc = bitcast %Frame* %outer to %Call*
-# IR-NEXT:      %1 = getelementptr %Call, %Call* %desc, i64 0, i32 0
-# IR-NEXT:      %label = load i8*, i8** %1
-# IR-NEXT:      %2 = getelementptr %Call, %Call* %desc, i64 0, i32 1
-# IR-NEXT:      %self = load %PyObj*, %PyObj** %2
-# IR-NEXT:      %3 = bitcast i8* %label to %PyObj* (%PyObj*)*
-# IR-NEXT:      %4 = call %PyObj* %label(%PyObj* %self)
-# IR-NEXT:      ret %PyObj* %4
-# IR-NEXT:  }
-
 # OUTPUT: Test

@@ -214,10 +214,30 @@ llvmPy_func(Frame *stackFrame, void *label)
  * @return Pointer to the function's IR.
  */
 extern "C" void * MARK_USED
-llvmPy_fchk(Frame **callframe, llvmPy::PyFunc &pyfunc, int np)
+llvmPy_fchk(Frame **callframe, llvmPy::PyFunc &func, int np)
 {
-    *callframe = pyfunc.getFrame();
-    return pyfunc.getLabel();
+    switch (func.getType()) {
+    case PyFuncType::LibraryFunction:
+        *callframe = nullptr;
+        break;
+
+    case PyFuncType::LibraryMethod:
+        *callframe = reinterpret_cast<Frame *>(func.getSelf());
+        break;
+
+    case PyFuncType::UserFunction:
+        *callframe = func.getFrame();
+        break;
+
+    case PyFuncType::UserMethod:
+        *callframe = reinterpret_cast<Frame *>(
+                const_cast<Call *>(
+                        &func.getCallFrame()));
+        // TODO: Return the label for the unpacking function.
+        return nullptr; // TODO: XXX
+    }
+
+    return func.getLabel();
 }
 
 /**
