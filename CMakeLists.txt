@@ -36,6 +36,7 @@ add_subdirectory(library)
 add_library(
         lib${name}
         include/llvmPy/PyObj/PyBool.h
+        include/llvmPy/PyObj/PyClass.h
         include/llvmPy/PyObj/PyFunc.h
         include/llvmPy/PyObj/PyInt.h
         include/llvmPy/PyObj/PyNone.h
@@ -59,6 +60,7 @@ add_library(
         include/llvmPy/Typed.h
         include/llvmPy.h
         src/PyObj/PyBool.cc
+        src/PyObj/PyClass.cc
         src/PyObj/PyFunc.cc
         src/PyObj/PyInt.cc
         src/PyObj/PyNone.cc
@@ -79,7 +81,7 @@ add_library(
         src/Lexer.cc
         src/Parser2.cc
         src/RT.cc
-        src/Token.cc )
+        src/Token.cc)
 
 set_target_properties(
         lib${name}
