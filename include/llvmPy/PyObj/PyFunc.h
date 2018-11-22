@@ -20,9 +20,9 @@ std::ostream &operator<< (std::ostream &, PyFuncType const &);
 class PyFunc : public PyObj {
 public:
     static PyFunc createLibraryFunction(void *label);
-    static PyFunc createLibraryMethod(void *label, PyObj *obj);
+    static PyFunc *newLibraryMethod(void *label, PyObj *obj);
     static PyFunc createUserFunction(void *label, Frame *frame);
-    static PyFunc createUserMethod(void *label, Frame *frame, PyObj *obj);
+    static PyFunc *newUserMethod(void *label, Frame *frame, PyObj *obj);
 
     PyFunc(Frame *frame, void *label);
 
@@ -43,6 +43,10 @@ public:
     Call const &getCallFrame() const;
 
     bool isBound() const;
+
+    bool isMethod() const;
+
+    PyFunc *bind(PyObj &self) const;
 
 private:
     PyFunc(PyFuncType, void *, Frame *, PyObj *);

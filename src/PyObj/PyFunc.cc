@@ -21,10 +21,10 @@ PyFunc::createLibraryFunction(void *label)
     return PyFunc(PyFuncType::LibraryFunction, label, nullptr, nullptr);
 }
 
-PyFunc
-PyFunc::createLibraryMethod(void *label, PyObj *obj)
+PyFunc *
+PyFunc::newLibraryMethod(void *label, PyObj *obj)
 {
-    return PyFunc(PyFuncType::LibraryMethod, label, nullptr, obj);
+    return new PyFunc(PyFuncType::LibraryMethod, label, nullptr, obj);
 }
 
 PyFunc
@@ -33,10 +33,10 @@ PyFunc::createUserFunction(void *label, Frame *frame)
     return PyFunc(PyFuncType::UserFunction, label, frame, nullptr);
 }
 
-PyFunc
-PyFunc::createUserMethod(void *label, Frame *frame, PyObj *obj)
+PyFunc *
+PyFunc::newUserMethod(void *label, Frame *frame, PyObj *obj)
 {
-    return PyFunc(PyFuncType::UserMethod, label, frame, obj);
+    return new PyFunc(PyFuncType::UserMethod, label, frame, obj);
 }
 
 PyFunc::PyFunc(Frame *frame, void *label)
@@ -100,4 +100,26 @@ bool
 PyFunc::isBound() const
 {
     return _call.self != nullptr;
+}
+
+bool
+PyFunc::isMethod() const
+{
+    return (getType() == PyFuncType::LibraryMethod ||
+            getType() == PyFuncType::UserMethod);
+}
+
+PyFunc *
+PyFunc::bind(PyObj &self) const
+{
+    assert(!isBound());
+
+    if (getType() == PyFuncType::LibraryFunction) {
+        return newLibraryMethod(getLabel(), &self);
+    } else if (getType() == PyFuncType::UserFunction) {
+        return newUserMethod(getLabel(), getFrame(), &self);
+    } else {
+        assert(false);
+        return nullptr;
+    }
 }

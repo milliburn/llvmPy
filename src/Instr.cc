@@ -307,5 +307,17 @@ llvmPy_len(llvmPy::PyObj &obj)
 extern "C" llvmPy::PyObj *
 llvmPy_getattr(llvmPy::PyObj &object, llvmPy::PyStr &name)
 {
-    return object.py__getattr__(name.str());
+    PyObj *attr = object.py__getattr__(name.str());
+
+    if (auto *func = attr->cast<PyFunc>()) {
+        if (object.isInstance()) {
+            assert(!func->isMethod());
+            assert(!func->isBound());
+            return func->bind(object);
+        } else {
+            return attr;
+        }
+    } else {
+        return attr;
+    }
 }

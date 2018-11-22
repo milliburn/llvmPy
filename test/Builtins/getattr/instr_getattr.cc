@@ -17,6 +17,14 @@ TEST_CASE("instr: llvmPy_getattr()", "[instr][getattr]") {
         CHECK(result == &i1);
     }
 
+    SECTION("it will pass through any non-function") {
+        PyStr name("func");
+        Mock<PyObj> obj;
+        When(Method(obj, py__getattr__)).Return(&name);
+        PyObj *result = llvmPy_getattr(obj.get(), name);
+        CHECK(result == &name);
+    }
+
     SECTION("it can optionally create a bound function") {
         // The simulated syntax is `obj.func`.
         PyStr name("func");
@@ -28,7 +36,7 @@ TEST_CASE("instr: llvmPy_getattr()", "[instr][getattr]") {
             PyFunc func = PyFunc::createLibraryFunction(label);
             When(Method(obj, py__getattr__)).Return(&func);
             When(Method(obj, isInstance)).Return(false);
-            PyFunc result = llvmPy_getattr(obj.get(), name)->as<PyFunc>();
+            PyFunc &result = llvmPy_getattr(obj.get(), name)->as<PyFunc>();
             CHECK(&result == &func);
         }
 
@@ -66,6 +74,9 @@ TEST_CASE("instr: llvmPy_getattr()", "[instr][getattr]") {
             CHECK(result.getCallFrame().frame == frame);
         }
 
+
+        Verify(Method(obj, py__getattr__)).Once();
+        Verify(Method(obj, isInstance)).Once();
         VerifyNoOtherInvocations(obj);
     }
 }
