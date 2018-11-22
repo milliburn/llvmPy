@@ -9,7 +9,8 @@ f = None
 f(1)
 # IR: [[fPtr1:%[^ ]+]] = load %PyObj*, %PyObj** %var.f1
 # IR: [[fLabel:%[^ ]+]] = call i8* @llvmPy_fchk(%Frame** %callframe, %PyObj* [[fPtr1]], i64 1)
-# IR-NEXT: [[fFunc:%[^ ]+]] = bitcast i8* [[fLabel]] to %PyObj* (%Frame**, %PyObj*)*
-# IR-NEXT: [[fRV:%[^ ]+]] = call %PyObj* [[fFunc]](%Frame** %callframe, %PyObj* %PyInt.1)
+# IR-NEXT: [[callframe:%[^ ]+]] = load %Frame*, %Frame** %callframe
+# IR-NEXT: [[fFunc:%[^ ]+]] = bitcast i8* [[fLabel]] to %PyObj* (%Frame*, %PyObj*)*
+# IR-NEXT: [[fRV:%[^ ]+]] = call %PyObj* [[fFunc]](%Frame* [[callframe]], %PyObj* %PyInt.1)
 
 # IR-DAG: declare i8* @llvmPy_fchk(%Frame**, %PyObj*, i64)

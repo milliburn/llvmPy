@@ -152,14 +152,15 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
     assert(callFrameAlloca);
 
     // Count of positional arguments.
-    llvm::Value *np = llvm::ConstantInt::get(_types.PyIntValue, argCount);
+    auto *np = llvm::ConstantInt::get(_types.PyIntValue, argCount);
 
-    llvm::CallInst *inst = _ir.CreateCall(
+    auto *inst = _ir.CreateCall(
             mod.llvmPy_fchk(),
             { callFrameAlloca, lhs, np },
             tags.FuncPtr);
 
-    argSlots[0] = callFrameAlloca;
+    // Load the pointer value that fchk placed on the stack.
+    argSlots[0] = _ir.CreateLoad(callFrameAlloca);
 
     llvm::Value *funcBitCast = _ir.CreateBitCast(
             inst,
@@ -309,15 +310,15 @@ Emitter::createFunction(
 
     // Name the arguments.
 
-    llvm::Value *outerFramePtrPtrArg = nullptr;
+    llvm::Value *outerFramePtrArg = nullptr;
 
     int iArg = 0;
     auto argNames = args.begin();
 
     for (auto &arg : function->args()) {
         if (iArg == 0) {
-            arg.setName(tags.OuterFramePtr);
-            outerFramePtrPtrArg = &arg;
+            arg.setName(tags.OuterFrame);
+            outerFramePtrArg = &arg;
         } else {
             arg.setName(tags.Arg + "." + *argNames);
             ++argNames;
@@ -326,7 +327,7 @@ Emitter::createFunction(
         ++iArg;
     }
 
-    if (!outerFramePtrPtrArg) {
+    if (!outerFramePtrArg) {
         throw "Missing outerFramePtrPtrArg!";
     }
 
@@ -358,10 +359,7 @@ Emitter::createFunction(
 
     _ir.CreateStore(frameAlloca, frameSelfPtrPtr);
 
-    auto *outerFramePtr = _ir.CreateLoad(
-            outerFramePtrPtrArg, tags.OuterFrame);
-
-    _ir.CreateStore(outerFramePtr, frameOuterPtrPtr);
+    _ir.CreateStore(outerFramePtrArg, frameOuterPtrPtr);
 
     // TODO: Zero-initialize slots with llvm.memset or something.
 

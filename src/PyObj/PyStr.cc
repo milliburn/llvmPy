@@ -98,15 +98,13 @@ PyStr::py__getattr__(std::string const &name)
 }
 
 PyObj *
-PyStr::py_upper(PyStr **self)
+PyStr::py_upper(PyStr &self)
 {
-    PyStr &str = **self;
-
-    if (str.getValue().empty()) {
-        return &str;
+    if (self.getValue().empty()) {
+        return &self;
     }
 
-    auto s = std::make_unique<std::string>(str.getValue());
+    auto s = std::make_unique<std::string>(self.getValue());
     std::transform(
             s->begin(),
             s->end(),
@@ -116,15 +114,13 @@ PyStr::py_upper(PyStr **self)
 }
 
 PyObj *
-PyStr::py_capitalize(PyStr **self)
+PyStr::py_capitalize(PyStr &self)
 {
-    PyStr &str = **self;
-
-    if (str.getValue().empty()) {
-        return &str;
+    if (self.getValue().empty()) {
+        return &self;
     }
 
-    auto s = std::make_unique<std::string>(str.getValue());
+    auto s = std::make_unique<std::string>(self.getValue());
     std::transform(
             s->begin(),
             s->end(),

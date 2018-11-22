@@ -88,7 +88,7 @@ llvm::FunctionType *
 Types::getOpaqueFunc(size_t N) const
 {
     std::vector<llvm::Type *> argTypes;
-    argTypes.push_back(FramePtrPtr);
+    argTypes.push_back(FramePtr);
 
     for (size_t i = 0; i < N; ++i) {
         argTypes.push_back(Ptr);
@@ -104,7 +104,7 @@ Types::getFunc(
         size_t N) const
 {
     std::vector<llvm::Type *> argTypes;
-    argTypes.push_back(getPtr(getPtr(outer)));
+    argTypes.push_back(getPtr(outer));
 
     for (size_t i = 0; i < N; ++i) {
         argTypes.push_back(Ptr);
