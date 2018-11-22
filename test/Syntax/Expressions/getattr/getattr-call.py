@@ -16,9 +16,9 @@ print("test".upper().capitalize())
 # IR: [[upperFunc:%[^ ]+]] = bitcast i8* [[upperFunc_]] to %PyObj* (%Frame**)*
 # IR: [[upperVal:%[^ ]+]] = call %PyObj* [[upperFunc]](%Frame** %callframe)
 # IR: [[capitalize:%[^ ]+]] = call %PyObj* @llvmPy_getattr(%PyObj* [[upperVal]], %PyObj* %PyStr.2)
-# IR: [[capitalizeFunc_:%[^ ]+]] = call i8* @llvmPy_fchk(%Frame** %callframe1, %PyObj* [[capitalize]], i64 0)
+# IR: [[capitalizeFunc_:%[^ ]+]] = call i8* @llvmPy_fchk(%Frame** %callframe, %PyObj* [[capitalize]], i64 0)
 # IR: [[capitalizeFunc:%[^ ]+]] = bitcast i8* [[capitalizeFunc_]] to %PyObj* (%Frame**)*
-# IR: [[capitalizeVal:%[^ ]+]] = call %PyObj* [[capitalizeFunc]](%Frame** %callframe1)
+# IR: [[capitalizeVal:%[^ ]+]] = call %PyObj* [[capitalizeFunc]](%Frame** %callframe)
 # IR: @llvmPy_print(%PyObj* [[capitalizeVal]])
 
 # OUTPUT: Test

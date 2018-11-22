@@ -148,8 +148,8 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
     }
 
     // Call frame pointer.
-    auto *callFrameAlloca = _ir.CreateAlloca(
-            _types.FramePtr, nullptr, tags.CallFrame);
+    auto *callFrameAlloca = scope.getCallFramePtr();
+    assert(callFrameAlloca);
 
     // Count of positional arguments.
     llvm::Value *np = llvm::ConstantInt::get(_types.PyIntValue, argCount);
@@ -367,6 +367,13 @@ Emitter::createFunction(
 
     function->setPrefixData(
             _types.getInt64(reinterpret_cast<int64_t>(innerScope)));
+
+    auto *callFramePtrPtr = _ir.CreateAlloca(
+            _types.FramePtr,
+            nullptr,
+            tags.CallFrame);
+
+    innerScope->setCallFramePtr(callFramePtrPtr);
 
     for (auto const &slotName : slotNames) {
         innerScope->declareSlot(slotName);

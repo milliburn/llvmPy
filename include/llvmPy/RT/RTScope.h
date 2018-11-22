@@ -70,6 +70,10 @@ public:
 
     size_t getNextWhileStmtIndex();
 
+    void setCallFramePtr(llvm::Value *ptr);
+
+    llvm::Value *getCallFramePtr() const;
+
 private:
     RTModule &_module;
     llvm::Value *_innerFramePtr;
@@ -79,6 +83,7 @@ private:
     size_t _condStmtCount;
     size_t _whileStmtCount;
     std::unordered_map<std::string, Slot> _slots;
+    llvm::Value *_callframePtr;
 };
 
 } // namespace llvmPy
