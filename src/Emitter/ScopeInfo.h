@@ -24,6 +24,18 @@ public:
         llvm::BasicBlock *loopEndBB;
     };
 
+public:
+    ScopeInfo() noexcept;
+
+    void reset();
+
+    void verify();
+
+public:
+    void setLoop(Loop const *loop);
+
+    void clearLoop();
+
 private:
     std::unordered_map<std::string, Slot> _slots;
     llvm::Value *_innerFramePtr;

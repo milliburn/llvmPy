@@ -13,11 +13,34 @@ class Stmt;
 
 class FuncInfo {
 public:
+    using ArgNamesIter = iterator_range<std::string const *>;
+
+    FuncInfo() noexcept;
+
+    void reset();
+
+    bool verify();
+
+public:
+    void setName(std::string const &name);
+
+    std::string const &getName() const;
+
+    void setStmt(Stmt const &stmt);
+
+    Stmt const &getStmt() const;
+
+    void setArgNames(ArgNamesIter argNames);
+
+    iterator_range<std::string const *> getArgNames() const;
 
 private:
     std::string _name;
-    std::shared_ptr<Stmt const> _stmt;
+
+    Stmt const *_stmt;
+
     std::set<std::string> _slotNames;
+
     std::vector<std::string> _argNames;
 };
 

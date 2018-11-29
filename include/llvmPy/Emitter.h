@@ -24,6 +24,7 @@ class Value;
 
 namespace llvmPy {
 
+class FuncInfo;
 class RT;
 class RTScope;
 class RTModule;
@@ -85,11 +86,7 @@ public:
     RTModule *createModule(std::string const &name, Stmt const &stmt);
     RTModule *createModule(std::string const &name);
 
-    llvm::Function *createFunction(
-            std::string const &name,
-            RTScope &scope,
-            Stmt const &stmt,
-            iterator_range<std::string const *> const &args);
+    llvm::Function *createFunction(RTScope &scope, FuncInfo const &funcInfo);
 
 private:
     llvm::DataLayout const &_dl;

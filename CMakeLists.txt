@@ -60,10 +60,6 @@ add_library(
         include/llvmPy/Token.h
         include/llvmPy/Typed.h
         include/llvmPy.h
-        src/Emitter/ModuleEmitter.cc
-        src/Emitter/ModuleEmitter.h
-        src/Emitter/ScopeEmitter.cc
-        src/Emitter/ScopeEmitter.h
         src/PyObj/PyBool.cc
         src/PyObj/PyClass.cc
         src/PyObj/PyFunc.cc
@@ -87,7 +83,7 @@ add_library(
         src/Lexer.cc
         src/Parser2.cc
         src/RT.cc
-        src/Token.cc src/Emitter/FuncInfo.h src/Emitter/ScopeInfo.h src/Emitter/Context.h)
+        src/Token.cc src/Emitter/FuncInfo.h src/Emitter/ScopeInfo.h src/Emitter/Context.h src/Emitter/FuncInfo.cc)
 
 set_target_properties(
         lib${name}

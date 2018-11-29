@@ -11,6 +11,7 @@
 #include <llvmPy/RT.h>
 #include <llvmPy/Token.h>
 #include <llvmPy/Support/iterator_range.h>
+#include "Emitter/FuncInfo.h"
 #include <iostream>
 #include <map>
 #include <stdlib.h>
@@ -64,11 +65,12 @@ Emitter::createModule(
     module->setDataLayout(_dl);
     RTModule *rtModule = new RTModule(name, module, _types);
 
-    createFunction(
-            "__body__",
-            rtModule->getScope(),
-            stmt,
-            empty_range<std::string const *>());
+    FuncInfo funcInfo;
+    funcInfo.setName("__body__");
+    funcInfo.setStmt(stmt);
+    assert(funcInfo.verify());
+
+    createFunction(rtModule->getScope(), funcInfo);
 
     llvm::verifyModule(*module);
     return rtModule;
@@ -206,11 +208,13 @@ Emitter::emit(RTScope &scope, LambdaExpr const &lambda)
     // TODO: XXX?
     auto *insertBlock = _ir.GetInsertBlock();
 
-    auto *function = createFunction(
-            tags.Lambda,
-            scope,
-            returnStmt,
-            lambda.args());
+    FuncInfo funcInfo;
+    funcInfo.setName(tags.Lambda);
+    funcInfo.setStmt(returnStmt);
+    funcInfo.setArgNames(lambda.args());
+    assert(funcInfo.verify());
+
+    auto *function = createFunction(scope, funcInfo);
 
     _ir.SetInsertPoint(insertBlock);
 
@@ -264,11 +268,7 @@ Emitter::emit(RTScope &scope, BinaryExpr const &expr)
 }
 
 llvm::Function *
-Emitter::createFunction(
-        std::string const &name,
-        RTScope &outerScope,
-        Stmt const &stmt,
-        ArgNamesIter const &args)
+Emitter::createFunction(RTScope &outerScope, FuncInfo const &funcInfo)
 {
     RTModule &mod = outerScope.getModule();
 
@@ -283,29 +283,29 @@ Emitter::createFunction(
     std::set<std::string> slotNames;
     size_t argCount = 0;
 
-    for (auto &argName : args) {
+    for (auto &argName : funcInfo.getArgNames()) {
         if (!slotNames.count(argName)) {
             slotNames.insert(argName);
             argCount += 1;
         }
     }
 
-    gatherSlotNames(stmt, slotNames);
+    gatherSlotNames(funcInfo.getStmt(), slotNames);
 
     innerScope->setInnerFrameType(
             _types.getFuncFrame(
-                    name,
+                    funcInfo.getName(),
                     innerScope->getOuterFrameType(),
                     slotNames.size()));
 
     llvm::Function *function =
             llvm::Function::Create(
                     _types.getFunc(
-                            name,
+                            funcInfo.getName(),
                             innerScope->getOuterFrameType(),
                             argCount),
                     llvm::Function::ExternalLinkage,
-                    name,
+                    funcInfo.getName(),
                     &mod.getModule());
 
     // Name the arguments.
@@ -313,7 +313,7 @@ Emitter::createFunction(
     llvm::Value *outerFramePtrArg = nullptr;
 
     int iArg = 0;
-    auto argNames = args.begin();
+    auto argNames = funcInfo.getArgNames().begin();
 
     for (auto &arg : function->args()) {
         if (iArg == 0) {
@@ -379,7 +379,7 @@ Emitter::createFunction(
 
     // Copy-initialise the contents of arguments.
     iArg = 0;
-    argNames = args.begin();
+    argNames = funcInfo.getArgNames().begin();
 
     for (auto &arg : function->args()) {
         if (iArg > 0) {
@@ -403,7 +403,7 @@ Emitter::createFunction(
 
     _ir.SetInsertPoint(entry);
 
-    emitStatement(*function, *innerScope, stmt, nullptr);
+    emitStatement(*function, *innerScope, funcInfo.getStmt(), nullptr);
 
     if (!lastInstructionWasTerminator()) {
         _ir.CreateRet(mod.llvmPy_None());
@@ -589,11 +589,13 @@ Emitter::emitDefStmt(
     // TODO: XXX?
     auto *insertBlock = _ir.GetInsertBlock();
 
-    auto *function = createFunction(
-            def.getName(),
-            scope,
-            def.getBody(),
-            def.args());
+    FuncInfo funcInfo;
+    funcInfo.setName(def.getName());
+    funcInfo.setStmt(def.getBody());
+    funcInfo.setArgNames(def.args());
+    assert(funcInfo.verify());
+
+    auto *function = createFunction(scope, funcInfo);
 
     _ir.SetInsertPoint(insertBlock);
 
@@ -638,6 +640,7 @@ Emitter::emit(RTScope &scope, UnaryExpr const &unary)
     }
 
     assert(false && "Not Implemented");
+    return nullptr;
 }
 
 llvm::Value *

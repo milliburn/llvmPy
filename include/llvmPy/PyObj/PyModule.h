@@ -21,9 +21,9 @@ public:
     std::string const &getPath() const;
 
 private:
-    Frame const &frame;
+    // Frame const &frame;
 
-    Scope const &scope;
+    // Scope const &scope;
 };
 
 } // namespace llvmPy
