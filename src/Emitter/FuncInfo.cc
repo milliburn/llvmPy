@@ -20,7 +20,7 @@ FuncInfo::reset()
 bool
 FuncInfo::verify()
 {
-    return false;
+    return true;
 }
 
 void
