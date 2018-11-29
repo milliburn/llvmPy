@@ -3,6 +3,7 @@
 #include <llvmPy/Instr.h>
 #include <memory>
 #include <string>
+#include "ScopeEmitter.h"
 
 #ifdef __cplusplus
 namespace llvm {
@@ -12,11 +13,10 @@ class Module;
 namespace llvmPy {
 
 class Compiler;
-class ScopeEmitter;
 class Stmt;
 class Types;
 
-class ModuleEmitter {
+class ModuleEmitter : public ScopeEmitter {
 public:
     explicit ModuleEmitter(Compiler &compiler) noexcept;
 
@@ -30,8 +30,6 @@ public:
 private:
     Compiler &_compiler;
     Types const _types;
-
-    ScopeEmitter getFunctionEmitter() const;
 };
 
 } // namespace llvmPy

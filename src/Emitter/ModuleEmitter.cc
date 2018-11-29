@@ -3,7 +3,8 @@
 using namespace llvmPy;
 
 ModuleEmitter::ModuleEmitter(Compiler &compiler) noexcept
-: _compiler(compiler),
+: ScopeEmitter(compiler, *this),
+  _compiler(compiler),
   _types(compiler.getContext(), compiler.getDataLayout())
 {
 }
@@ -11,7 +12,9 @@ ModuleEmitter::ModuleEmitter(Compiler &compiler) noexcept
 ModuleEmitter::~ModuleEmitter() = default;
 
 std::unique_ptr<llvm::Module>
-ModuleEmitter::emitModule(std::string const &name, Stmt const &stmt)
+ModuleEmitter::emitModule(
+        std::string const &name,
+        Stmt const &stmt)
 {
     return std::unique_ptr<llvm::Module>();
 }

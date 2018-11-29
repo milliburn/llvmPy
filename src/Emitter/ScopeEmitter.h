@@ -3,8 +3,9 @@
 #include <llvmPy/AST.h>
 #include <llvmPy/Support/iterator_range.h>
 #include <memory>
-#include <unordered_map>
+#include <set>
 #include <string>
+#include <unordered_map>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Weverything"
@@ -38,6 +39,16 @@ public:
         size_t frameIndex;
     };
 
+    struct ScopeContext {
+        struct Slot {
+            llvm::Value *value;
+            size_t frameIndex;
+        };
+
+        std::unordered_map<std::string, Slot> slots;
+        iterator_range<Stmt const *> stmts;
+    };
+
     ScopeEmitter(
             Compiler &compiler,
             ModuleEmitter const &module)
@@ -50,6 +61,10 @@ public:
             std::string const &name,
             Stmt const &stmt,
             iterator_range<std::string const *> const &argNames);
+
+    void gatherSlotNames(
+            Stmt const &stmt,
+            std::set<std::string> &names);
 
 private:
     llvm::LLVMContext &_ctx;

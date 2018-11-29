@@ -87,7 +87,7 @@ add_library(
         src/Lexer.cc
         src/Parser2.cc
         src/RT.cc
-        src/Token.cc)
+        src/Token.cc src/Emitter/FuncInfo.h src/Emitter/ScopeInfo.h src/Emitter/Context.h)
 
 set_target_properties(
         lib${name}
