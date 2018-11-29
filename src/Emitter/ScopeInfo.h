@@ -16,7 +16,8 @@ namespace llvmPy {
 
 class ScopeInfo {
 public:
-    class Slot {
+    struct Slot {
+        size_t frameIndex;
     };
 
     struct Loop {
@@ -29,12 +30,46 @@ public:
 
     void reset();
 
-    void verify();
+    bool verify();
 
 public:
+    bool hasSlot(std::string const &name) const;
+
+    void declareSlot(std::string const &name);
+
+    size_t getSlotIndex(std::string const &name) const;
+
+    size_t getSlotCount() const;
+
+    Loop const *getLoop() const;
+
     void setLoop(Loop const *loop);
 
     void clearLoop();
+
+    llvm::StructType *getInnerFrameType() const;
+
+    void setInnerFrameType(llvm::StructType *st);
+
+    llvm::StructType *getOuterFrameType() const;
+
+    void setOuterFrameType(llvm::StructType *st);
+
+    llvm::Value *getInnerFramePtrPtr() const;
+
+    void setInnerFramePtrPtr(llvm::Value *ptr);
+
+    llvm::Value *getInnerFramePtr() const;
+
+    void setInnerFramePtr(llvm::Value *ptr);
+
+    size_t getNextCondStmtIndex();
+
+    size_t getNextWhileStmtIndex();
+
+    void setCallFramePtr(llvm::Value *ptr);
+
+    llvm::Value *getCallFramePtr() const;
 
 private:
     std::unordered_map<std::string, Slot> _slots;

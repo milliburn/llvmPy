@@ -88,7 +88,7 @@ add_library(
         src/Parser2.cc
         src/RT.cc
         src/Token.cc
-)
+        src/Emitter/ScopeInfo.cc)
 
 set_target_properties(
         lib${name}
