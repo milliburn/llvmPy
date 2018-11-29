@@ -9,3 +9,9 @@ ModuleEmitter::ModuleEmitter(Compiler &compiler) noexcept
 }
 
 ModuleEmitter::~ModuleEmitter() = default;
+
+std::unique_ptr<llvm::Module>
+ModuleEmitter::emitModule(std::string const &name, Stmt const &stmt)
+{
+    return std::unique_ptr<llvm::Module>();
+}

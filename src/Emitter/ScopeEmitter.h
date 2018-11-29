@@ -1,6 +1,10 @@
 #pragma once
 
+#include <llvmPy/AST.h>
+#include <llvmPy/Support/iterator_range.h>
+#include <memory>
 #include <unordered_map>
+#include <string>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Weverything"
@@ -8,13 +12,11 @@
 #include <llvm/IR/IRBuilder.h>
 #pragma GCC diagnostic pop
 
-#include <llvmPy/AST.h>
-#include <llvmPy/Support/iterator_range.h>
-
 #ifdef __cplusplus
 namespace llvm {
 class BasicBlock;
 class DataLayout;
+class Function;
 class LLVMContext;
 class Value;
 } // namespace llvm
@@ -38,9 +40,16 @@ public:
 
     ScopeEmitter(
             Compiler &compiler,
-            ModuleEmitter const &module) noexcept;
+            ModuleEmitter const &module)
+            noexcept;
 
     virtual ~ScopeEmitter();
+
+    std::unique_ptr<llvm::Function>
+    emitFunction(
+            std::string const &name,
+            Stmt const &stmt,
+            iterator_range<std::string const *> const &argNames);
 
 private:
     llvm::LLVMContext &_ctx;
