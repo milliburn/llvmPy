@@ -2,6 +2,19 @@
 Execution Model
 ***************
 
+Slots, Variables, and Members
+=============================
+
+llvmPy distinguishes between two mechanisms for storing variables:
+
+slot
+    An array-indexed pointer in a lexical frame (on the stack or on the heap) to an object on the heap.
+
+member
+    Entry in a dynamic map-like structure that associates the name of the slot to the pointer of a heap object.
+
+The emitter will generally strive to allocate as many variables in slots as possible, which is possible when the scope and name of a variable is lexically unambiguous (e.g. variables on the left-hand side of assign statements in function definitions). Where that is not possible (e.g. assigning a global variable of some other module), a variable is stored as a member. The uniqueness of names in a scope is maintained across its slots and members. The ``getattr(obj, name)`` and ``setattr(obj, name, value)`` builtins manage the mechanisms automatically.
+
 Calling Convention
 ==================
 
@@ -23,3 +36,4 @@ If the function check does not throw, the label is called immediately: ::
 
     %func = bitcast i8* %label to %PyObj* (%Frame**, %PyObj*, %PyObj*)*
     %result = call %PyObj* %func(%Frame** %callframe, %PyObj* %arg1, %PyObj* %arg2)
+
