@@ -40,6 +40,8 @@ public:
 
     virtual PyObj *py__getattr__(std::string const &name);
 
+    virtual void py__setattr__(std::string const &name, PyObj &obj);
+
     /** Return true if this is an instance of a class, i.e. method calls
      *  should automatically bind the self-argument.
      */

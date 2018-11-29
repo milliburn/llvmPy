@@ -3,8 +3,9 @@
 #include <llvmPy/Support/Testing.h>
 
 #ifdef __cplusplus
-
 namespace llvmPy {
+
+class PyObj;
 
 class Scope {
 public:

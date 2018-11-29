@@ -105,3 +105,8 @@ PyObj::isInstance() const
 {
     return true;
 }
+
+void
+PyObj::py__setattr__(std::string const &name, PyObj &obj)
+{
+}
