@@ -1,11 +1,14 @@
 #include "ScopeEmitter.h"
+#include <llvmPy/Compiler.h>
 using namespace llvmPy;
 
 ScopeEmitter::ScopeEmitter(
-        llvm::DataLayout const &dl,
-        llvm::LLVMContext &ctx,
-        Types const &types) noexcept
-: _ctx(ctx), _dl(dl), _types(types), _ir(_ctx)
+        Compiler &compiler,
+        ModuleEmitter const &module) noexcept
+: _ctx(compiler.getContext()),
+  _dl(compiler.getDataLayout()),
+  _module(module),
+  _ir(_ctx)
 {
 
 }

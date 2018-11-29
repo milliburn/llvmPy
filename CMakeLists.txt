@@ -60,6 +60,8 @@ add_library(
         include/llvmPy/Token.h
         include/llvmPy/Typed.h
         include/llvmPy.h
+        src/Emitter/ModuleEmitter.cc
+        src/Emitter/ModuleEmitter.h
         src/Emitter/ScopeEmitter.cc
         src/Emitter/ScopeEmitter.h
         src/PyObj/PyBool.cc
