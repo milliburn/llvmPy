@@ -43,6 +43,7 @@ add_library(
         include/llvmPy/PyObj/PyNone.h
         include/llvmPy/PyObj/PyObj.h
         include/llvmPy/PyObj/PyStr.h
+        include/llvmPy/RT/Call.h
         include/llvmPy/RT/Frame.h
         include/llvmPy/RT/RTModule.h
         include/llvmPy/RT/RTScope.h
@@ -60,6 +61,10 @@ add_library(
         include/llvmPy/Token.h
         include/llvmPy/Typed.h
         include/llvmPy.h
+        src/Emitter/Context.h
+        src/Emitter/FuncInfo.cc
+        src/Emitter/FuncInfo.h
+        src/Emitter/ScopeInfo.h
         src/PyObj/PyBool.cc
         src/PyObj/PyClass.cc
         src/PyObj/PyFunc.cc
@@ -68,7 +73,6 @@ add_library(
         src/PyObj/PyNone.cc
         src/PyObj/PyObj.cc
         src/PyObj/PyStr.cc
-        include/llvmPy/RT/Call.h
         src/RT/Frame.cc
         src/RT/RTScope.cc
         src/RT/RTModule.cc
@@ -83,7 +87,8 @@ add_library(
         src/Lexer.cc
         src/Parser2.cc
         src/RT.cc
-        src/Token.cc src/Emitter/FuncInfo.h src/Emitter/ScopeInfo.h src/Emitter/Context.h src/Emitter/FuncInfo.cc)
+        src/Token.cc
+)
 
 set_target_properties(
         lib${name}
