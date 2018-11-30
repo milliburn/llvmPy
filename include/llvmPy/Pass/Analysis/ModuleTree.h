@@ -6,14 +6,21 @@
 namespace llvmPy {
 
 class FuncTree;
+class ScopeTree;
 
 class ModuleTree {
 public:
+    std::string const &getName() const;
+
+    FuncTree &getFuncTree() const;
+
+    ScopeTree &getScopeTree() const;
 
 private:
+
     std::string _name;
 
-    FuncTree const *_funcTree;
+    FuncTree *_funcTree;
 };
 
 } // namespace llvmPy
