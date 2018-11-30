@@ -75,13 +75,14 @@ Emitter::createModule(
 
     ScopeInfo moduleScopeInfo;
     moduleScopeInfo.setIsAlwaysHeap(true);
-    initSlotsFromSignature(moduleScopeInfo, moduleFuncInfo);
-    initSlotsFromStatements(moduleScopeInfo, stmt);
+    initScopeSlotsFromSignature(moduleScopeInfo, moduleFuncInfo);
+    initScopeSlotsFromBody(moduleScopeInfo, stmt);
+    initScopeFrame(moduleScopeInfo);
     assert(moduleScopeInfo.verify());
 
     Context ctx(moduleFuncInfo, moduleScopeInfo);
 
-    createFunction(rtModule->getScope(), moduleFuncInfo);
+    createFunction(moduleScopeInfo, moduleFuncInfo);
 
     llvm::verifyModule(*module);
     return rtModule;
@@ -279,14 +280,16 @@ Emitter::emit(RTScope &scope, BinaryExpr const &expr)
 }
 
 llvm::Function *
-Emitter::createFunction(RTScope &outerScope, FuncInfo const &funcInfo)
+Emitter::createFunction(
+        ScopeInfo const &scopeInfo,
+        FuncInfo const &funcInfo)
 {
-    RTModule &mod = outerScope.getModule();
+    RTModule &mod = scopeInfo.getModule();
 
-    RTScope *innerScope = outerScope.createDerived();
+    RTScope *innerScope = scopeInfo.createDerived();
 
-    if (outerScope.getInnerFramePtrPtr()) {
-        innerScope->setOuterFrameType(outerScope.getInnerFrameType());
+    if (scopeInfo.getInnerFramePtrPtr()) {
+        innerScope->setOuterFrameType(scopeInfo.getInnerFrameType());
     } else {
         innerScope->setOuterFrameType(_types.Frame);
     }
@@ -590,7 +593,7 @@ Emitter::gatherSlotNames(Stmt const &stmt, std::set<std::string> &names)
 }
 
 void
-Emitter::initSlotsFromSignature(
+Emitter::initScopeSlotsFromSignature(
         ScopeInfo &scopeInfo,
         FuncInfo const &funcInfo)
 {
@@ -600,7 +603,7 @@ Emitter::initSlotsFromSignature(
 }
 
 void
-Emitter::initSlotsFromStatements(
+Emitter::initScopeSlotsFromBody(
         ScopeInfo &scopeInfo,
         Stmt const &stmt)
 {
@@ -610,13 +613,13 @@ Emitter::initSlotsFromStatements(
         scopeInfo.declareSlot(def->getName());
     } else if (auto *compound = stmt.cast<CompoundStmt>()) {
         for (auto const &stmt_ : compound->getStatements()) {
-            initSlotsFromStatements(scopeInfo, *stmt_);
+            initScopeSlotsFromBody(scopeInfo, *stmt_);
         }
     } else if (auto *cond = stmt.cast<ConditionalStmt>()) {
-        initSlotsFromStatements(scopeInfo, cond->getThenBranch());
-        initSlotsFromStatements(scopeInfo, cond->getElseBranch());
+        initScopeSlotsFromBody(scopeInfo, cond->getThenBranch());
+        initScopeSlotsFromBody(scopeInfo, cond->getElseBranch());
     } else if (auto *loop = stmt.cast<WhileStmt>()) {
-        initSlotsFromStatements(scopeInfo, loop->getBody());
+        initScopeSlotsFromBody(scopeInfo, loop->getBody());
     }
 }
 
@@ -757,4 +760,15 @@ Emitter::emit(RTScope &scope, GetattrExpr const &getattr)
             { object, name });
 
     return value;
+}
+
+void
+Emitter::initScopeFrame(ScopeInfo &scopeInfo)
+{
+    if (scopeInfo.hasParent()) {
+        auto const &parent = scopeInfo.getParent();
+        scopeInfo.setOuterFrameType(parent.getInnerFrameType());
+    } else {
+        scopeInfo.setOuterFrameType(_types.Frame);
+    }
 }

@@ -35,7 +35,9 @@ public:
 public:
     void setParent(ScopeInfo *parent);
 
-    ScopeInfo *getParent() const;
+    bool hasParent() const;
+
+    ScopeInfo &getParent() const;
 
     bool hasSlot(std::string const &name) const;
 

@@ -33,10 +33,17 @@ ScopeInfo::setParent(ScopeInfo *parent)
     _parent = parent;
 }
 
-ScopeInfo *
+ScopeInfo &
 ScopeInfo::getParent() const
 {
-    return _parent;
+    assert(hasParent());
+    return *_parent;
+}
+
+bool
+ScopeInfo::hasParent() const
+{
+    return _parent != nullptr;
 }
 
 bool

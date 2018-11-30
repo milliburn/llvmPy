@@ -80,13 +80,15 @@ public:
             Stmt const &stmt,
             std::set<std::string> &names);
 
-    void initSlotsFromSignature(
+    void initScopeSlotsFromSignature(
             ScopeInfo &scopeInfo,
             FuncInfo const &funcInfo);
 
-    void initSlotsFromStatements(
+    void initScopeSlotsFromBody(
             ScopeInfo &scopeInfo,
             Stmt const &stmt);
+
+    void initScopeFrame(ScopeInfo &scopeInfo);
 
     llvm::Value *findLexicalSlotGEP(
             std::string const &name,
@@ -96,7 +98,8 @@ public:
     RTModule *createModule(std::string const &name, Stmt const &stmt);
     RTModule *createModule(std::string const &name);
 
-    llvm::Function *createFunction(RTScope &scope, FuncInfo const &funcInfo);
+    llvm::Function *createFunction(
+            ScopeInfo const &scopeInfo, FuncInfo const &funcInfo);
 
 private:
     llvm::DataLayout const &_dl;
