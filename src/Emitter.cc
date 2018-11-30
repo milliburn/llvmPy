@@ -12,6 +12,8 @@
 #include <llvmPy/Token.h>
 #include <llvmPy/Support/iterator_range.h>
 #include "Emitter/FuncInfo.h"
+#include "Emitter/ScopeInfo.h"
+#include "Emitter/Context.h"
 #include <iostream>
 #include <map>
 #include <stdlib.h>
@@ -65,12 +67,19 @@ Emitter::createModule(
     module->setDataLayout(_dl);
     RTModule *rtModule = new RTModule(name, module, _types);
 
-    FuncInfo funcInfo;
-    funcInfo.setName("__body__");
-    funcInfo.setStmt(stmt);
-    assert(funcInfo.verify());
+    FuncInfo moduleFuncInfo;
+    moduleFuncInfo.setName("__body__");
+    moduleFuncInfo.setStmt(stmt);
+    moduleFuncInfo.setIsModuleBody(true);
+    assert(moduleFuncInfo.verify());
 
-    createFunction(rtModule->getScope(), funcInfo);
+    ScopeInfo moduleScopeInfo;
+    moduleScopeInfo.setIsAlwaysHeap(true);
+    initSlotsFromSignature(moduleScopeInfo, moduleFuncInfo);
+    initSlotsFromStatements(moduleScopeInfo, stmt);
+    assert(moduleScopeInfo.verify());
+
+    createFunction(rtModule->getScope(), moduleFuncInfo);
 
     llvm::verifyModule(*module);
     return rtModule;
@@ -575,6 +584,37 @@ Emitter::gatherSlotNames(Stmt const &stmt, std::set<std::string> &names)
         gatherSlotNames(cond->getElseBranch(), names);
     } else if (auto *loop = stmt.cast<WhileStmt>()) {
         gatherSlotNames(loop->getBody(), names);
+    }
+}
+
+void
+Emitter::initSlotsFromSignature(
+        ScopeInfo &scopeInfo,
+        FuncInfo const &funcInfo)
+{
+    for (auto const &argName : funcInfo.getArgNames()) {
+        scopeInfo.declareSlot(argName);
+    }
+}
+
+void
+Emitter::initSlotsFromStatements(
+        ScopeInfo &scopeInfo,
+        Stmt const &stmt)
+{
+    if (auto *assign = stmt.cast<AssignStmt>()) {
+        scopeInfo.declareSlot(assign->getName());
+    } else if (auto *def = stmt.cast<DefStmt>()) {
+        scopeInfo.declareSlot(def->getName());
+    } else if (auto *compound = stmt.cast<CompoundStmt>()) {
+        for (auto const &stmt_ : compound->getStatements()) {
+            initSlotsFromStatements(scopeInfo, *stmt_);
+        }
+    } else if (auto *cond = stmt.cast<ConditionalStmt>()) {
+        initSlotsFromStatements(scopeInfo, cond->getThenBranch());
+        initSlotsFromStatements(scopeInfo, cond->getElseBranch());
+    } else if (auto *loop = stmt.cast<WhileStmt>()) {
+        initSlotsFromStatements(scopeInfo, loop->getBody());
     }
 }
 

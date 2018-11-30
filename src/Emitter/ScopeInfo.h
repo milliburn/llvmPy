@@ -71,6 +71,10 @@ public:
 
     llvm::Value *getCallFramePtr() const;
 
+    bool isAlwaysHeap() const;
+
+    void setIsAlwaysHeap(bool value);
+
 private:
     std::unordered_map<std::string, Slot> _slots;
     llvm::Value *_innerFramePtr;
@@ -81,6 +85,7 @@ private:
     size_t _condStmtCount;
     size_t _whileStmtCount;
     llvm::Value *_callframePtr;
+    bool _isAlwaysHeap;
 };
 
 } // namespace llvmPy

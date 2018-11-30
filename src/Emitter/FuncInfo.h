@@ -34,6 +34,10 @@ public:
 
     iterator_range<std::string const *> getArgNames() const;
 
+    bool isModuleBody() const;
+
+    void setIsModuleBody(bool value) const;
+
 private:
     std::string _name;
 
@@ -42,6 +46,8 @@ private:
     std::set<std::string> _slotNames;
 
     std::vector<std::string> _argNames;
+
+    bool _isModuleBody;
 };
 
 } // namespace llvmPy

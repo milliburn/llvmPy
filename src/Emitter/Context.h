@@ -7,15 +7,26 @@ class BasicBlock;
 
 namespace llvmPy {
 
+class FuncInfo;
+class ScopeInfo;
+
 class Context {
 public:
-    struct Loop {
-        llvm::BasicBlock *loopCondBB;
-        llvm::BasicBlock *loopEndBB;
-    };
+    Context(FuncInfo const &fi, ScopeInfo const &si);
+
+    void setLoop(llvm::BasicBlock *cond, llvm::BasicBlock *end);
+
+    llvm::BasicBlock *getLoopCondBB() const;
+
+    llvm::BasicBlock *getLoopEndBB() const;
+
+    void resetLoop();
 
 private:
-    Loop const *_loop;
+    FuncInfo const &funcInfo;
+    ScopeInfo const &scopeInfo;
+    llvm::BasicBlock *_loopCondBB;
+    llvm::BasicBlock *_loopEndBB;
 };
 
 } // namespace llvmPy

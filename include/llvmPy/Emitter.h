@@ -24,7 +24,9 @@ class Value;
 
 namespace llvmPy {
 
+class Context;
 class FuncInfo;
+class ScopeInfo;
 class RT;
 class RTScope;
 class RTModule;
@@ -77,6 +79,14 @@ public:
     void gatherSlotNames(
             Stmt const &stmt,
             std::set<std::string> &names);
+
+    void initSlotsFromSignature(
+            ScopeInfo &scopeInfo,
+            FuncInfo const &funcInfo);
+
+    void initSlotsFromStatements(
+            ScopeInfo &scopeInfo,
+            Stmt const &stmt);
 
     llvm::Value *findLexicalSlotGEP(
             std::string const &name,

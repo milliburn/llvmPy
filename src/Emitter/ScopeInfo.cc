@@ -145,3 +145,15 @@ ScopeInfo::getCallFramePtr() const
 {
     return _callframePtr;
 }
+
+bool
+ScopeInfo::isAlwaysHeap() const
+{
+    return _isAlwaysHeap;
+}
+
+void
+ScopeInfo::setIsAlwaysHeap(bool value)
+{
+    _isAlwaysHeap = value;
+}

@@ -15,6 +15,7 @@ FuncInfo::reset()
     _stmt = nullptr;
     _slotNames.clear();
     _argNames.clear();
+    _isModuleBody = false;
 }
 
 bool
@@ -62,4 +63,16 @@ FuncInfo::getArgNames() const
     return make_range<std::string const *>(
             _argNames.data(),
             _argNames.data() + _argNames.size());
+}
+
+bool
+FuncInfo::isModuleBody() const
+{
+    return _isModuleBody;
+}
+
+void
+FuncInfo::setIsModuleBody(bool value) const
+{
+    _isModuleBody = value;
 }
