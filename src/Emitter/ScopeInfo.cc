@@ -9,6 +9,7 @@ ScopeInfo::ScopeInfo() noexcept
 void
 ScopeInfo::reset()
 {
+    _parent = nullptr;
     _slots.clear();
     _innerFramePtr = nullptr;
     _innerFramePtrPtr = nullptr;
@@ -24,6 +25,18 @@ bool
 ScopeInfo::verify()
 {
     return true;
+}
+
+void
+ScopeInfo::setParent(ScopeInfo *parent)
+{
+    _parent = parent;
+}
+
+ScopeInfo *
+ScopeInfo::getParent() const
+{
+    return _parent;
 }
 
 bool

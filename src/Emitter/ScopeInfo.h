@@ -33,6 +33,10 @@ public:
     bool verify();
 
 public:
+    void setParent(ScopeInfo *parent);
+
+    ScopeInfo *getParent() const;
+
     bool hasSlot(std::string const &name) const;
 
     void declareSlot(std::string const &name);
@@ -76,6 +80,7 @@ public:
     void setIsAlwaysHeap(bool value);
 
 private:
+    ScopeInfo *_parent;
     std::unordered_map<std::string, Slot> _slots;
     llvm::Value *_innerFramePtr;
     llvm::Value *_innerFramePtrPtr;

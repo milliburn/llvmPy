@@ -79,6 +79,8 @@ Emitter::createModule(
     initSlotsFromStatements(moduleScopeInfo, stmt);
     assert(moduleScopeInfo.verify());
 
+    Context ctx(moduleFuncInfo, moduleScopeInfo);
+
     createFunction(rtModule->getScope(), moduleFuncInfo);
 
     llvm::verifyModule(*module);
