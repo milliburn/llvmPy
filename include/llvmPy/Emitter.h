@@ -88,7 +88,7 @@ public:
             ScopeInfo &scopeInfo,
             Stmt const &stmt);
 
-    void initScopeFrame(ScopeInfo &scopeInfo);
+    void initScopeFrame(ScopeInfo &scopeInfo, FuncInfo const &funcInfo);
 
     llvm::Value *findLexicalSlotGEP(
             std::string const &name,
@@ -98,8 +98,7 @@ public:
     RTModule *createModule(std::string const &name, Stmt const &stmt);
     RTModule *createModule(std::string const &name);
 
-    llvm::Function *createFunction(
-            ScopeInfo const &scopeInfo, FuncInfo const &funcInfo);
+    llvm::Function *createFunction(Context &ctx);
 
 private:
     llvm::DataLayout const &_dl;
@@ -108,6 +107,8 @@ private:
     Types const _types;
 
     bool lastInstructionWasTerminator() const;
+
+    llvm::Value *getInstr(Instr instr);
 };
 
 } // namespace llvmPy

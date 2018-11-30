@@ -38,6 +38,8 @@ public:
 
     void setIsModuleBody(bool value) const;
 
+    size_t getArgCount() const;
+
 private:
     std::string _name;
 

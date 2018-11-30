@@ -3,6 +3,8 @@
 #ifdef __cplusplus
 namespace llvm {
 class BasicBlock;
+class Module;
+class Value;
 }
 
 namespace llvmPy {
@@ -12,7 +14,7 @@ class ScopeInfo;
 
 class Context {
 public:
-    Context(FuncInfo const &fi, ScopeInfo const &si);
+    Context(llvm::Module *mod, FuncInfo const &fi, ScopeInfo const &si);
 
     void setLoop(llvm::BasicBlock *cond, llvm::BasicBlock *end);
 
@@ -22,11 +24,33 @@ public:
 
     void resetLoop();
 
+    llvm::Module *getModule() const;
+
+    FuncInfo const &getFuncInfo() const;
+
+    ScopeInfo const &getScopeInfo() const;
+
+    llvm::Value *getFramePtr() const;
+
+    void setFramePtr(llvm::Value *ptr);
+
+    llvm::Value *getFramePtrPtr() const;
+
+    void setFramePtrPtr(llvm::Value *ptrptr);
+
+    llvm::Value *getCallFramePtr() const;
+
+    void setCallFramePtr(llvm::Value *ptr);
+
 private:
-    FuncInfo const &funcInfo;
-    ScopeInfo const &scopeInfo;
+    llvm::Module * const _module;
+    FuncInfo const &_funcInfo;
+    ScopeInfo const &_scopeInfo;
     llvm::BasicBlock *_loopCondBB;
     llvm::BasicBlock *_loopEndBB;
+    llvm::Value *_framePtr;
+    llvm::Value *_framePtrPtr;
+    llvm::Value *_callFramePtr;
 };
 
 } // namespace llvmPy

@@ -77,7 +77,7 @@ Emitter::createModule(
     moduleScopeInfo.setIsAlwaysHeap(true);
     initScopeSlotsFromSignature(moduleScopeInfo, moduleFuncInfo);
     initScopeSlotsFromBody(moduleScopeInfo, stmt);
-    initScopeFrame(moduleScopeInfo);
+    initScopeFrame(moduleScopeInfo, moduleFuncInfo);
     assert(moduleScopeInfo.verify());
 
     Context ctx(moduleFuncInfo, moduleScopeInfo);
@@ -280,51 +280,26 @@ Emitter::emit(RTScope &scope, BinaryExpr const &expr)
 }
 
 llvm::Function *
-Emitter::createFunction(
-        ScopeInfo const &scopeInfo,
-        FuncInfo const &funcInfo)
+Emitter::createFunction(Context &ctx)
 {
-    RTModule &mod = scopeInfo.getModule();
-
-    RTScope *innerScope = scopeInfo.createDerived();
-
-    if (scopeInfo.getInnerFramePtrPtr()) {
-        innerScope->setOuterFrameType(scopeInfo.getInnerFrameType());
-    } else {
-        innerScope->setOuterFrameType(_types.Frame);
-    }
-
-    std::set<std::string> slotNames;
-    size_t argCount = 0;
-
-    for (auto &argName : funcInfo.getArgNames()) {
-        if (!slotNames.count(argName)) {
-            slotNames.insert(argName);
-            argCount += 1;
-        }
-    }
-
-    gatherSlotNames(funcInfo.getStmt(), slotNames);
-
-    innerScope->setInnerFrameType(
-            _types.getFuncFrame(
-                    funcInfo.getName(),
-                    innerScope->getOuterFrameType(),
-                    slotNames.size()));
+    auto * const module = ctx.getModule();
+    auto const &funcInfo = ctx.getFuncInfo();
+    auto const &scopeInfo = ctx.getScopeInfo();
 
     llvm::Function *function =
             llvm::Function::Create(
                     _types.getFunc(
                             funcInfo.getName(),
-                            innerScope->getOuterFrameType(),
-                            argCount),
+                            scopeInfo.getOuterFrameType(),
+                            funcInfo.getArgCount()),
                     llvm::Function::ExternalLinkage,
                     funcInfo.getName(),
-                    &mod.getModule());
+                    module);
 
     // Name the arguments.
 
-    llvm::Value *outerFramePtrArg = nullptr;
+    llvm::Value * const outerFramePtrArg = function->arg_begin();
+    assert(outerFramePtrArg);
 
     int iArg = 0;
     auto argNames = funcInfo.getArgNames().begin();
@@ -332,20 +307,15 @@ Emitter::createFunction(
     for (auto &arg : function->args()) {
         if (iArg == 0) {
             arg.setName(tags.OuterFrame);
-            outerFramePtrArg = &arg;
         } else {
             arg.setName(tags.Arg + "." + *argNames);
             ++argNames;
         }
 
-        ++iArg;
+        iArg += 1;
     }
 
-    if (!outerFramePtrArg) {
-        throw "Missing outerFramePtrPtrArg!";
-    }
-
-    // Create function body.
+    // Function body.
     auto *entry = llvm::BasicBlock::Create(_ctx, "", function);
     _ir.SetInsertPoint(entry);
 
@@ -353,18 +323,18 @@ Emitter::createFunction(
     // heap by a closure.
 
     auto *frameAlloca = _ir.CreateAlloca(
-            innerScope->getInnerFrameType(),
+            scopeInfo.getInnerFrameType(),
             nullptr,
             tags.InnerFrame);
 
-    innerScope->setInnerFramePtr(frameAlloca);
+    ctx.setFramePtr(frameAlloca);
 
     auto *frameSelfPtrPtr = _ir.CreateGEP(
             frameAlloca,
             { _types.getInt64(0),
               _types.getInt32(Frame::SelfIndex) });
 
-    innerScope->setInnerFramePtrPtr(frameSelfPtrPtr);
+    ctx.setFramePtrPtr(frameSelfPtrPtr);
 
     auto *frameOuterPtrPtr = _ir.CreateGEP(
             frameAlloca,
@@ -377,19 +347,15 @@ Emitter::createFunction(
 
     // TODO: Zero-initialize slots with llvm.memset or something.
 
-    function->setPrefixData(
-            _types.getInt64(reinterpret_cast<int64_t>(innerScope)));
+    // TODO: Set as pointer to instance of Scope.
+    function->setPrefixData(_types.getInt64(0));
 
     auto *callFramePtrPtr = _ir.CreateAlloca(
             _types.FramePtr,
             nullptr,
             tags.CallFrame);
 
-    innerScope->setCallFramePtr(callFramePtrPtr);
-
-    for (auto const &slotName : slotNames) {
-        innerScope->declareSlot(slotName);
-    }
+    ctx.setCallFramePtr(callFramePtrPtr);
 
     // Copy-initialise the contents of arguments.
     iArg = 0;
@@ -399,8 +365,8 @@ Emitter::createFunction(
         if (iArg > 0) {
             auto ident = *argNames;
             ++argNames;
-            assert(innerScope->hasSlot(ident));
-            auto slotIndex = innerScope->getSlotIndex(ident);
+            assert(scopeInfo.hasSlot(ident));
+            auto slotIndex = scopeInfo.getSlotIndex(ident);
 
             auto *argVarPtr = _ir.CreateGEP(
                     frameAlloca,
@@ -417,10 +383,10 @@ Emitter::createFunction(
 
     _ir.SetInsertPoint(entry);
 
-    emitStatement(*function, *innerScope, funcInfo.getStmt(), nullptr);
+    emitStatement(ctx, funcInfo.getStmt());
 
     if (!lastInstructionWasTerminator()) {
-        _ir.CreateRet(mod.llvmPy_None());
+        _ir.CreateRet(getInstr(Instr::llvmPy_None));
     }
 
     llvm::verifyFunction(*function);
@@ -763,7 +729,9 @@ Emitter::emit(RTScope &scope, GetattrExpr const &getattr)
 }
 
 void
-Emitter::initScopeFrame(ScopeInfo &scopeInfo)
+Emitter::initScopeFrame(
+        ScopeInfo &scopeInfo,
+        FuncInfo const &funcInfo)
 {
     if (scopeInfo.hasParent()) {
         auto const &parent = scopeInfo.getParent();
@@ -771,4 +739,10 @@ Emitter::initScopeFrame(ScopeInfo &scopeInfo)
     } else {
         scopeInfo.setOuterFrameType(_types.Frame);
     }
+
+    scopeInfo.setInnerFrameType(
+            _types.getFuncFrame(
+                    funcInfo.getName(),
+                    scopeInfo.getOuterFrameType(),
+                    scopeInfo.getSlotCount()));
 }

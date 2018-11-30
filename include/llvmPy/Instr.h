@@ -22,6 +22,10 @@ class Type;
 
 namespace llvmPy {
 
+enum class Instr {
+    llvmPy_None,
+};
+
 class Types {
 public:
     Types(llvm::LLVMContext &, llvm::DataLayout const &);
