@@ -28,14 +28,14 @@ public:
 private:
 
     /** Declare slots inferred from the function's signature. */
-    void initScopeSlotsFromSignature(ScopeTree &, FuncTree const &) const;
+    void initScopeSlotsFromSignature(ScopeTree &st, FuncTree const &ft) const;
 
     /** Declare slots inferred from the function's statements. */
-    void initScopeSlotsFromBody(ScopeTree &, Stmt const &) const;
+    void initScopeSlotsFromBody(ScopeTree &st, Stmt const &stmt) const;
 
     /** Set the properties of the scope's frames based on scope declarations
      *  acquired from other methods. */
-    void initScopeFrames(ScopeTree &, FuncTree const &) const;
+    void initScopeFrames(ScopeTree &st, FuncTree const &ft) const;
 };
 
 } // namespace llvmPy

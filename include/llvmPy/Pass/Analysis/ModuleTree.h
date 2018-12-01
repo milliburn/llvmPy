@@ -12,6 +12,8 @@ class ModuleTree {
 public:
     std::string const &getName() const;
 
+    void setName(std::string const &name);
+
     FuncTree &getFuncTree() const;
 
     ScopeTree &getScopeTree() const;
