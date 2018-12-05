@@ -1,11 +1,13 @@
 #pragma once
 
 #include "llvmPy/Pass.h"
+#include <llvmPy/Pass/Analysis/LexicalTree.h>
 #include <string>
 
 #ifdef __cplusplus
 namespace llvmPy {
 
+class Expr;
 class FuncTree;
 class ModuleTree;
 class ScopeTree;
@@ -26,6 +28,15 @@ public:
     AnalysisPassO run(AnalysisPassI const &input) override;
 
 private:
+
+    std::shared_ptr<ModuleTree>
+    buildModuleLexicalTree(
+            std::string const &name,
+            std::shared_ptr<Stmt const> const &) const;
+
+    void buildBasicLexicalTree(LexicalTree &tree, Stmt const &stmt) const;
+
+    void buildBasicLexicalTree(LexicalTree &tree, Expr const &expr) const;
 
     /** Declare slots inferred from the function's signature. */
     void initScopeSlotsFromSignature(ScopeTree &st, FuncTree const &ft) const;

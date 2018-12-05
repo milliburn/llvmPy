@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <llvmPy/Pass/Analysis/LexicalTree.h>
 
 #ifdef __cplusplus
 namespace llvmPy {
@@ -8,7 +9,7 @@ namespace llvmPy {
 class FuncTree;
 class ScopeTree;
 
-class ModuleTree {
+class ModuleTree : public LexicalTree {
 public:
     std::string const &getName() const;
 
@@ -17,6 +18,8 @@ public:
     FuncTree &getFuncTree() const;
 
     ScopeTree &getScopeTree() const;
+
+    void setBody(std::shared_ptr<LexicalTree> const &tree);
 
 private:
 

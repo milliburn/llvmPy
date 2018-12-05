@@ -85,7 +85,8 @@ add_library(
         src/RT.cc
         src/Token.cc include/llvmPy/Pass/AnalysisPass.h include/llvmPy/Pass.h include/llvmPy/Pass/Analysis/ModuleTree.h
         include/llvmPy/Pass/Analysis/FuncTree.h
-        include/llvmPy/Pass/Analysis/ScopeTree.h src/Pass/AnalysisPass.cc)
+        include/llvmPy/Pass/Analysis/ScopeTree.h src/Pass/AnalysisPass.cc
+        include/llvmPy/Pass/Analysis/LexicalTree.h src/Pass/LexicalTree.cc)
 
 set_target_properties(
         lib${name}

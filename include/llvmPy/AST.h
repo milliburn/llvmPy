@@ -23,6 +23,8 @@ class Expr : public AST {
 public:
     virtual ~Expr();
 
+    virtual iterator_range<Expr const *> getInnerExpressions() const;
+
 protected:
     Expr();
 };
@@ -203,6 +205,8 @@ private:
 class Stmt : public AST {
 public:
     virtual ~Stmt();
+
+    virtual iterator_range<Stmt const *> getInnerStatements() const;
 
 protected:
     Stmt();
