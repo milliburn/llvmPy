@@ -113,23 +113,24 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
 {
     RTModule &mod = scope.getModule();
     auto &callee = call.getCallee();
-    auto &args = call.getArguments();
+    auto args = call.args();
+    auto *firstArg = args.begin();
 
     if (auto *lhsIdent = callee.cast<IdentExpr>()) {
         if (lhsIdent->getName() == "print") {
-            llvm::Value *arg = emit(scope, *args[0]);
+            llvm::Value *arg = emit(scope, *firstArg);
             return _ir.CreateCall(mod.llvmPy_print(), { arg });
         } else if (lhsIdent->getName() == "len") {
-            llvm::Value *arg = emit(scope, *args[0]);
+            llvm::Value *arg = emit(scope, *firstArg);
             return _ir.CreateCall(mod.llvmPy_len(), { arg });
         } else if (lhsIdent->getName() == "str") {
-            llvm::Value *arg = emit(scope, *args[0]);
+            llvm::Value *arg = emit(scope, *firstArg);
             return _ir.CreateCall(mod.llvmPy_str(), { arg });
         } else if (lhsIdent->getName() == "int") {
-            llvm::Value *arg = emit(scope, *args[0]);
+            llvm::Value *arg = emit(scope, *firstArg);
             return _ir.CreateCall(mod.llvmPy_int(), { arg });
         } else if (lhsIdent->getName() == "bool") {
-            llvm::Value *arg = emit(scope, *args[0]);
+            llvm::Value *arg = emit(scope, *firstArg);
             return _ir.CreateCall(mod.llvmPy_bool(), { arg });
         }
     }
@@ -142,7 +143,7 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
     size_t argCount = 0;
 
     for (auto &arg : args) {
-        llvm::Value *value = emit(scope, *arg);
+        llvm::Value *value = emit(scope, arg);
         argSlots.push_back(value);
         argCount += 1;
     }

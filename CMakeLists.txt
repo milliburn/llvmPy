@@ -81,7 +81,7 @@ add_library(
         src/Lexer.cc
         src/Parser2.cc
         src/RT.cc
-        src/Token.cc)
+        src/Token.cc include/llvmPy/Pass.h include/llvmPy/Support/iterable_member.h)
 
 set_target_properties(
         lib${name}

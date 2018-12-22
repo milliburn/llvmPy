@@ -198,7 +198,7 @@ Parser2::readExpr(int lastPrec, Expr *lhs)
             auto *call = new CallExpr(std::shared_ptr<Expr>(lhs));
 
             if (auto *tuple = args->cast<TupleExpr>()) {
-                for (auto const &member : tuple->getMembers()) {
+                for (auto &member : tuple->members_ptrs()) {
                     call->addArgument(member);
                 }
             } else {
@@ -499,7 +499,7 @@ Parser2::findLambdaExpression()
         auto *lambda = new LambdaExpr(std::shared_ptr<Expr>(lambdaBody));
 
         if (auto const *tuple = argsSubExpr->cast<TupleExpr>()) {
-            for (auto const &member : tuple->getMembers()) {
+            for (auto const &member : tuple->members_ptrs()) {
                 auto const &ident = member->as<IdentExpr>();
                 lambda->addArgument(ident.getName());
             }
@@ -543,7 +543,7 @@ Parser2::findDefStatement(int outerIndent)
         auto *def = new DefStmt(fnName, std::shared_ptr<Stmt>(body));
 
         if (auto *tuple = fnSignatureExpr->cast<TupleExpr>()) {
-            for (auto const &member : tuple->getMembers()) {
+            for (auto const &member : tuple->members_ptrs()) {
                 auto const &ident = member->as<IdentExpr>();
                 def->addArgument(ident.getName());
             }
