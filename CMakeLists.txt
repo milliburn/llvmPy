@@ -82,7 +82,6 @@ add_library(
         src/Parser2.cc
         src/RT.cc
         src/Token.cc
-        include/llvmPy/Pass.h
 )
 
 set_target_properties(
