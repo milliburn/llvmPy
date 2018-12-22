@@ -4,6 +4,12 @@
 #include <llvmPy/Support/iterator_range.h>
 #include <string>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weverything"
+#pragma GCC diagnostic ignored "-Wpedantic"
+#include <boost/iterator/indirect_iterator.hpp>
+#pragma GCC diagnostic pop
+
 #define DECLARE_AST_MEMBER(T, member, Name) \
 public: \
     T const &get##Name() const { return *member; } \
@@ -18,18 +24,14 @@ private: \
 
 #define DECLARE_ITER_MEMBER(T, member, name, Name) \
 public: \
-    using name##_iterator = T *; \
-    using name##_const_iterator = T *; \
-    name##_iterator name##_begin() { return *member.data(); } \
-    name##_iterator name##_end() { return *member.data() + member.size(); } \
-    iterator_range<name##_iterator> name() { \
-        return make_range(name##_begin(), name##_end()); \
-    } \
-    name##_const_iterator name##_begin() const { return *member.data(); } \
-    name##_const_iterator name##_end() const { return *member.data() + member.size(); } \
-    iterator_range<name##_const_iterator> name() const { \
-        return make_range(name##_begin(), name##_end()); \
-    } \
+    using name##_iterator = boost::indirect_iterator<T **>; \
+    using name##_const_iterator = boost::indirect_iterator<T const **>; \
+    name##_iterator name##_begin() { return boost::make_indirect_iterator(member.data()); } \
+    name##_iterator name##_end() { return boost::make_indirect_iterator(member.data() + member.size()); } \
+    iterator_range<name##_iterator> name() { return make_range(name##_begin(), name##_end()); } \
+    name##_const_iterator name##_begin() const { return boost::make_indirect_iterator(const_cast<T const **>(member.data())); } \
+    name##_const_iterator name##_end() const { return boost::make_indirect_iterator(const_cast<T const **>(member.data()) + member.size()); } \
+    iterator_range<name##_const_iterator> name() const { return make_range(name##_begin(), name##_end()); } \
     void add##Name (T &it) { \
         member.push_back(&it); \
         it.removeParent(); \

@@ -114,7 +114,7 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
     RTModule &mod = scope.getModule();
     auto &callee = call.getCallee();
     auto args = call.args();
-    auto *firstArg = args.begin();
+    auto firstArg = args.begin();
 
     if (auto *lhsIdent = callee.cast<IdentExpr>()) {
         if (lhsIdent->getName() == "print") {
