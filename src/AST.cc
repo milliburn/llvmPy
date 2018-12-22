@@ -1,5 +1,6 @@
 #include <llvmPy/AST.h>
 #include <stdexcept>
+#include <type_traits>
 using namespace llvmPy;
 using std::ostream;
 using std::string;
@@ -7,6 +8,11 @@ using std::stringstream;
 using std::endl;
 
 static constexpr int INDENT = 4;
+
+template<class T>
+T *nonconst(T const *x) {
+    return const_cast<T *>(x);
+}
 
 static void
 indentToStream(ostream &s, Stmt const &stmt, size_t indent)
@@ -109,10 +115,10 @@ IdentExpr::toStream(std::ostream &s) const
     s << getName();
 }
 
-LambdaExpr::LambdaExpr(std::shared_ptr<Expr> const &expr)
-: _expr(expr)
+LambdaExpr::LambdaExpr(Expr &expr)
+: _expr(&expr)
 {
-    expr->setParent(this);
+    expr.setParent(this);
 }
 
 ArgNamesIter
@@ -139,17 +145,17 @@ LambdaExpr::arg_end() const
     return _args.data() + _args.size();
 }
 
-Expr const &
-LambdaExpr::getExpr() const
-{
-    return const_cast<LambdaExpr *>(this)->getExpr();
-}
-
 Expr &
 LambdaExpr::getExpr()
 {
     assert(_expr);
     return *_expr;
+}
+
+Expr const &
+LambdaExpr::getExpr() const
+{
+    return nonconst(this)->getExpr();
 }
 
 void
@@ -551,8 +557,8 @@ DefStmt::DefStmt(
 {
 }
 
-ReturnStmt::ReturnStmt(std::shared_ptr<Expr const> const &expr)
-: _expr(expr)
+ReturnStmt::ReturnStmt(Expr &expr)
+: _expr(&expr)
 {
 }
 
@@ -563,11 +569,11 @@ ReturnStmt::getExpr() const
     return *_expr;
 }
 
-std::shared_ptr<Expr const> const &
-ReturnStmt::getExprPtr() const
+Expr &
+ReturnStmt::getExpr()
 {
     assert(_expr);
-    return _expr;
+    return *_expr;
 }
 
 Expr::Expr() = default;
@@ -678,19 +684,6 @@ void
 DefStmt::addArgument(std::string const &name)
 {
     _args.emplace_back(name);
-}
-
-std::shared_ptr<Expr>
-LambdaExpr::getExprPtr()
-{
-    assert(_expr);
-    return _expr;
-}
-
-std::shared_ptr<Expr const>
-LambdaExpr::getExprPtr() const
-{
-    return const_cast<LambdaExpr *>(this)->getExprPtr();
 }
 
 void

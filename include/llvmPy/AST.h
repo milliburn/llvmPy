@@ -91,7 +91,7 @@ private:
 
 class LambdaExpr final : public Expr {
 public:
-    explicit LambdaExpr(std::shared_ptr<Expr> const &expr);
+    explicit LambdaExpr(Expr &expr);
 
     void toStream(std::ostream &s) const override;
 
@@ -101,20 +101,16 @@ public:
 
     ArgNamesIter args() const;
 
-    Expr &getExpr();
-
     Expr const &getExpr() const;
 
-    std::shared_ptr<Expr> getExprPtr();
-
-    std::shared_ptr<Expr const> getExprPtr() const;
+    Expr &getExpr();
 
     void addArgument(std::string const &argument);
 
 private:
     std::vector<std::string> _args;
 
-    std::shared_ptr<Expr> _expr;
+    Expr *_expr;
 };
 
 class UnaryExpr final : public Expr {
@@ -305,16 +301,16 @@ private:
 
 class ReturnStmt final : public Stmt {
 public:
-    explicit ReturnStmt(std::shared_ptr<Expr const> const &expr);
+    explicit ReturnStmt(Expr &expr);
 
     void toStream(std::ostream &s) const override;
 
     Expr const &getExpr() const;
 
-    std::shared_ptr<Expr const> const &getExprPtr() const;
+    Expr &getExpr();
 
 private:
-    std::shared_ptr<Expr const> _expr;
+    Expr *_expr;
 };
 
 class CompoundStmt final : public Stmt {

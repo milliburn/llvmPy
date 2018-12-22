@@ -496,7 +496,7 @@ Parser2::findLambdaExpression()
 
         auto *lambdaBody = readSubExpr();
 
-        auto *lambda = new LambdaExpr(std::shared_ptr<Expr>(lambdaBody));
+        auto *lambda = new LambdaExpr(*lambdaBody);
 
         if (auto const *tuple = argsSubExpr->cast<TupleExpr>()) {
             for (auto const &member : tuple->members_ptrs()) {
@@ -637,7 +637,7 @@ Parser2::findReturnStatement()
         next();
         auto *expr = readExpr();
         assert(expr);
-        return new ReturnStmt(std::unique_ptr<Expr>(expr));
+        return new ReturnStmt(*expr);
     } else {
         return nullptr;
     }

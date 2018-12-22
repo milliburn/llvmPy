@@ -202,7 +202,7 @@ Emitter::emit(RTScope &scope, LambdaExpr const &lambda)
 {
     RTModule &mod = scope.getModule();
 
-    ReturnStmt returnStmt(lambda.getExprPtr());
+    ReturnStmt returnStmt(const_cast<Expr &>(lambda.getExpr()));
 
     // TODO: XXX?
     auto *insertBlock = _ir.GetInsertBlock();
