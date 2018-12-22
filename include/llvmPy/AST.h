@@ -6,6 +6,40 @@
 #include <string>
 #include <memory>
 
+#define DECLARE_AST_MEMBER(T, member, Name) \
+public: \
+    T const &get##Name() const { return *member; } \
+    T &get##Name() { return *member; } \
+    void set##Name(T &x) { \
+        if (member) { member->removeParent(); } \
+        member = &x; \
+        member->setParent(this); \
+    } \
+private: \
+    T *member = nullptr;
+
+#define DECLARE_ITER_MEMBER(T, member, name, Name) \
+public: \
+    using name##_iterator = T *; \
+    using name##_const_iterator = T *; \
+    name##_iterator name##_begin() { return *member.data(); } \
+    name##_iterator name##_end() { return *member.data() + member.size(); } \
+    iterator_range<name##_iterator> name() { \
+        return make_range(name##_begin(), name##_end()); \
+    } \
+    name##_const_iterator name##_begin() const { return *member.data(); } \
+    name##_const_iterator name##_end() const { return *member.data() + member.size(); } \
+    iterator_range<name##_const_iterator> name() const { \
+        return make_range(name##_begin(), name##_end()); \
+    } \
+    void add##Name (T &it) { \
+        member.push_back(&it); \
+        it.removeParent(); \
+        it.setParent(this); \
+    } \
+private: \
+    std::vector<T *> member;
+
 #ifdef __cplusplus
 namespace llvmPy {
 
@@ -28,6 +62,8 @@ public:
     void setParent(AST &);
 
     void setParent(AST *);
+
+    void removeParent();
 
 private:
     AST *_parent = nullptr;
@@ -90,6 +126,8 @@ private:
 };
 
 class LambdaExpr final : public Expr {
+    DECLARE_AST_MEMBER(Expr, _expr, Expr)
+
 public:
     explicit LambdaExpr(Expr &expr);
 
@@ -101,93 +139,49 @@ public:
 
     ArgNamesIter args() const;
 
-    Expr const &getExpr() const;
-
-    Expr &getExpr();
-
     void addArgument(std::string const &argument);
 
 private:
     std::vector<std::string> _args;
-
-    Expr *_expr;
 };
 
 class UnaryExpr final : public Expr {
+    DECLARE_AST_MEMBER(Expr, _expr, Expr)
+
 public:
-    UnaryExpr(TokenType op, std::shared_ptr<Expr> const &expr);
+    UnaryExpr(TokenType op, Expr &expr);
 
     void toStream(std::ostream &s) const override;
 
     TokenType getOperator() const;
 
-    Expr const &getExpr() const;
-
-    Expr &getExpr();
-
 private:
     TokenType const _operator;
-    std::shared_ptr<Expr> _expr;
 };
 
 class BinaryExpr final : public Expr {
+    DECLARE_AST_MEMBER(Expr, _lhs, LeftOperand)
+    DECLARE_AST_MEMBER(Expr, _rhs, RightOperand)
+
 public:
-    BinaryExpr(
-            std::shared_ptr<Expr> const &lhs,
-            TokenType op,
-            std::shared_ptr<Expr> const &rhs);
+    BinaryExpr(Expr &lhs, TokenType op, Expr &rhs);
 
     void toStream(std::ostream &s) const override;
-
-    Expr &getLeftOperand();
-
-    Expr const &getLeftOperand() const;
-
-    Expr &getRightOperand();
-
-    Expr const &getRightOperand() const;
 
     TokenType getOperator() const;
 
 private:
-    std::shared_ptr<Expr> _lhs;
-    std::shared_ptr<Expr> _rhs;
     TokenType const _operator;
 };
 
 class CallExpr final : public Expr {
-public:
-    using arg_iterator = Expr *;
-    using arg_const_iterator = Expr const *;
+    DECLARE_AST_MEMBER(Expr, _callee, Callee)
+    DECLARE_ITER_MEMBER(Expr, _args, args, Argument)
 
-    explicit CallExpr(std::shared_ptr<Expr> const &callee);
+public:
+    explicit CallExpr(Expr &callee);
 
     void toStream(std::ostream &s) const override;
-
-    Expr &getCallee();
-
-    Expr const &getCallee() const;
-
-    arg_iterator arg_start();
-
-    arg_iterator arg_end();
-
-    iterator_range<arg_iterator> args();
-
-    arg_const_iterator arg_start() const;
-
-    arg_const_iterator arg_end() const;
-
-    iterator_range<arg_const_iterator> args() const;
-
-    void addArgument(std::shared_ptr<Expr> argument);
-
-private:
-    std::shared_ptr<Expr> _callee;
-
-    std::vector<std::shared_ptr<Expr>> _args;
-
-    std::vector<Expr *> _argPtrs;
 };
 
 class TokenExpr final : public Expr {
@@ -204,7 +198,7 @@ private:
 
 /** A group consists of expressions separated by comma (a tuple). */
 class TupleExpr final : public Expr {
-    IMPLEMENT_ITERABLE_MEMBER(Expr, members, _members)
+    DECLARE_ITER_MEMBER(Expr, _members, members, Member)
 
 public:
     using iterator = Expr *;
@@ -213,25 +207,19 @@ public:
     explicit TupleExpr();
 
     void toStream(std::ostream &s) const override;
-
-    void addMember(std::shared_ptr<Expr> member);
 };
 
 class GetattrExpr final : public Expr {
+    DECLARE_AST_MEMBER(Expr, _object, Object)
+
 public:
-    GetattrExpr(
-            std::shared_ptr<Expr const> const &object,
-            std::string const &name);
+    GetattrExpr(Expr &object, std::string const &name);
 
     void toStream(std::ostream &s) const override;
-
-    Expr const &getObject() const;
 
     std::string const &getName() const;
 
 private:
-    std::shared_ptr<Expr const> _object;
-
     std::string const _name;
 };
 
@@ -244,34 +232,26 @@ protected:
 };
 
 class ExprStmt final : public Stmt {
+    DECLARE_AST_MEMBER(Expr, _expr, Expr)
+
 public:
-    explicit ExprStmt(std::shared_ptr<Expr const> const &expr);
+    explicit ExprStmt(Expr &expr);
 
     void toStream(std::ostream &s) const override;
-
-    Expr const &getExpr() const;
-
-private:
-    std::shared_ptr<Expr const> _expr;
 };
 
 class AssignStmt final : public Stmt {
+    DECLARE_AST_MEMBER(Expr, _value, Value)
+
 public:
-    AssignStmt(
-            std::string const &name,
-            std::shared_ptr<Expr const> const &value);
+    AssignStmt(std::string const &name, Expr &value);
 
     void toStream(std::ostream &s) const override;
 
     std::string const &getName() const;
 
-    Expr const &getValue() const;
-
-    std::shared_ptr<Expr const> const &getValuePtr() const;
-
 private:
     std::string const _name;
-    std::shared_ptr<Expr const> _value;
 };
 
 class DefStmt final : public Stmt {
