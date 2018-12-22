@@ -67,7 +67,7 @@ Parser2::read()
 
     for (;;) {
         if (auto *stmt = readStatement(0)) {
-            compound->addStatement(std::unique_ptr<Stmt>(stmt));
+            compound->addStatement(*stmt);
         } else {
             break;
         }
@@ -322,7 +322,7 @@ Parser2::readSimpleStatement(int indent)
     for (;;) {
         if (stmt) {
             assert(compound);
-            compound->addStatement(std::unique_ptr<Stmt>(stmt));
+            compound->addStatement(*stmt);
             stmt = nullptr;
         }
 
@@ -535,7 +535,7 @@ Parser2::findDefStatement(int outerIndent)
         Stmt *body = readCompoundStatement(outerIndent);
         assert(body);
 
-        auto *def = new DefStmt(fnName, std::shared_ptr<Stmt>(body));
+        auto *def = new DefStmt(fnName, *body);
 
         if (auto *tuple = fnSignatureExpr->cast<TupleExpr>()) {
             for (auto const &member : tuple->members()) {
@@ -619,7 +619,7 @@ Parser2::readCompoundStatement(int outerIndent)
     } else {
         auto *compound = new CompoundStmt();
         for (auto &stmt : statements) {
-            compound->addStatement(std::shared_ptr<Stmt>(stmt));
+            compound->addStatement(*stmt);
         }
         return compound;
     }
@@ -724,9 +724,9 @@ Parser2::findConditionalStatement(int outerIndent, bool elif)
         assert(elseBranch);
 
         auto *condStmt = new ConditionalStmt(
-                std::shared_ptr<Expr>(condition),
-                std::shared_ptr<Stmt>(thenBranch),
-                std::shared_ptr<Stmt>(elseBranch));
+                *condition,
+                *thenBranch,
+                *elseBranch);
 
         return condStmt;
     } else {
@@ -779,9 +779,7 @@ Parser2::findWhileStmt(int outerIndent)
         Stmt *body = readCompoundStatement(outerIndent);
         assert(body);
 
-        return new WhileStmt(
-                std::shared_ptr<Expr>(condition),
-                std::shared_ptr<Stmt>(body));
+        return new WhileStmt(*condition, *body);
     } else {
         return nullptr;
     }

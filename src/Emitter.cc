@@ -473,8 +473,8 @@ Emitter::emitStatement(
     }
 
     if (auto *compound = stmt.cast<CompoundStmt>()) {
-        for (auto const &innerStmt : compound->getStatements()) {
-            emitStatement(function, scope, *innerStmt, loop);
+        for (auto const &innerStmt : compound->statements()) {
+            emitStatement(function, scope, innerStmt, loop);
         }
     } else if (auto *expr = stmt.cast<ExprStmt>()) {
         emit(scope, expr->getExpr());
@@ -568,8 +568,8 @@ Emitter::gatherSlotNames(Stmt const &stmt, std::set<std::string> &names)
     } else if (auto *def = stmt.cast<DefStmt>()) {
         names.insert(def->getName());
     } else if (auto *compound = stmt.cast<CompoundStmt>()) {
-        for (auto const &stmt_ : compound->getStatements()) {
-            gatherSlotNames(*stmt_, names);
+        for (auto const &stmt_ : compound->statements()) {
+            gatherSlotNames(stmt_, names);
         }
     } else if (auto *cond = stmt.cast<ConditionalStmt>()) {
         gatherSlotNames(cond->getThenBranch(), names);

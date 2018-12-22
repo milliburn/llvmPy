@@ -1,6 +1,5 @@
 #include <llvmPy/AST.h>
 #include <stdexcept>
-#include <type_traits>
 using namespace llvmPy;
 using std::ostream;
 using std::string;
@@ -8,11 +7,6 @@ using std::stringstream;
 using std::endl;
 
 static constexpr int INDENT = 4;
-
-template<class T>
-T *nonconst(T const *x) {
-    return const_cast<T *>(x);
-}
 
 static void
 indentToStream(ostream &s, Stmt const &stmt, size_t indent)
@@ -340,21 +334,9 @@ CompoundStmt::CompoundStmt()
 void
 CompoundStmt::toStream(std::ostream &s) const
 {
-    for (auto const &stmt : getStatements()) {
-        s << *stmt;
+    for (auto const &stmt : statements()) {
+        s << stmt;
     }
-}
-
-std::vector<std::shared_ptr<Stmt const>> const &
-CompoundStmt::getStatements() const
-{
-    return _statements;
-}
-
-void
-CompoundStmt::addStatement(std::shared_ptr<Stmt const> const &stmt)
-{
-    _statements.push_back(stmt);
 }
 
 PassStmt::PassStmt()
@@ -368,16 +350,13 @@ PassStmt::toStream(std::ostream &s) const
 }
 
 ConditionalStmt::ConditionalStmt(
-        std::shared_ptr<Expr const> const &condition,
-        std::shared_ptr<Stmt const> const &thenBranch,
-        std::shared_ptr<Stmt const> const &elseBranch)
-: _condition(condition),
-  _thenBranch(thenBranch),
-  _elseBranch(elseBranch)
+        Expr &condition,
+        Stmt &thenBranch,
+        Stmt &elseBranch)
 {
-    assert(this->_condition);
-    assert(this->_thenBranch);
-    assert(this->_elseBranch);
+    setCondition(condition);
+    setThenBranch(thenBranch);
+    setElseBranch(elseBranch);
 }
 
 void
@@ -397,38 +376,15 @@ ConditionalStmt::toStream(std::ostream &s) const
     }
 }
 
-Expr const &
-ConditionalStmt::getCondition() const
-{
-    assert(_condition);
-    return *_condition;
-}
-
-Stmt const &
-ConditionalStmt::getThenBranch() const
-{
-    assert(_thenBranch);
-    return *_thenBranch;
-}
-
-Stmt const &
-ConditionalStmt::getElseBranch() const
-{
-    assert(_elseBranch);
-    return *_elseBranch;
-}
-
 ExprStmt::ExprStmt(Expr &expr)
 {
     setExpr(expr);
 }
 
-DefStmt::DefStmt(
-        std::string const &name,
-        std::shared_ptr<Stmt const> const &body)
-: _name(name),
-  _body(body)
+DefStmt::DefStmt(std::string const &name, Stmt &body)
+: _name(name)
 {
+    setBody(body);
 }
 
 ReturnStmt::ReturnStmt(Expr &expr)
@@ -436,30 +392,14 @@ ReturnStmt::ReturnStmt(Expr &expr)
 {
 }
 
-Expr const &
-ReturnStmt::getExpr() const
-{
-    assert(_expr);
-    return *_expr;
-}
-
-Expr &
-ReturnStmt::getExpr()
-{
-    assert(_expr);
-    return *_expr;
-}
-
 Expr::Expr() = default;
 
 Stmt::Stmt() = default;
 
-WhileStmt::WhileStmt(
-        std::shared_ptr<Expr const> const &condition,
-        std::shared_ptr<Stmt const> const &body)
-: _condition(condition),
-  _body(body)
+WhileStmt::WhileStmt(Expr &condition, Stmt &body)
 {
+    setCondition(condition);
+    setBody(body);
 }
 
 void
@@ -467,20 +407,6 @@ WhileStmt::toStream(std::ostream &s) const
 {
     s << "while " << getCondition() << ":" << endl;
     indentToStream(s, getBody(), INDENT);
-}
-
-Expr const &
-WhileStmt::getCondition() const
-{
-    assert(_condition);
-    return *_condition;
-}
-
-Stmt const &
-WhileStmt::getBody() const
-{
-    assert(_body);
-    return *_body;
 }
 
 void
@@ -529,13 +455,6 @@ ArgNamesIter
 DefStmt::args() const
 {
     return { arg_begin(), arg_end() };
-}
-
-Stmt const &
-DefStmt::getBody() const
-{
-    assert(_body);
-    return *_body;
 }
 
 void

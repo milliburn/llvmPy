@@ -2,9 +2,7 @@
 #include <llvmPy/Token.h>
 #include <llvmPy/Typed.h>
 #include <llvmPy/Support/iterator_range.h>
-#include <llvmPy/Support/iterable_member.h>
 #include <string>
-#include <memory>
 
 #define DECLARE_AST_MEMBER(T, member, Name) \
 public: \
@@ -255,9 +253,10 @@ private:
 };
 
 class DefStmt final : public Stmt {
+    DECLARE_AST_MEMBER(Stmt, _body, Body)
+
 public:
-    DefStmt(std::string const &name,
-            std::shared_ptr<Stmt const> const &body);
+    DefStmt(std::string const &name, Stmt &body);
 
     void toStream(std::ostream &s) const override;
 
@@ -271,40 +270,27 @@ public:
 
     void addArgument(std::string const &name);
 
-    Stmt const &getBody() const;
-
 private:
     std::string const _name;
     std::vector<std::string> _args;
-    std::shared_ptr<Stmt const> _body;
 };
 
 class ReturnStmt final : public Stmt {
+    DECLARE_AST_MEMBER(Expr, _expr, Expr)
+
 public:
     explicit ReturnStmt(Expr &expr);
 
     void toStream(std::ostream &s) const override;
-
-    Expr const &getExpr() const;
-
-    Expr &getExpr();
-
-private:
-    Expr *_expr;
 };
 
 class CompoundStmt final : public Stmt {
+    DECLARE_ITER_MEMBER(Stmt, _stmts, statements, Statement)
+
 public:
     CompoundStmt();
 
     void toStream(std::ostream &s) const override;
-
-    std::vector<std::shared_ptr<Stmt const>> const &getStatements() const;
-
-    void addStatement(std::shared_ptr<Stmt const> const &stmt);
-
-private:
-    std::vector<std::shared_ptr<Stmt const>> _statements;
 };
 
 class PassStmt final : public Stmt {
@@ -315,43 +301,25 @@ public:
 };
 
 class ConditionalStmt final : public Stmt {
+    DECLARE_AST_MEMBER(Expr, _condition, Condition)
+    DECLARE_AST_MEMBER(Stmt, _thenBranch, ThenBranch)
+    DECLARE_AST_MEMBER(Stmt, _elseBranch, ElseBranch)
+
 public:
-    ConditionalStmt(
-            std::shared_ptr<Expr const> const &condition,
-            std::shared_ptr<Stmt const> const &thenBranch,
-            std::shared_ptr<Stmt const> const &elseBranch);
+    ConditionalStmt(Expr &condition, Stmt &thenBranch, Stmt &elseBranch);
 
     void toStream(std::ostream &s) const override;
-
-public:
-    Expr const &getCondition() const;
-
-    Stmt const &getThenBranch() const;
-
-    Stmt const &getElseBranch() const;
-
-private:
-    std::shared_ptr<Expr const> _condition;
-    std::shared_ptr<Stmt const> _thenBranch;
-    std::shared_ptr<Stmt const> _elseBranch;
 };
 
 class WhileStmt final : public Stmt {
+    DECLARE_AST_MEMBER(Expr, _condition, Condition)
+    DECLARE_AST_MEMBER(Stmt, _body, Body)
+
 public:
 
-    WhileStmt(
-            std::shared_ptr<Expr const> const &condition,
-            std::shared_ptr<Stmt const> const &body);
+    WhileStmt(Expr &condition, Stmt &body);
 
     void toStream(std::ostream &s) const override;
-
-    Expr const &getCondition() const;
-
-    Stmt const &getBody() const;
-
-private:
-    std::shared_ptr<Expr const> _condition;
-    std::shared_ptr<Stmt const> _body;
 };
 
 class BreakStmt final : public Stmt {
