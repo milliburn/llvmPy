@@ -44,7 +44,7 @@ public:
     Stmt *readStatement(int indent);
     Stmt *readSimpleStatement(int indent);
     Stmt *readBlockStatement(int indent);
-    Stmt *readCompoundStatement(int outerIndent);
+    CompoundStmt * readCompoundStatement(int outerIndent);
 
     bool isEnd();
 
