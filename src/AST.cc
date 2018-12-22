@@ -109,9 +109,10 @@ IdentExpr::toStream(std::ostream &s) const
     s << getName();
 }
 
-LambdaExpr::LambdaExpr(std::shared_ptr<Expr> const &expr)
-: _expr(expr)
+LambdaExpr::LambdaExpr(Expr &expr)
+: _expr(&expr)
 {
+    setExpr(expr);
 }
 
 ArgNamesIter
@@ -138,13 +139,6 @@ LambdaExpr::arg_end() const
     return _args.data() + _args.size();
 }
 
-Expr const &
-LambdaExpr::getExpr() const
-{
-    assert(_expr);
-    return *_expr;
-}
-
 void
 LambdaExpr::toStream(std::ostream &s) const
 {
@@ -163,12 +157,11 @@ LambdaExpr::toStream(std::ostream &s) const
     s << ": " << getExpr() << ')';
 }
 
-BinaryExpr::BinaryExpr(
-        std::shared_ptr<Expr const> const &lhs,
-        TokenType op,
-        std::shared_ptr<Expr const> const &rhs)
-: _lhs(lhs), _rhs(rhs), _operator(op)
+BinaryExpr::BinaryExpr(Expr &lhs, TokenType op, Expr &rhs)
+: _operator(op)
 {
+    setLeftOperand(lhs);
+    setRightOperand(rhs);
 }
 
 void
@@ -177,20 +170,6 @@ BinaryExpr::toStream(std::ostream &s) const
     s << '(' << getLeftOperand()
       << ' ' << Token(getOperator())
       << ' ' << getRightOperand() << ')';
-}
-
-Expr const &
-BinaryExpr::getLeftOperand() const
-{
-    assert(_lhs);
-    return *_lhs;
-}
-
-Expr const &
-BinaryExpr::getRightOperand() const
-{
-    assert(_rhs);
-    return *_rhs;
 }
 
 TokenType
@@ -205,12 +184,12 @@ CallExpr::toStream(std::ostream &s) const
     s << getCallee() << '(';
 
     int iArg = 0;
-    for (auto const &arg : getArguments()) {
+    for (auto const &arg : args()) {
         if (iArg > 0) {
             s << ", ";
         }
 
-        s << *arg;
+        s << arg;
         iArg += 1;
     }
 
@@ -280,28 +259,9 @@ StringExpr::getValue() const
     return _value;
 }
 
-CallExpr::CallExpr(std::shared_ptr<Expr> const &callee)
-: _callee(callee)
+CallExpr::CallExpr(Expr &callee)
 {
-}
-
-Expr const &
-CallExpr::getCallee() const
-{
-    assert(_callee);
-    return *_callee;
-}
-
-std::vector<std::shared_ptr<Expr const>> const &
-CallExpr::getArguments() const
-{
-    return _arguments;
-}
-
-void
-CallExpr::addArgument(std::shared_ptr<Expr const> argument)
-{
-    _arguments.emplace_back(argument);
+    setCallee(callee);
 }
 
 TupleExpr::TupleExpr()
@@ -314,12 +274,12 @@ TupleExpr::toStream(std::ostream &s) const
     s << "(";
 
     int i = 0;
-    for (auto const &member : _members) {
+    for (auto const &member : members()) {
         if (i > 0) {
             s << ", ";
         }
 
-        s << *member;
+        s << member;
         i += 1;
     }
 
@@ -328,18 +288,6 @@ TupleExpr::toStream(std::ostream &s) const
     }
 
     s << ")";
-}
-
-std::vector<std::shared_ptr<Expr const>> const &
-TupleExpr::getMembers() const
-{
-    return _members;
-}
-
-void
-TupleExpr::addMember(std::shared_ptr<Expr> member)
-{
-    _members.emplace_back(member);
 }
 
 TokenExpr::TokenExpr(TokenType type)
@@ -359,9 +307,10 @@ TokenExpr::getTokenType() const
     return _tokenType;
 }
 
-UnaryExpr::UnaryExpr(TokenType op, std::shared_ptr<Expr const> const &expr)
-: _operator(op), _expr(expr)
+UnaryExpr::UnaryExpr(TokenType op, Expr &expr)
+: _operator(op)
 {
+    setExpr(expr);
 }
 
 void
@@ -378,13 +327,6 @@ UnaryExpr::getOperator() const
     return _operator;
 }
 
-Expr const &
-UnaryExpr::getExpr() const
-{
-    assert(_expr);
-    return *_expr;
-}
-
 CompoundStmt::CompoundStmt()
 {
 }
@@ -392,21 +334,9 @@ CompoundStmt::CompoundStmt()
 void
 CompoundStmt::toStream(std::ostream &s) const
 {
-    for (auto const &stmt : getStatements()) {
-        s << *stmt;
+    for (auto const &stmt : statements()) {
+        s << stmt;
     }
-}
-
-std::vector<std::shared_ptr<Stmt const>> const &
-CompoundStmt::getStatements() const
-{
-    return _statements;
-}
-
-void
-CompoundStmt::addStatement(std::shared_ptr<Stmt const> const &stmt)
-{
-    _statements.push_back(stmt);
 }
 
 PassStmt::PassStmt()
@@ -420,16 +350,13 @@ PassStmt::toStream(std::ostream &s) const
 }
 
 ConditionalStmt::ConditionalStmt(
-        std::shared_ptr<Expr const> const &condition,
-        std::shared_ptr<Stmt const> const &thenBranch,
-        std::shared_ptr<Stmt const> const &elseBranch)
-: _condition(condition),
-  _thenBranch(thenBranch),
-  _elseBranch(elseBranch)
+        Expr &condition,
+        Stmt &thenBranch,
+        Stmt &elseBranch)
 {
-    assert(this->_condition);
-    assert(this->_thenBranch);
-    assert(this->_elseBranch);
+    setCondition(condition);
+    setThenBranch(thenBranch);
+    setElseBranch(elseBranch);
 }
 
 void
@@ -449,76 +376,30 @@ ConditionalStmt::toStream(std::ostream &s) const
     }
 }
 
-Expr const &
-ConditionalStmt::getCondition() const
+ExprStmt::ExprStmt(Expr &expr)
 {
-    assert(_condition);
-    return *_condition;
+    setExpr(expr);
 }
 
-Stmt const &
-ConditionalStmt::getThenBranch() const
+DefStmt::DefStmt(std::string const &name, Stmt &body)
+: _name(name)
 {
-    assert(_thenBranch);
-    return *_thenBranch;
+    setBody(body);
 }
 
-Stmt const &
-ConditionalStmt::getElseBranch() const
+ReturnStmt::ReturnStmt(Expr &expr)
+: _expr(&expr)
 {
-    assert(_elseBranch);
-    return *_elseBranch;
-}
-
-ExprStmt::ExprStmt(std::shared_ptr<Expr const> const &expr)
-: _expr(expr)
-{
-}
-
-Expr const &
-ExprStmt::getExpr() const
-{
-    assert(_expr);
-    return *_expr;
-}
-
-DefStmt::DefStmt(
-        std::string const &name,
-        std::shared_ptr<Stmt const> const &body)
-: _name(name),
-  _body(body)
-{
-}
-
-ReturnStmt::ReturnStmt(std::shared_ptr<Expr const> const &expr)
-: _expr(expr)
-{
-}
-
-Expr const &
-ReturnStmt::getExpr() const
-{
-    assert(_expr);
-    return *_expr;
-}
-
-std::shared_ptr<Expr const> const &
-ReturnStmt::getExprPtr() const
-{
-    assert(_expr);
-    return _expr;
 }
 
 Expr::Expr() = default;
 
 Stmt::Stmt() = default;
 
-WhileStmt::WhileStmt(
-        std::shared_ptr<Expr const> const &condition,
-        std::shared_ptr<Stmt const> const &body)
-: _condition(condition),
-  _body(body)
+WhileStmt::WhileStmt(Expr &condition, Stmt &body)
 {
+    setCondition(condition);
+    setBody(body);
 }
 
 void
@@ -526,20 +407,6 @@ WhileStmt::toStream(std::ostream &s) const
 {
     s << "while " << getCondition() << ":" << endl;
     indentToStream(s, getBody(), INDENT);
-}
-
-Expr const &
-WhileStmt::getCondition() const
-{
-    assert(_condition);
-    return *_condition;
-}
-
-Stmt const &
-WhileStmt::getBody() const
-{
-    assert(_body);
-    return *_body;
 }
 
 void
@@ -554,32 +421,16 @@ ContinueStmt::toStream(std::ostream &s) const
     s << "continue" << endl;
 }
 
-AssignStmt::AssignStmt(
-        std::string const &name,
-        std::shared_ptr<Expr const> const &value)
-: _name(name),
-  _value(value)
+AssignStmt::AssignStmt(std::string const &name, Expr &value)
+: _name(name)
 {
+    setValue(value);
 }
 
 std::string const &
 AssignStmt::getName() const
 {
     return _name;
-}
-
-Expr const &
-AssignStmt::getValue() const
-{
-    assert(_value);
-    return *_value;
-}
-
-std::shared_ptr<Expr const> const &
-AssignStmt::getValuePtr() const
-{
-    assert(_value);
-    return _value;
 }
 
 std::string const &
@@ -606,24 +457,10 @@ DefStmt::args() const
     return { arg_begin(), arg_end() };
 }
 
-Stmt const &
-DefStmt::getBody() const
-{
-    assert(_body);
-    return *_body;
-}
-
 void
 DefStmt::addArgument(std::string const &name)
 {
     _args.emplace_back(name);
-}
-
-std::shared_ptr<Expr const> const &
-LambdaExpr::getExprPtr() const
-{
-    assert(_expr);
-    return _expr;
 }
 
 void
@@ -632,21 +469,54 @@ GetattrExpr::toStream(std::ostream &s) const
     s << getObject() << '.' << getName();
 }
 
-GetattrExpr::GetattrExpr(
-        std::shared_ptr<Expr const> const &object,
-        std::string const &name)
-: _object(object), _name(name)
+GetattrExpr::GetattrExpr(Expr &object, std::string const &name)
+: _name(name)
 {
-}
-
-Expr const &
-GetattrExpr::getObject() const
-{
-    return *_object;
+    setObject(object);
 }
 
 std::string const &
 GetattrExpr::getName() const
 {
     return _name;
+}
+
+bool
+AST::hasParent() const
+{
+    return _parent;
+}
+
+AST &
+AST::getParent()
+{
+    assert(hasParent());
+    return *_parent;
+}
+
+AST const &
+AST::getParent() const
+{
+    assert(hasParent());
+    return *_parent;
+}
+
+void
+AST::setParent(AST &ast)
+{
+    assert(!hasParent());
+    _parent = &ast;
+}
+
+void
+AST::setParent(AST *ast)
+{
+    assert(ast);
+    setParent(*ast);
+}
+
+void
+AST::removeParent()
+{
+    _parent = nullptr;
 }

@@ -67,7 +67,7 @@ Parser2::read()
 
     for (;;) {
         if (auto *stmt = readStatement(0)) {
-            compound->addStatement(std::unique_ptr<Stmt>(stmt));
+            compound->addStatement(*stmt);
         } else {
             break;
         }
@@ -102,7 +102,7 @@ Parser2::readSubExpr()
         if (isTerminal) {
             if (tuple) {
                 if (expr) {
-                    tuple->addMember(std::unique_ptr<Expr>(expr));
+                    tuple->addMember(*expr);
                 }
 
                 return tuple;
@@ -119,7 +119,7 @@ Parser2::readSubExpr()
                 tuple = new TupleExpr();
             }
 
-            tuple->addMember(std::unique_ptr<Expr>(expr));
+            tuple->addMember(*expr);
         }
     }
 }
@@ -175,14 +175,11 @@ Parser2::readExpr(int lastPrec, Expr *lhs)
 
                 if (op->getTokenType() == tok_dot) {
                     result = new GetattrExpr(
-                            std::shared_ptr<Expr>(lhs),
+                            *lhs,
                             rhs->as<IdentExpr>().getName());
                     delete(rhs);
                 } else {
-                    result = new BinaryExpr(
-                            std::shared_ptr<Expr>(lhs),
-                            op->getTokenType(),
-                            std::shared_ptr<Expr>(rhs));
+                    result = new BinaryExpr(*lhs, op->getTokenType(), *rhs);
                 }
 
                 return readExpr(lastPrec, result);
@@ -195,14 +192,14 @@ Parser2::readExpr(int lastPrec, Expr *lhs)
             }
 
             auto *args = readSubExpr();
-            auto *call = new CallExpr(std::shared_ptr<Expr>(lhs));
+            auto *call = new CallExpr(*lhs);
 
             if (auto *tuple = args->cast<TupleExpr>()) {
-                for (auto const &member : tuple->getMembers()) {
+                for (auto &member : tuple->members()) {
                     call->addArgument(member);
                 }
             } else {
-                call->addArgument(std::shared_ptr<Expr>(args));
+                call->addArgument(*args);
             }
 
             return readExpr(lastPrec, call);
@@ -222,9 +219,7 @@ Parser2::readExpr(int lastPrec, Expr *lhs)
             int precedence = getPrecedence(op) + UnaryPrecedenceOffset;
             auto *operand = readExpr(precedence, nullptr);
             assert(operand);
-            auto *unary = new UnaryExpr(
-                    op->getTokenType(),
-                    std::shared_ptr<Expr>(operand));
+            auto *unary = new UnaryExpr(op->getTokenType(), *operand);
             return readExpr(lastPrec, unary);
 
         } else if (auto *atomic = readAtomicExpr()) {
@@ -327,7 +322,7 @@ Parser2::readSimpleStatement(int indent)
     for (;;) {
         if (stmt) {
             assert(compound);
-            compound->addStatement(std::unique_ptr<Stmt>(stmt));
+            compound->addStatement(*stmt);
             stmt = nullptr;
         }
 
@@ -344,7 +339,7 @@ Parser2::readSimpleStatement(int indent)
             (stmt = findBreakStmt()) ||
             (stmt = findContinueStmt())) {
         } else if (auto *expr = readExpr()) {
-            stmt = new ExprStmt(std::shared_ptr<Expr>(expr));
+            stmt = new ExprStmt(*expr);
         } else {
             return nullptr;
         }
@@ -496,11 +491,11 @@ Parser2::findLambdaExpression()
 
         auto *lambdaBody = readSubExpr();
 
-        auto *lambda = new LambdaExpr(std::shared_ptr<Expr>(lambdaBody));
+        auto *lambda = new LambdaExpr(*lambdaBody);
 
         if (auto const *tuple = argsSubExpr->cast<TupleExpr>()) {
-            for (auto const &member : tuple->getMembers()) {
-                auto const &ident = member->as<IdentExpr>();
+            for (auto const &member : tuple->members()) {
+                auto const &ident = member.as<IdentExpr>();
                 lambda->addArgument(ident.getName());
             }
         } else if (auto *ident = argsSubExpr->cast<IdentExpr>()) {
@@ -540,11 +535,11 @@ Parser2::findDefStatement(int outerIndent)
         Stmt *body = readCompoundStatement(outerIndent);
         assert(body);
 
-        auto *def = new DefStmt(fnName, std::shared_ptr<Stmt>(body));
+        auto *def = new DefStmt(fnName, *body);
 
         if (auto *tuple = fnSignatureExpr->cast<TupleExpr>()) {
-            for (auto const &member : tuple->getMembers()) {
-                auto const &ident = member->as<IdentExpr>();
+            for (auto const &member : tuple->members()) {
+                auto const &ident = member.as<IdentExpr>();
                 def->addArgument(ident.getName());
             }
         } else {
@@ -624,7 +619,7 @@ Parser2::readCompoundStatement(int outerIndent)
     } else {
         auto *compound = new CompoundStmt();
         for (auto &stmt : statements) {
-            compound->addStatement(std::shared_ptr<Stmt>(stmt));
+            compound->addStatement(*stmt);
         }
         return compound;
     }
@@ -637,7 +632,7 @@ Parser2::findReturnStatement()
         next();
         auto *expr = readExpr();
         assert(expr);
-        return new ReturnStmt(std::unique_ptr<Expr>(expr));
+        return new ReturnStmt(*expr);
     } else {
         return nullptr;
     }
@@ -654,9 +649,7 @@ Parser2::findAssignStatement()
             next();
             auto *expr = readExpr();
             assert(expr);
-            return new AssignStmt(
-                    nameToken.getString(),
-                    std::shared_ptr<Expr const>(expr));
+            return new AssignStmt(nameToken.getString(), *expr);
         } else {
             back();
             return nullptr;
@@ -731,9 +724,9 @@ Parser2::findConditionalStatement(int outerIndent, bool elif)
         assert(elseBranch);
 
         auto *condStmt = new ConditionalStmt(
-                std::shared_ptr<Expr>(condition),
-                std::shared_ptr<Stmt>(thenBranch),
-                std::shared_ptr<Stmt>(elseBranch));
+                *condition,
+                *thenBranch,
+                *elseBranch);
 
         return condStmt;
     } else {
@@ -786,9 +779,7 @@ Parser2::findWhileStmt(int outerIndent)
         Stmt *body = readCompoundStatement(outerIndent);
         assert(body);
 
-        return new WhileStmt(
-                std::shared_ptr<Expr>(condition),
-                std::shared_ptr<Stmt>(body));
+        return new WhileStmt(*condition, *body);
     } else {
         return nullptr;
     }

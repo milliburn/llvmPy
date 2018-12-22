@@ -81,7 +81,8 @@ add_library(
         src/Lexer.cc
         src/Parser2.cc
         src/RT.cc
-        src/Token.cc)
+        src/Token.cc
+)
 
 set_target_properties(
         lib${name}
@@ -91,6 +92,7 @@ target_include_directories(
         lib${name}
         PUBLIC include
         PUBLIC ${LLVM_INCLUDE_DIRS}
+        PUBLIC ${Boost_INCLUDE_DIR}
         PRIVATE src)
 
 target_compile_definitions(
@@ -99,7 +101,8 @@ target_compile_definitions(
 
 target_link_libraries(
         lib${name}
-        PUBLIC ${llvm_libs})
+        PUBLIC ${llvm_libs}
+        PRIVATE ${Boost_LIBRARIES})
 
 # llvmPy executable
 

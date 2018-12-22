@@ -113,23 +113,24 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
 {
     RTModule &mod = scope.getModule();
     auto &callee = call.getCallee();
-    auto &args = call.getArguments();
+    auto args = call.args();
+    auto firstArg = args.begin();
 
     if (auto *lhsIdent = callee.cast<IdentExpr>()) {
         if (lhsIdent->getName() == "print") {
-            llvm::Value *arg = emit(scope, *args[0]);
+            llvm::Value *arg = emit(scope, *firstArg);
             return _ir.CreateCall(mod.llvmPy_print(), { arg });
         } else if (lhsIdent->getName() == "len") {
-            llvm::Value *arg = emit(scope, *args[0]);
+            llvm::Value *arg = emit(scope, *firstArg);
             return _ir.CreateCall(mod.llvmPy_len(), { arg });
         } else if (lhsIdent->getName() == "str") {
-            llvm::Value *arg = emit(scope, *args[0]);
+            llvm::Value *arg = emit(scope, *firstArg);
             return _ir.CreateCall(mod.llvmPy_str(), { arg });
         } else if (lhsIdent->getName() == "int") {
-            llvm::Value *arg = emit(scope, *args[0]);
+            llvm::Value *arg = emit(scope, *firstArg);
             return _ir.CreateCall(mod.llvmPy_int(), { arg });
         } else if (lhsIdent->getName() == "bool") {
-            llvm::Value *arg = emit(scope, *args[0]);
+            llvm::Value *arg = emit(scope, *firstArg);
             return _ir.CreateCall(mod.llvmPy_bool(), { arg });
         }
     }
@@ -142,7 +143,7 @@ Emitter::emit(RTScope &scope, CallExpr const &call)
     size_t argCount = 0;
 
     for (auto &arg : args) {
-        llvm::Value *value = emit(scope, *arg);
+        llvm::Value *value = emit(scope, arg);
         argSlots.push_back(value);
         argCount += 1;
     }
@@ -201,7 +202,7 @@ Emitter::emit(RTScope &scope, LambdaExpr const &lambda)
 {
     RTModule &mod = scope.getModule();
 
-    ReturnStmt returnStmt(lambda.getExprPtr());
+    ReturnStmt returnStmt(const_cast<Expr &>(lambda.getExpr()));
 
     // TODO: XXX?
     auto *insertBlock = _ir.GetInsertBlock();
@@ -472,8 +473,8 @@ Emitter::emitStatement(
     }
 
     if (auto *compound = stmt.cast<CompoundStmt>()) {
-        for (auto const &innerStmt : compound->getStatements()) {
-            emitStatement(function, scope, *innerStmt, loop);
+        for (auto const &innerStmt : compound->statements()) {
+            emitStatement(function, scope, innerStmt, loop);
         }
     } else if (auto *expr = stmt.cast<ExprStmt>()) {
         emit(scope, expr->getExpr());
@@ -567,8 +568,8 @@ Emitter::gatherSlotNames(Stmt const &stmt, std::set<std::string> &names)
     } else if (auto *def = stmt.cast<DefStmt>()) {
         names.insert(def->getName());
     } else if (auto *compound = stmt.cast<CompoundStmt>()) {
-        for (auto const &stmt_ : compound->getStatements()) {
-            gatherSlotNames(*stmt_, names);
+        for (auto const &stmt_ : compound->statements()) {
+            gatherSlotNames(stmt_, names);
         }
     } else if (auto *cond = stmt.cast<ConditionalStmt>()) {
         gatherSlotNames(cond->getThenBranch(), names);
