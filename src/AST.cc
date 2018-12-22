@@ -339,6 +339,23 @@ CompoundStmt::toStream(std::ostream &s) const
     }
 }
 
+CompoundStmt::CompoundStmt(Stmt &stmt)
+{
+    addStatement(stmt);
+}
+
+Stmt const *
+CompoundStmt::findOnlyMember() const
+{
+    return const_cast<CompoundStmt *>(this)->findOnlyMember();
+}
+
+Stmt *
+CompoundStmt::findOnlyMember()
+{
+    return _stmts.size() == 1 ? _stmts[0] : nullptr;
+}
+
 PassStmt::PassStmt()
 {
 }
@@ -351,8 +368,8 @@ PassStmt::toStream(std::ostream &s) const
 
 ConditionalStmt::ConditionalStmt(
         Expr &condition,
-        Stmt &thenBranch,
-        Stmt &elseBranch)
+        CompoundStmt &thenBranch,
+        CompoundStmt &elseBranch)
 {
     setCondition(condition);
     setThenBranch(thenBranch);
@@ -365,12 +382,16 @@ ConditionalStmt::toStream(std::ostream &s) const
     s << "if " << getCondition() << ":" << endl;
     indentToStream(s, getThenBranch(), INDENT);
 
-    if (getElseBranch().isa<ConditionalStmt>()) {
-        // XXX: This relies on toStream() not prepending anything, i.e. we get
-        // XXX: the "el" from here and the "if" from the next toStream().
+    auto *onlyMember = getElseBranch().findOnlyMember();
+
+    if (onlyMember && onlyMember->isa<ConditionalStmt>()) {
+        // XXX: This relies on toStream() not prepending anything, i.e.
+        // XXX: we get the "el" from here and the "if" from the
+        // XXX: next toStream().
         s << "el";
-        s << getElseBranch();
-    } else if (!getElseBranch().isa<PassStmt>()) {
+        s << *onlyMember;
+        return;
+    } else if (!onlyMember || !onlyMember->isa<PassStmt>()) {
         s << "else:" << endl;
         indentToStream(s, getElseBranch(), INDENT);
     }
@@ -381,7 +402,7 @@ ExprStmt::ExprStmt(Expr &expr)
     setExpr(expr);
 }
 
-DefStmt::DefStmt(std::string const &name, Stmt &body)
+DefStmt::DefStmt(std::string const &name, CompoundStmt &body)
 : _name(name)
 {
     setBody(body);
@@ -396,7 +417,7 @@ Expr::Expr() = default;
 
 Stmt::Stmt() = default;
 
-WhileStmt::WhileStmt(Expr &condition, Stmt &body)
+WhileStmt::WhileStmt(Expr &condition, CompoundStmt &body)
 {
     setCondition(condition);
     setBody(body);

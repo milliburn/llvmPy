@@ -254,11 +254,26 @@ private:
     std::string const _name;
 };
 
-class DefStmt final : public Stmt {
-    DECLARE_AST_MEMBER(Stmt, _body, Body)
+class CompoundStmt final : public Stmt {
+    DECLARE_ITER_MEMBER(Stmt, _stmts, statements, Statement)
 
 public:
-    DefStmt(std::string const &name, Stmt &body);
+    CompoundStmt();
+
+    explicit CompoundStmt(Stmt &stmt);
+
+    void toStream(std::ostream &s) const override;
+
+    Stmt *findOnlyMember();
+
+    Stmt const *findOnlyMember() const;
+};
+
+class DefStmt final : public Stmt {
+    DECLARE_AST_MEMBER(CompoundStmt, _body, Body)
+
+public:
+    DefStmt(std::string const &name, CompoundStmt &body);
 
     void toStream(std::ostream &s) const override;
 
@@ -286,15 +301,6 @@ public:
     void toStream(std::ostream &s) const override;
 };
 
-class CompoundStmt final : public Stmt {
-    DECLARE_ITER_MEMBER(Stmt, _stmts, statements, Statement)
-
-public:
-    CompoundStmt();
-
-    void toStream(std::ostream &s) const override;
-};
-
 class PassStmt final : public Stmt {
 public:
     PassStmt();
@@ -304,22 +310,25 @@ public:
 
 class ConditionalStmt final : public Stmt {
     DECLARE_AST_MEMBER(Expr, _condition, Condition)
-    DECLARE_AST_MEMBER(Stmt, _thenBranch, ThenBranch)
-    DECLARE_AST_MEMBER(Stmt, _elseBranch, ElseBranch)
+    DECLARE_AST_MEMBER(CompoundStmt, _thenBranch, ThenBranch)
+    DECLARE_AST_MEMBER(CompoundStmt, _elseBranch, ElseBranch)
 
 public:
-    ConditionalStmt(Expr &condition, Stmt &thenBranch, Stmt &elseBranch);
+    ConditionalStmt(
+            Expr &condition,
+            CompoundStmt &thenBranch,
+            CompoundStmt &elseBranch);
 
     void toStream(std::ostream &s) const override;
 };
 
 class WhileStmt final : public Stmt {
     DECLARE_AST_MEMBER(Expr, _condition, Condition)
-    DECLARE_AST_MEMBER(Stmt, _body, Body)
+    DECLARE_AST_MEMBER(CompoundStmt, _body, Body)
 
 public:
 
-    WhileStmt(Expr &condition, Stmt &body);
+    WhileStmt(Expr &condition, CompoundStmt &body);
 
     void toStream(std::ostream &s) const override;
 };

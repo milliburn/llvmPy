@@ -532,7 +532,7 @@ Parser2::findDefStatement(int outerIndent)
         assert(is(tok_eol));
         next();
 
-        Stmt *body = readCompoundStatement(outerIndent);
+        auto *body = readCompoundStatement(outerIndent);
         assert(body);
 
         auto *def = new DefStmt(fnName, *body);
@@ -566,7 +566,7 @@ Parser2::findDefStatement(int outerIndent)
  * @param outerIndent The indentation level of the enclosing block header
  *        (e.g. the if-statement).
  */
-Stmt *
+CompoundStmt *
 Parser2::readCompoundStatement(int outerIndent)
 {
     std::vector<Stmt *> statements;
@@ -614,15 +614,13 @@ Parser2::readCompoundStatement(int outerIndent)
 
     assert(statements.size() > 0);
 
-    if (statements.size() == 1) {
-        return statements[0];
-    } else {
-        auto *compound = new CompoundStmt();
-        for (auto &stmt : statements) {
-            compound->addStatement(*stmt);
-        }
-        return compound;
+    auto *compound = new CompoundStmt();
+
+    for (auto &stmt : statements) {
+        compound->addStatement(*stmt);
     }
+
+    return compound;
 }
 
 ReturnStmt *
@@ -699,8 +697,8 @@ Parser2::findConditionalStatement(int outerIndent, bool elif)
         assert(is(tok_eol));
         next();
 
-        Stmt *thenBranch = nullptr;
-        Stmt *elseBranch = nullptr;
+        CompoundStmt *thenBranch = nullptr;
+        CompoundStmt *elseBranch = nullptr;
 
         thenBranch = readCompoundStatement(outerIndent);
         assert(thenBranch);
@@ -716,9 +714,10 @@ Parser2::findConditionalStatement(int outerIndent, bool elif)
 
             elseBranch = readCompoundStatement(outerIndent);
         } else if (isAtIndent(kw_elif, outerIndent)) {
-            elseBranch = findConditionalStatement(outerIndent, true);
+            elseBranch = new CompoundStmt(
+                    *findConditionalStatement(outerIndent, true));
         } else {
-            elseBranch = new PassStmt();
+            elseBranch = new CompoundStmt(*new PassStmt());
         }
 
         assert(elseBranch);
@@ -776,7 +775,7 @@ Parser2::findWhileStmt(int outerIndent)
         assert(is(tok_eol));
         next();
 
-        Stmt *body = readCompoundStatement(outerIndent);
+        auto *body = readCompoundStatement(outerIndent);
         assert(body);
 
         return new WhileStmt(*condition, *body);
