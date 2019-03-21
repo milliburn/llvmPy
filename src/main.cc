@@ -1,38 +1,18 @@
 #include <llvmPy.h>
-#include <llvm/Support/CommandLine.h>
-#include <llvm/Support/raw_ostream.h>
 #include <sstream>
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
+#include <string>
+#include <unistd.h>
+
 using namespace llvmPy;
-namespace cl = llvm::cl;
 using std::cerr;
 using std::cout;
 using std::endl;
 using std::string;
-
-static cl::opt<string> Cmd(
-        "c",
-        cl::desc("Program passed as string."),
-        cl::value_desc("cmd"));
-
-static cl::opt<bool> IsIR(
-        "ir",
-        cl::desc("Print resulting LLVM IR and exit."));
-
-static cl::opt<bool> IsParser(
-        "parser",
-        cl::desc("Print resulting parser tree and exit."));
-
-static cl::opt<bool> IsLexer(
-        "lexer",
-        cl::desc("Print tokens output by the lexer and exit."));
-
-static cl::opt<string> Filename(
-        cl::Positional,
-        cl::desc("file"));
+using std::vector;
 
 enum class Stage {
     PYTHON = 0,
@@ -42,16 +22,16 @@ enum class Stage {
 };
 
 enum class Mode {
-    UNKNOWN = 0,
+    STDIN,
     COMMAND,
     SCRIPT,
-    STDIN,
 };
 
 struct Options {
     Stage stage;
     Mode mode;
     string program;
+    vector<string> impl;
 };
 
 static int run(Options const &);
@@ -61,30 +41,48 @@ main(int argc, char **argv)
 {
     Options options = {
             .stage = Stage::PYTHON,
-            .mode = Mode::UNKNOWN,
+            .mode = Mode::STDIN,
     };
 
-    cl::ParseCommandLineOptions(argc, argv);
+    char c;
 
-    if (IsLexer) {
-        options.stage = Stage::LEXER;
-    } else if (IsParser) {
-        options.stage = Stage::PARSER;
-    } else if (IsIR) {
-        options.stage = Stage::IR;
+    while ((c = static_cast<char>(getopt(argc, argv, "hVc:X:"))) != -1) {
+        bool isDone = false;
+
+        switch (c) {
+        case 'h':
+            cout << "llvmPy" << endl;
+            exit(0);
+        case 'V':
+            cout << "llvmPy ?.?" << endl;
+            exit(0);
+        case 'c':
+            options.program = optarg;
+            options.mode = Mode::COMMAND;
+            isDone = true;
+            break;
+        case 'X':
+            std::string impl = optarg;
+
+            if (impl == "ir") {
+                options.stage = Stage::IR;
+            } else if (impl == "parser") {
+                options.stage = Stage::PARSER;
+            } else if (impl == "lexer") {
+                options.stage = Stage::LEXER;
+            }
+
+            break;
+        }
+
+        if (isDone) {
+            break;
+        }
     }
 
-    if (Cmd.getPosition() && Filename.getPosition()) {
-        cerr << "Only one of cmd or filename may be specified." << endl;
-        exit(1);
-    } else if (Cmd.getPosition()) {
-        options.mode = Mode::COMMAND;
-        options.program = Cmd.getValue();
-    } else if (Filename.getPosition()) {
+    if (optind < argc) {
         options.mode = Mode::SCRIPT;
-        options.program = Filename.getValue();
-    } else {
-        options.mode = Mode::STDIN;
+        options.program = argv[optind++];
     }
 
     return run(options);
