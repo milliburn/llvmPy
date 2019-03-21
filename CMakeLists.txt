@@ -118,28 +118,33 @@ target_link_libraries(
 
 add_executable(
         ${name}Test
-        test/main.cc
-        test/LexerTest.cc
-        test/InstrTest.cc
-        test/TestSuite.cc
-        test/PyObjTest.cc
-        test/Parser/Parser2Test.cc
-        test/Builtins/str/builtin_str.cc
-        test/Types/PyStr/type_PyStr.cc
-        test/Builtins/truthy/instr_truthy.cc
-        test/Builtins/bool/builtin_bool.cc
-        test/Builtins/func/instr_func.cc
+        test/src/main.cc
+        test/src/Internals/Lexer/LexerTest.cc
+        test/src/TestSuite.cc
+        test/src/Internals/Parser/Parser2Test.cc
+        test/src/Builtins/str/builtin_str.cc
+        test/src/Types/PyStr/type_PyStr.cc
+        test/src/Builtins/truthy/instr_truthy.cc
+        test/src/Builtins/bool/builtin_bool.cc
+        test/src/Builtins/func/instr_func.cc
         test/include/catch2.h
         test/include/fakeit.h
-        test/Builtins/getattr/instr_getattr.cc
-        test/Builtins/fchk/instr_fchk.cc)
+        test/src/Builtins/getattr/instr_getattr.cc
+        test/src/Builtins/fchk/instr_fchk.cc
+        test/src/Types/PyBool/type_PyBool.cc
+        test/src/Types/PyNone/type_PyNone.cc
+        test/src/Types/PyInt/type_PyInt.cc
+        test/src/Builtins/add/builtin_add.cc
+        test/src/Builtins/int/builtin_int.cc
+        test/src/Builtins/none/builtin_none.cc
+        test/src/Builtins/len/builtin_len.cc)
 
 # The test suites depend on an up-to-date llvmPy binary.
 add_dependencies(
         ${name}Test ${name})
 
 configure_file(
-        test/llvmPyTest.h.in
+        test/src/llvmPyTest.h.in
         ${CMAKE_CURRENT_BINARY_DIR}/src/llvmPyTest.h)
 
 target_include_directories(
