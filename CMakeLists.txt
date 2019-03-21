@@ -120,7 +120,6 @@ add_executable(
         ${name}Test
         test/main.cc
         test/LexerTest.cc
-        test/InstrTest.cc
         test/TestSuite.cc
         test/Parser/Parser2Test.cc
         test/Builtins/str/builtin_str.cc
@@ -134,7 +133,11 @@ add_executable(
         test/Builtins/fchk/instr_fchk.cc
         test/Types/PyBool/type_PyBool.cc
         test/Types/PyNone/type_PyNone.cc
-        test/Types/PyInt/type_PyInt.cc)
+        test/Types/PyInt/type_PyInt.cc
+        test/Builtins/add/builtin_add.cc
+        test/Builtins/int/builtin_int.cc
+        test/Builtins/none/builtin_none.cc
+        test/Builtins/len/builtin_len.cc)
 
 # The test suites depend on an up-to-date llvmPy binary.
 add_dependencies(

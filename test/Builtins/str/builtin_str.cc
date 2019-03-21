@@ -17,4 +17,14 @@ TEST_CASE("builtin: str()", "[builtins][str]") {
         CHECK(rv->getValue() == str);
     }
 
+    SECTION("it returns an object's string representation") {
+        PyInt i1(2), i2(-4);
+        PyBool b1(true);
+        PyNone none;
+
+        CHECK(llvmPy_str(i1)->getValue() == "2");
+        CHECK(llvmPy_str(i2)->getValue() == "-4");
+        CHECK(llvmPy_str(b1)->getValue() == "True");
+        CHECK(llvmPy_str(none)->getValue() == "None");
+    }
 }
