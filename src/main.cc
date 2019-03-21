@@ -6,12 +6,21 @@
 #include <fstream>
 #include <string>
 #include <vector>
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weverything"
+#pragma GCC diagnostic ignored "-Wpedantic"
+#include <boost/program_options.hpp>
+#pragma GCC diagnostic pop
+
 using namespace llvmPy;
+namespace po = boost::program_options;
 namespace cl = llvm::cl;
 using std::cerr;
 using std::cout;
 using std::endl;
 using std::string;
+using std::vector;
 
 static cl::opt<string> Cmd(
         "c",
@@ -52,6 +61,7 @@ struct Options {
     Stage stage;
     Mode mode;
     string program;
+    vector<string> impl;
 };
 
 static int run(Options const &);
@@ -64,30 +74,48 @@ main(int argc, char **argv)
             .mode = Mode::UNKNOWN,
     };
 
-    cl::ParseCommandLineOptions(argc, argv);
+    po::options_description desc("Options");
+    desc.add_options()
+            ("help,h,?", "Show help.")
+            ("version,v", "Show program version.")
+            ("X", po::value<vector<string>>(), "Set implementation-specific option.")
+            ("c", po::value<string>(&options.program), "Run program passed as string");
 
-    if (IsLexer) {
-        options.stage = Stage::LEXER;
-    } else if (IsParser) {
-        options.stage = Stage::PARSER;
-    } else if (IsIR) {
-        options.stage = Stage::IR;
-    }
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
 
-    if (Cmd.getPosition() && Filename.getPosition()) {
-        cerr << "Only one of cmd or filename may be specified." << endl;
-        exit(1);
-    } else if (Cmd.getPosition()) {
-        options.mode = Mode::COMMAND;
-        options.program = Cmd.getValue();
-    } else if (Filename.getPosition()) {
-        options.mode = Mode::SCRIPT;
-        options.program = Filename.getValue();
-    } else {
-        options.mode = Mode::STDIN;
+    if (vm.count("help")) {
+        cout << desc << endl;
+        return 0;
     }
 
     return run(options);
+
+//     cl::ParseCommandLineOptions(argc, argv);
+//
+//     if (IsLexer) {
+//         options.stage = Stage::LEXER;
+//     } else if (IsParser) {
+//         options.stage = Stage::PARSER;
+//     } else if (IsIR) {
+//         options.stage = Stage::IR;
+//     }
+//
+//     if (Cmd.getPosition() && Filename.getPosition()) {
+//         cerr << "Only one of cmd or filename may be specified." << endl;
+//         exit(1);
+//     } else if (Cmd.getPosition()) {
+//         options.mode = Mode::COMMAND;
+//         options.program = Cmd.getValue();
+//     } else if (Filename.getPosition()) {
+//         options.mode = Mode::SCRIPT;
+//         options.program = Filename.getValue();
+//     } else {
+//         options.mode = Mode::STDIN;
+//     }
+//
+//     return run(options);
 }
 
 static int
