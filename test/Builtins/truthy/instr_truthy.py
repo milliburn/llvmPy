@@ -12,4 +12,4 @@ if x == 1:
 else:
     print("No")
 
-# CHECK-DAG: declare i1 @llvmPy_truthy(%PyObj*)
+# IR-DAG: declare i1 @llvmPy_truthy(%PyObj*)
