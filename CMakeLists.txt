@@ -119,7 +119,7 @@ target_link_libraries(
 add_executable(
         ${name}Test
         test/main.cc
-        test/LexerTest.cc
+        test/Internals/Lexer/LexerTest.cc
         test/TestSuite.cc
         test/Parser/Parser2Test.cc
         test/Builtins/str/builtin_str.cc
