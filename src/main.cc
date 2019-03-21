@@ -34,45 +34,96 @@ static cl::opt<string> Filename(
         cl::Positional,
         cl::desc("file"));
 
+enum class Stage {
+    PYTHON = 0,
+    IR,
+    PARSER,
+    LEXER,
+};
+
+enum class Mode {
+    UNKNOWN = 0,
+    COMMAND,
+    SCRIPT,
+    STDIN,
+};
+
+struct Options {
+    Stage stage;
+    Mode mode;
+    string program;
+};
+
+static int run(Options const &);
+
 int
 main(int argc, char **argv)
 {
+    Options options = {
+            .stage = Stage::PYTHON,
+            .mode = Mode::UNKNOWN,
+    };
+
     cl::ParseCommandLineOptions(argc, argv);
 
-    std::vector<Token> tokens;
+    if (IsLexer) {
+        options.stage = Stage::LEXER;
+    } else if (IsParser) {
+        options.stage = Stage::PARSER;
+    } else if (IsIR) {
+        options.stage = Stage::IR;
+    }
 
     if (Cmd.getPosition() && Filename.getPosition()) {
         cerr << "Only one of cmd or filename may be specified." << endl;
         exit(1);
     } else if (Cmd.getPosition()) {
-        std::stringstream ss(Cmd);
+        options.mode = Mode::COMMAND;
+        options.program = Cmd.getValue();
+    } else if (Filename.getPosition()) {
+        options.mode = Mode::SCRIPT;
+        options.program = Filename.getValue();
+    } else {
+        options.mode = Mode::STDIN;
+    }
+
+    return run(options);
+}
+
+static int
+run(Options const &options)
+{
+    std::vector<Token> tokens;
+
+    if (options.mode == Mode::COMMAND) {
+        std::stringstream ss(options.program);
         Lexer lexer(ss);
         lexer.tokenize(tokens);
-    } else if (Filename.getPosition()) {
+    } else if (options.mode == Mode::SCRIPT) {
         std::ifstream input;
-        input.open(Filename, std::ios::in);
+        input.open(options.program, std::ios::in);
 
         if (input.fail()) {
             // File not found.
             cerr << "Cannot open file '"
-                    << Filename << "': file not found."
-                    << endl;
+                 << options.program << "': file not found."
+                 << endl;
             exit(1);
         }
 
         Lexer lexer(input);
         lexer.tokenize(tokens);
-    } else {
+    } else if (options.mode == Mode::STDIN) {
         Lexer lexer(std::cin);
         lexer.tokenize(tokens);
     }
 
-    if (IsLexer) {
+    if (options.stage == Stage::LEXER) {
         int iTokenOnLine = 0;
         for (auto const &token : tokens) {
             if (iTokenOnLine > 0
-                    && token.getTokenType() != tok_eol
-                    && token.getTokenType() != tok_eof) {
+                && token.getTokenType() != tok_eol
+                && token.getTokenType() != tok_eof) {
                 cout << ' ';
             }
 
@@ -98,7 +149,7 @@ main(int argc, char **argv)
     Parser2 parser(iter, tokens.end());
     auto stmt = parser.read();
 
-    if (IsParser) {
+    if (options.stage == Stage::PARSER) {
         std::cout << *stmt;
         return 0;
     }
@@ -109,7 +160,7 @@ main(int argc, char **argv)
 
     RTModule &mod = *em.createModule("__main__", *stmt);
 
-    if (IsIR) {
+    if (options.stage == Stage::IR) {
         mod.getModule().print(llvm::outs(), nullptr);
     } else {
         rt.import(mod);
