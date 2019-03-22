@@ -16,17 +16,17 @@ TEST_CASE("AST: CompoundStmt", "[AST][CompoundStmt]") {
         SECTION("it should insert at the beginning if marker is null") {
             compound.insertBefore(nullptr, pass3);
             REQUIRE(compound.statementsCount() == 3);
-            CHECK(&compound.at(0) == &pass3);
-            CHECK(&compound.at(1) == &pass1);
-            CHECK(&compound.at(2) == &pass2);
+            CHECK(&compound.getStatementAt(0) == &pass3);
+            CHECK(&compound.getStatementAt(1) == &pass1);
+            CHECK(&compound.getStatementAt(2) == &pass2);
         }
 
         SECTION("it should insert before the given marker") {
             compound.insertBefore(&pass2, pass3);
             REQUIRE(compound.statementsCount() == 3);
-            CHECK(&compound.at(0) == &pass1);
-            CHECK(&compound.at(1) == &pass3);
-            CHECK(&compound.at(2) == &pass2);
+            CHECK(&compound.getStatementAt(0) == &pass1);
+            CHECK(&compound.getStatementAt(1) == &pass3);
+            CHECK(&compound.getStatementAt(2) == &pass2);
         }
     }
 
@@ -38,17 +38,17 @@ TEST_CASE("AST: CompoundStmt", "[AST][CompoundStmt]") {
         SECTION("it should insert at the end if marker is null") {
             compound.insertAfter(nullptr, pass3);
             REQUIRE(compound.statementsCount() == 3);
-            CHECK(&compound.at(0) == &pass1);
-            CHECK(&compound.at(1) == &pass2);
-            CHECK(&compound.at(2) == &pass3);
+            CHECK(&compound.getStatementAt(0) == &pass1);
+            CHECK(&compound.getStatementAt(1) == &pass2);
+            CHECK(&compound.getStatementAt(2) == &pass3);
         }
 
         SECTION("it should insert after the given marker") {
             compound.insertAfter(&pass1, pass3);
             REQUIRE(compound.statementsCount() == 3);
-            CHECK(&compound.at(0) == &pass1);
-            CHECK(&compound.at(1) == &pass3);
-            CHECK(&compound.at(2) == &pass2);
+            CHECK(&compound.getStatementAt(0) == &pass1);
+            CHECK(&compound.getStatementAt(1) == &pass3);
+            CHECK(&compound.getStatementAt(2) == &pass2);
         }
     }
 }

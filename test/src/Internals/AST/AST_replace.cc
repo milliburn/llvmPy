@@ -16,6 +16,7 @@ TEST_CASE("AST: replace() operation", "[AST][replace]") {
     SECTION("Expressions") {
         IntegerExpr oldval(1);
         IntegerExpr oldval2(1);
+        IntegerExpr oldval3(1);
         IntegerExpr newval(2);
         IntegerExpr irrelevant(3);
 
@@ -42,25 +43,47 @@ TEST_CASE("AST: replace() operation", "[AST][replace]") {
             SECTION("first member") {
                 expr.addMember(oldval);
                 expr.addMember(oldval2);
-                RUN_TEST(expr, at(0));
+                RUN_TEST(expr, getMemberAt(0));
             }
 
             SECTION("second member") {
                 expr.addMember(oldval2);
                 expr.addMember(oldval);
-                RUN_TEST(expr, at(1));
+                RUN_TEST(expr, getMemberAt(1));
+            }
+        }
+
+        SECTION("Call") {
+            SECTION("callee") {
+                CallExpr expr(oldval);
+                expr.addArgument(oldval2);
+                RUN_TEST(expr, getCallee());
+            }
+
+            SECTION("argument 0") {
+                CallExpr expr(oldval2);
+                expr.addArgument(oldval);
+                expr.addArgument(oldval3);
+                RUN_TEST(expr, getArgumentAt(0));
+            }
+
+            SECTION("argument 0") {
+                CallExpr expr(oldval2);
+                expr.addArgument(oldval3);
+                expr.addArgument(oldval);
+                RUN_TEST(expr, getArgumentAt(1));
             }
         }
     }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshadow"
     SECTION("Statements") {
         PassStmt oldval;
         PassStmt oldval2;
         PassStmt newval;
         PassStmt irrelevant;
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wshadow"
         SECTION("Expr") {
             IntegerExpr oldval(1);
             IntegerExpr newval(2);
@@ -68,13 +91,29 @@ TEST_CASE("AST: replace() operation", "[AST][replace]") {
             ExprStmt stmt(oldval);
             RUN_TEST(stmt, getExpr());
         }
-#pragma GCC diagnostic pop
 
         SECTION("Compound") {
             CompoundStmt stmt;
             stmt.addStatement(oldval);
             stmt.addStatement(oldval2);
-            RUN_TEST(stmt, at(0));
+            RUN_TEST(stmt, getStatementAt(0));
+        }
+
+        SECTION("Assign") {
+            IntegerExpr oldval(1);
+            IntegerExpr newval(2);
+            IntegerExpr irrelevant(3);
+            AssignStmt stmt("x", oldval);
+            RUN_TEST(stmt, getValue());
+        }
+
+        SECTION("Return") {
+            IntegerExpr oldval(1);
+            IntegerExpr newval(2);
+            IntegerExpr irrelevant(3);
+            ReturnStmt stmt(oldval);
+            RUN_TEST(stmt, getExpr());
         }
     }
+#pragma GCC diagnostic pop
 }
