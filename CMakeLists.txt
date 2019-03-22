@@ -109,6 +109,7 @@ add_library(
         src/RT.cc
         src/Token.cc
         src/build.h.in
+        include/llvmPy/Compiler/Phase.h
 )
 
 set_target_properties(

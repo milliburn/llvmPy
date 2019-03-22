@@ -2,7 +2,7 @@
 set -e
 src=$1
 t1=$(mktemp)
-llvmPy -X pass=ir $src | llc -march=x86 > $t1
+llvmPy -X phase=ir $src | llc -march=x86 > $t1
 cat -n $t1 >&2
 cat $t1 | FileCheck $src --check-prefix=X86
 
