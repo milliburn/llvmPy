@@ -12,6 +12,7 @@
       <w>oper</w>
       <w>prog</w>
       <w>pyfunc</w>
+      <w>stdin</w>
       <w>stmts</w>
       <w>syntaxes</w>
       <w>toks</w>

@@ -2,6 +2,6 @@
 set -e
 src=$1
 t1=$(mktemp)
-llvmPy -X ir $src > $t1
+llvmPy -X phase=ir $src > $t1
 cat -n $t1 >&2
 llvm-as < $t1 | llvm-dis | FileCheck $src --check-prefix=IR

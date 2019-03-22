@@ -12,6 +12,32 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
                      -Wno-padded -Wno-switch-enum \
                      -Wno-disabled-macro-expansion")
 
+# VERSIONING
+
+find_package(Git QUIET REQUIRED)
+
+set(project_name "${name}")
+
+execute_process(
+        COMMAND "${GIT_EXECUTABLE}" describe --tags --always HEAD
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        RESULT_VARIABLE res
+        OUTPUT_VARIABLE project_version
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+execute_process(
+        COMMAND "${GIT_EXECUTABLE}" show -s --format=%cd
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        RESULT_VARIABLE res
+        OUTPUT_VARIABLE project_timestamp
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+set_property(GLOBAL APPEND
+             PROPERTY CMAKE_CONFIGURE_DEPENDS
+             "${CMAKE_SOURCE_DIR}/.git/index")
+
 # LLVM
 
 find_package(LLVM REQUIRED CONFIG)
@@ -82,6 +108,21 @@ add_library(
         src/Parser2.cc
         src/RT.cc
         src/Token.cc
+        src/build.h.in
+        include/llvmPy/Compiler/Phase.h
+        include/llvmPy/Compiler/Lexer/LexerPhase.h
+        src/Compiler/Lexer/LexerPhase.cc
+        include/llvmPy/Compiler/Parser/ParserPhase.h
+        src/Compiler/Parser/ParserPhase.cc
+        include/llvmPy/Compiler/Emitter/EmitterPhase.h
+        src/Compiler/Emitter/EmitterPhase.cc
+        include/llvmPy/Compiler/Runtime/RuntimePhase.h
+        src/Compiler/Runtime/RuntimePhase.cc
+        include/llvmPy/Compiler/AllPhases.h
+        include/llvmPy/Python.h
+        src/Python.cc
+        src/PythonImpl.cc
+        src/PythonImpl.h
 )
 
 set_target_properties(
@@ -110,6 +151,16 @@ add_executable(
         ${name}
         src/main.cc)
 
+configure_file(
+        src/build.h.in
+        ${CMAKE_CURRENT_BINARY_DIR}/src/build.h)
+
+target_include_directories(
+        ${name}
+        PRIVATE
+            src
+            ${CMAKE_CURRENT_BINARY_DIR}/src)
+
 target_link_libraries(
         ${name}
         PRIVATE lib${name})
@@ -137,7 +188,9 @@ add_executable(
         test/src/Builtins/add/builtin_add.cc
         test/src/Builtins/int/builtin_int.cc
         test/src/Builtins/none/builtin_none.cc
-        test/src/Builtins/len/builtin_len.cc)
+        test/src/Builtins/len/builtin_len.cc
+        test/src/Internals/AST/AST_replace.cc
+        test/src/Internals/AST/test_CompoundStmt.cc)
 
 # The test suites depend on an up-to-date llvmPy binary.
 add_dependencies(

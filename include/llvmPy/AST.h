@@ -15,9 +15,11 @@ public: \
     T const &get##Name() const { return *member; } \
     T &get##Name() { return *member; } \
     void set##Name(T &x) { \
+        assert(&x); \
         if (member) { member->removeParent(); } \
         member = &x; \
         member->setParent(this); \
+        throwIfNotConsistent(); \
     } \
 private: \
     T *member = nullptr;
@@ -32,10 +34,24 @@ public: \
     name##_const_iterator name##_begin() const { return boost::make_indirect_iterator(const_cast<T const **>(member.data())); } \
     name##_const_iterator name##_end() const { return boost::make_indirect_iterator(const_cast<T const **>(member.data()) + member.size()); } \
     iterator_range<name##_const_iterator> name() const { return make_range(name##_begin(), name##_end()); } \
+    T &at(size_t index) { \
+        return *member.at(index); \
+    } \
     void add##Name (T &it) { \
         member.push_back(&it); \
         it.removeParent(); \
         it.setParent(this); \
+        throwIfNotConsistent(); \
+    } \
+    void set##Name##At (size_t index, T &it) { \
+        auto &current = *member[index]; \
+        current.removeParent(); \
+        member[index] = &it; \
+        it.setParent(this); \
+        throwIfNotConsistent(); \
+    } \
+    size_t name##Count () { \
+        return member.size(); \
     } \
 private: \
     std::vector<T *> member;
@@ -64,6 +80,18 @@ public:
     void setParent(AST *);
 
     void removeParent();
+
+    /**
+     * Replace the sub-node `oldval` with `replacement`, depending on the nature
+     * of the particular AST node.
+     * @returns A pointer to the expression that was replaced, or nullptr if
+     *          the `oldval` was not a direct descendant of this AST.
+     */
+    virtual AST *replace(AST &oldval, AST &replacement);
+
+protected:
+    virtual bool isConsistent();
+    void throwIfNotConsistent();
 
 private:
     AST *_parent = nullptr;
@@ -155,6 +183,8 @@ public:
 
     TokenType getOperator() const;
 
+    AST *replace(AST &oldval, AST &replacement) override;
+
 private:
     TokenType const _operator;
 };
@@ -169,6 +199,11 @@ public:
     void toStream(std::ostream &s) const override;
 
     TokenType getOperator() const;
+
+    AST *replace(AST &oldval, AST &replacement) override;
+
+protected:
+    bool isConsistent() override;
 
 private:
     TokenType const _operator;
@@ -207,6 +242,11 @@ public:
     explicit TupleExpr();
 
     void toStream(std::ostream &s) const override;
+
+    AST *replace(AST &oldval, AST &replacement) override;
+
+protected:
+    bool isConsistent() override;
 };
 
 class GetattrExpr final : public Expr {
@@ -238,6 +278,8 @@ public:
     explicit ExprStmt(Expr &expr);
 
     void toStream(std::ostream &s) const override;
+
+    AST *replace(AST &oldval, AST &replacement) override;
 };
 
 class AssignStmt final : public Stmt {
@@ -267,6 +309,23 @@ public:
     Stmt *findOnlyMember();
 
     Stmt const *findOnlyMember() const;
+
+    /**
+     * Inserts statement `stmt` immediately before `marker` in this compound
+     * statement. If `marker` is null, `stmt` will become the first statement.
+     */
+    void insertBefore(Stmt *marker, Stmt &stmt);
+
+    /**
+     * Inserts statement `stmt` immediately after `marker` in this compound
+     * statement. If `marker` is null, `stmt` will become the last statement.
+     */
+    void insertAfter(Stmt *marker, Stmt &stmt);
+
+    AST *replace(AST &oldval, AST &replacement) override;
+
+protected:
+    bool isConsistent() override;
 };
 
 class DefStmt final : public Stmt {
@@ -345,6 +404,8 @@ public:
 
 } // namespace llvmPy
 
+std::ostream & operator<< (std::ostream &, llvmPy::Expr &);
+std::ostream & operator<< (std::ostream &, llvmPy::Stmt &);
 std::ostream & operator<< (std::ostream &, llvmPy::Expr const &);
 std::ostream & operator<< (std::ostream &, llvmPy::Stmt const &);
 

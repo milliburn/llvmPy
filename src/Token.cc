@@ -40,9 +40,10 @@ Token::getDepth() const
     return _depth;
 }
 
-std::ostream &
-operator<< (std::ostream & s, Token const &t)
+void
+Token::toStream(std::ostream &s) const
 {
+    auto &t = *this;
     switch (t.getTokenType()) {
     case tok_assign: s << '='; break;
     case tok_ident: s << t.getString(); break;
@@ -88,6 +89,17 @@ operator<< (std::ostream & s, Token const &t)
     case kw_continue: s << ">continue"; break;
     default: s << "?"; break;
     }
+}
 
+std::ostream &
+operator<< (std::ostream & s, Token &t)
+{
+    return s << const_cast<Token const &>(t);
+}
+
+std::ostream &
+operator<< (std::ostream & s, Token const &t)
+{
+    t.toStream(s);
     return s;
 }

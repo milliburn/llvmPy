@@ -52,6 +52,27 @@ AST::toStream(std::ostream &s) const
     throw std::runtime_error("Not Implemented");
 }
 
+AST *
+AST::replace(AST &oldval, AST &replacement)
+{
+    throw "Invalid AST replacement!";
+}
+
+bool
+AST::isConsistent()
+{
+    return true;
+}
+
+void
+AST::throwIfNotConsistent()
+{
+    // TODO: Currently this fails a lot of tests.
+    // if (!isConsistent()) {
+    //     throw "Inconsistent AST!";
+    // }
+}
+
 void
 StringExpr::toStream(std::ostream &s) const
 {
@@ -178,6 +199,26 @@ BinaryExpr::getOperator() const
     return _operator;
 }
 
+AST *
+BinaryExpr::replace(AST &oldval, AST &replacement)
+{
+    if (&getLeftOperand() == &oldval) {
+        setLeftOperand(replacement.as<Expr>());
+        return &oldval;
+    } else if (&getRightOperand() == &oldval) {
+        setRightOperand(replacement.as<Expr>());
+        return &oldval;
+    } else {
+        return nullptr;
+    }
+}
+
+bool
+BinaryExpr::isConsistent()
+{
+    return &getLeftOperand() != &getRightOperand();
+}
+
 void
 CallExpr::toStream(std::ostream &s) const
 {
@@ -232,6 +273,18 @@ void
 ReturnStmt::toStream(std::ostream &s) const
 {
     s << "return " << getExpr() << endl;
+}
+
+std::ostream &
+operator<< (std::ostream & s, Expr & expr)
+{
+    return s << const_cast<Expr const &>(expr);
+}
+
+std::ostream &
+operator<< (std::ostream & s, Stmt & stmt)
+{
+    return s << const_cast<Stmt const &>(stmt);
 }
 
 std::ostream &
@@ -290,6 +343,33 @@ TupleExpr::toStream(std::ostream &s) const
     s << ")";
 }
 
+AST *
+TupleExpr::replace(AST &oldval, AST &replacement)
+{
+    for (size_t i = 0; i < _members.size(); ++i) {
+        if (_members[i] == &oldval) {
+            setMemberAt(i, replacement.as<Expr>());
+            return &oldval;
+        }
+    }
+
+    return nullptr;
+}
+
+bool
+TupleExpr::isConsistent()
+{
+    for (size_t i = 0; i < _members.size() - 1; ++i) {
+        for (size_t j = i + 1; j < _members.size(); ++j) {
+            if (_members[i] == _members[j]) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 TokenExpr::TokenExpr(TokenType type)
 : _tokenType(type)
 {
@@ -327,6 +407,17 @@ UnaryExpr::getOperator() const
     return _operator;
 }
 
+AST *
+UnaryExpr::replace(AST &oldval, AST &replacement)
+{
+    if (&getExpr() == &oldval) {
+        setExpr(replacement.as<Expr>());
+        return &oldval;
+    } else {
+        return nullptr;
+    }
+}
+
 CompoundStmt::CompoundStmt()
 {
 }
@@ -354,6 +445,33 @@ Stmt *
 CompoundStmt::findOnlyMember()
 {
     return _stmts.size() == 1 ? _stmts[0] : nullptr;
+}
+
+AST *
+CompoundStmt::replace(AST &oldval, AST &replacement)
+{
+    for (size_t i = 0; i < _stmts.size(); ++i) {
+        if (_stmts[i] == &oldval) {
+            setStatementAt(i, replacement.as<Stmt>());
+            return &oldval;
+        }
+    }
+
+    return nullptr;
+}
+
+bool
+CompoundStmt::isConsistent()
+{
+    for (size_t i = 0; i < _stmts.size() - 1; ++i) {
+        for (size_t j = 1; j < _stmts.size(); ++j) {
+            if (_stmts[i] == _stmts[j]) {
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 PassStmt::PassStmt()
@@ -400,6 +518,17 @@ ConditionalStmt::toStream(std::ostream &s) const
 ExprStmt::ExprStmt(Expr &expr)
 {
     setExpr(expr);
+}
+
+AST *
+ExprStmt::replace(AST &oldval, AST &replacement)
+{
+    if (_expr == &oldval) {
+        setExpr(replacement.as<Expr>());
+        return &oldval;
+    } else {
+        return nullptr;
+    }
 }
 
 DefStmt::DefStmt(std::string const &name, CompoundStmt &body)
@@ -540,4 +669,50 @@ void
 AST::removeParent()
 {
     _parent = nullptr;
+}
+
+void
+CompoundStmt::insertBefore(Stmt *marker, Stmt &stmt)
+{
+    if (marker == nullptr) {
+        _stmts.insert(_stmts.begin(), &stmt);
+        return;
+    }
+
+    auto it = _stmts.begin();
+    auto end = _stmts.end();
+
+    while (it != end) {
+        if (*it == marker) {
+            _stmts.insert(it, &stmt);
+            return;
+        }
+
+        ++it;
+    }
+
+    assert(false && "reached end of statement");
+}
+
+void
+CompoundStmt::insertAfter(Stmt *marker, Stmt &stmt)
+{
+    if (marker == nullptr) {
+        _stmts.push_back(&stmt);
+        return;
+    }
+
+    auto it = _stmts.begin();
+    auto end = _stmts.end();
+
+    while (it != end) {
+        if (*it == marker) {
+            _stmts.insert(++it, &stmt);
+            return;
+        }
+
+        ++it;
+    }
+
+    assert(false && "reached end of statement");
 }
