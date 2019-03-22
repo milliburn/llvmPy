@@ -38,6 +38,8 @@ AstPass::updateExpr(Expr &expr)
         updateIdentExpr(*ident);
     } else if (auto *lambda = expr.cast<LambdaExpr>()) {
         updateLambdaExpr(*lambda);
+    } else if (auto *unary = expr.cast<UnaryExpr>()) {
+        updateUnaryExpr(*unary);
     } else if (auto *binary = expr.cast<BinaryExpr>()) {
         updateBinaryExpr(*binary);
     } else if (auto *call = expr.cast<CallExpr>()) {
@@ -77,6 +79,12 @@ void
 AstPass::updateLambdaExpr(LambdaExpr &expr)
 {
     updateExpr(expr.getExpr());
+}
+
+void
+AstPass::updateUnaryExpr(UnaryExpr &unary)
+{
+    updateExpr(unary.getExpr());
 }
 
 void

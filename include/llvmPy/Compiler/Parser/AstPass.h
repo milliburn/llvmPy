@@ -19,6 +19,7 @@ protected:
     virtual void updateIntegerExpr(IntegerExpr &expr);
     virtual void updateIdentExpr(IdentExpr &expr);
     virtual void updateLambdaExpr(LambdaExpr &lambda);
+    virtual void updateUnaryExpr(UnaryExpr &unary);
     virtual void updateBinaryExpr(BinaryExpr &binary);
     virtual void updateCallExpr(CallExpr &call);
     virtual void updateTokenExpr(TokenExpr &token);
