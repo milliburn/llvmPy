@@ -64,12 +64,16 @@ main(int argc, char **argv)
         case 'X':
             std::string impl = optarg;
 
-            if (impl == "ir") {
+            if (impl == "pass=ir") {
                 options.stage = Stage::IR;
-            } else if (impl == "parser") {
+            } else if (impl == "pass=parser") {
                 options.stage = Stage::PARSER;
-            } else if (impl == "lexer") {
+            } else if (impl == "pass=lexer") {
                 options.stage = Stage::LEXER;
+            } else {
+                cerr << "Unknown implementation-specific option: "
+                     << impl << "." << endl;
+                exit(1);
             }
 
             break;
