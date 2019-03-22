@@ -50,6 +50,9 @@ public: \
         it.setParent(this); \
         throwIfNotConsistent(); \
     } \
+    size_t name##Count () { \
+        return member.size(); \
+    } \
 private: \
     std::vector<T *> member;
 
@@ -306,6 +309,18 @@ public:
     Stmt *findOnlyMember();
 
     Stmt const *findOnlyMember() const;
+
+    /**
+     * Inserts statement `stmt` immediately before `marker` in this compound
+     * statement. If `marker` is null, `stmt` will become the first statement.
+     */
+    void insertBefore(Stmt *marker, Stmt &stmt);
+
+    /**
+     * Inserts statement `stmt` immediately after `marker` in this compound
+     * statement. If `marker` is null, `stmt` will become the last statement.
+     */
+    void insertAfter(Stmt *marker, Stmt &stmt);
 
     AST *replace(AST &oldval, AST &replacement) override;
 

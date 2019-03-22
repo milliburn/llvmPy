@@ -658,3 +658,49 @@ AST::removeParent()
 {
     _parent = nullptr;
 }
+
+void
+CompoundStmt::insertBefore(Stmt *marker, Stmt &stmt)
+{
+    if (marker == nullptr) {
+        _stmts.insert(_stmts.begin(), &stmt);
+        return;
+    }
+
+    auto it = _stmts.begin();
+    auto end = _stmts.end();
+
+    while (it != end) {
+        if (*it == marker) {
+            _stmts.insert(it, &stmt);
+            return;
+        }
+
+        ++it;
+    }
+
+    assert(false && "reached end of statement");
+}
+
+void
+CompoundStmt::insertAfter(Stmt *marker, Stmt &stmt)
+{
+    if (marker == nullptr) {
+        _stmts.push_back(&stmt);
+        return;
+    }
+
+    auto it = _stmts.begin();
+    auto end = _stmts.end();
+
+    while (it != end) {
+        if (*it == marker) {
+            _stmts.insert(++it, &stmt);
+            return;
+        }
+
+        ++it;
+    }
+
+    assert(false && "reached end of statement");
+}

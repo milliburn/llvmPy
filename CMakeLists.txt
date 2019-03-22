@@ -175,7 +175,8 @@ add_executable(
         test/src/Builtins/int/builtin_int.cc
         test/src/Builtins/none/builtin_none.cc
         test/src/Builtins/len/builtin_len.cc
-        test/src/Internals/AST/AST_replace.cc)
+        test/src/Internals/AST/AST_replace.cc
+        test/src/Internals/AST/test_CompoundStmt.cc)
 
 # The test suites depend on an up-to-date llvmPy binary.
 add_dependencies(
