@@ -16,4 +16,4 @@ f = lambda: 1
 # IR-NEXT: [[fPtr:%[^ ]+]] = getelementptr [[F]], [[F]]* [[framePtr]], i64 0, i32 2, i64 0
 # IR-NEXT: store %PyObj* [[PyFunc]], %PyObj** [[fPtr]]
 
-# IR-LABEL: define %PyObj* @lambda
+# IR-LABEL: define %PyObj* @__lambda__{{[0-9]+}}

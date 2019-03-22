@@ -14,12 +14,18 @@
 public: \
     T const &get##Name() const { return *member; } \
     T &get##Name() { return *member; } \
-    void set##Name(T &x) { \
+    void set##Name (T &x) { \
         assert(&x); \
         if (member) { member->removeParent(); } \
         member = &x; \
         member->setParent(this); \
         throwIfNotConsistent(); \
+    } \
+    T *release##Name () { \
+        auto *it = member; \
+        member = nullptr; \
+        it->removeParent(); \
+        return it; \
     } \
 private: \
     T *member = nullptr;
@@ -34,7 +40,7 @@ public: \
     name##_const_iterator name##_begin() const { return boost::make_indirect_iterator(const_cast<T const **>(member.data())); } \
     name##_const_iterator name##_end() const { return boost::make_indirect_iterator(const_cast<T const **>(member.data()) + member.size()); } \
     iterator_range<name##_const_iterator> name() const { return make_range(name##_begin(), name##_end()); } \
-    T &at(size_t index) { \
+    T &get##Name##At(size_t index) { \
         return *member.at(index); \
     } \
     void add##Name (T &it) { \
@@ -217,6 +223,8 @@ public:
     explicit CallExpr(Expr &callee);
 
     void toStream(std::ostream &s) const override;
+
+    AST *replace(AST &oldval, AST &replacement) override;
 };
 
 class TokenExpr final : public Expr {
@@ -292,6 +300,8 @@ public:
 
     std::string const &getName() const;
 
+    AST *replace(AST &oldval, AST &replacement) override;
+
 private:
     std::string const _name;
 };
@@ -358,6 +368,8 @@ public:
     explicit ReturnStmt(Expr &expr);
 
     void toStream(std::ostream &s) const override;
+
+    AST *replace(AST &oldval, AST &replacement) override;
 };
 
 class PassStmt final : public Stmt {

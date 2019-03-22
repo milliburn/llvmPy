@@ -317,6 +317,24 @@ CallExpr::CallExpr(Expr &callee)
     setCallee(callee);
 }
 
+AST *
+CallExpr::replace(AST &oldval, AST &replacement)
+{
+    if (_callee == &oldval) {
+        setCallee(replacement.as<Expr>());
+        return &oldval;
+    } else {
+        for (size_t i = 0; i < _args.size(); ++i) {
+            if (_args[i] == &oldval) {
+                setArgumentAt(i, replacement.as<Expr>());
+                return &oldval;
+            }
+        }
+
+        return nullptr;
+    }
+}
+
 TupleExpr::TupleExpr()
 {
 }
@@ -538,8 +556,19 @@ DefStmt::DefStmt(std::string const &name, CompoundStmt &body)
 }
 
 ReturnStmt::ReturnStmt(Expr &expr)
-: _expr(&expr)
 {
+    setExpr(expr);
+}
+
+AST *
+ReturnStmt::replace(AST &oldval, AST &replacement)
+{
+    if (_expr == &oldval) {
+        setExpr(replacement.as<Expr>());
+        return &oldval;
+    } else {
+        return nullptr;
+    }
 }
 
 Expr::Expr() = default;
@@ -581,6 +610,17 @@ std::string const &
 AssignStmt::getName() const
 {
     return _name;
+}
+
+AST *
+AssignStmt::replace(AST &oldval, AST &replacement)
+{
+    if (_value == &oldval) {
+        setValue(replacement.as<Expr>());
+        return &oldval;
+    } else {
+        return nullptr;
+    }
 }
 
 std::string const &

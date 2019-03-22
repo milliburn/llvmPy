@@ -36,6 +36,7 @@ private:
 
     LexerPhase _lexerPhase;
     ParserPhase _parserPhase;
+    DelambdafyRule _delambdafyRule;
     EmitterPhase _emitterPhase;
     RuntimePhase _runtimePhase;
 

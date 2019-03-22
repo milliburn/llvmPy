@@ -123,6 +123,10 @@ add_library(
         src/Python.cc
         src/PythonImpl.cc
         src/PythonImpl.h
+        include/llvmPy/Compiler/Parser/AstPass.h
+        src/Compiler/Parser/AstPass.cc
+        include/llvmPy/Compiler/Parser/DelambdafyRule.h
+        src/Compiler/Parser/DelambdafyRule.cc
 )
 
 set_target_properties(
