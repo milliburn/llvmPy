@@ -110,7 +110,14 @@ add_library(
         src/Token.cc
         src/build.h.in
         include/llvmPy/Compiler/Phase.h
-)
+        include/llvmPy/Compiler/Lexer/LexerPhase.h
+        src/Compiler/Lexer/LexerPhase.cc
+        include/llvmPy/Compiler/Parser/ParserPhase.h
+        src/Compiler/Parser/ParserPhase.cc
+        include/llvmPy/Compiler/Emitter/EmitterPhase.h
+        src/Compiler/Emitter/EmitterPhase.cc
+        include/llvmPy/Compiler/Runtime/RuntimePhase.h
+        src/Compiler/Runtime/RuntimePhase.cc)
 
 set_target_properties(
         lib${name}
