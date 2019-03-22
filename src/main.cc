@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <unistd.h>
+#include <build.h>
 
 using namespace llvmPy;
 using std::cerr;
@@ -51,10 +52,13 @@ main(int argc, char **argv)
 
         switch (c) {
         case 'h':
-            cout << "llvmPy" << endl;
+            cout << LLVMPY_NAME << endl;
             exit(0);
         case 'V':
-            cout << "llvmPy ?.?" << endl;
+            cout << "Python " << LLVMPY_PYTHON << " ("
+                 << LLVMPY_NAME << " " << LLVMPY_VERSION << ", "
+                 << LLVMPY_TIMESTAMP << ")"
+                 << endl;
             exit(0);
         case 'c':
             options.program = optarg;

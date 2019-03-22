@@ -12,6 +12,32 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
                      -Wno-padded -Wno-switch-enum \
                      -Wno-disabled-macro-expansion")
 
+# VERSIONING
+
+find_package(Git QUIET REQUIRED)
+
+set(project_name "${name}")
+
+execute_process(
+        COMMAND "${GIT_EXECUTABLE}" describe --tags --always HEAD
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        RESULT_VARIABLE res
+        OUTPUT_VARIABLE project_version
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+execute_process(
+        COMMAND "${GIT_EXECUTABLE}" show -s --format=%cd
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        RESULT_VARIABLE res
+        OUTPUT_VARIABLE project_timestamp
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+set_property(GLOBAL APPEND
+             PROPERTY CMAKE_CONFIGURE_DEPENDS
+             "${CMAKE_SOURCE_DIR}/.git/index")
+
 # LLVM
 
 find_package(LLVM REQUIRED CONFIG)
@@ -82,6 +108,7 @@ add_library(
         src/Parser2.cc
         src/RT.cc
         src/Token.cc
+        src/build.h.in
 )
 
 set_target_properties(
@@ -109,6 +136,16 @@ target_link_libraries(
 add_executable(
         ${name}
         src/main.cc)
+
+configure_file(
+        src/build.h.in
+        ${CMAKE_CURRENT_BINARY_DIR}/src/build.h)
+
+target_include_directories(
+        ${name}
+        PRIVATE
+            src
+            ${CMAKE_CURRENT_BINARY_DIR}/src)
 
 target_link_libraries(
         ${name}
