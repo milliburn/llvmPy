@@ -79,20 +79,21 @@ Parser2::read()
 Expr *
 Parser2::readSubExpr()
 {
-    TokenType term = tok_unknown;
+    TokenType terminator = tok_unknown;
 
     if (is(tok_lp)) {
         next();
-        term = tok_rp;
+        terminator = tok_rp;
     }
 
+    Expr *lastExpr = nullptr;
     TupleExpr *tuple = nullptr;
 
     for (;;) {
         auto *expr = readExpr(0, nullptr);
         bool isTerminal = false;
 
-        if (term && is(term)) {
+        if (terminator && is(terminator)) {
             next();
             isTerminal = true;
         } else if (!expr || isEnd() || is(tok_colon) || is(tok_eol)) {
@@ -107,7 +108,11 @@ Parser2::readSubExpr()
 
                 return tuple;
             } else if (!expr) {
-                return new TupleExpr();
+                if (lastExpr) {
+                    return lastExpr;
+                } else {
+                    return new TupleExpr();
+                }
             } else {
                 return expr;
             }
@@ -120,6 +125,8 @@ Parser2::readSubExpr()
             }
 
             tuple->addMember(*expr);
+        } else {
+            lastExpr = expr;
         }
     }
 }
