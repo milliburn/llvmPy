@@ -85,6 +85,8 @@ public:
 
     size_t getDepth() const;
 
+    void toStream(std::ostream &) const;
+
 private:
     TokenType const _type;
 
@@ -95,6 +97,7 @@ private:
 
 } // namespace llvmPy
 
+std::ostream & operator<< (std::ostream &, llvmPy::Token &);
 std::ostream & operator<< (std::ostream &, llvmPy::Token const &);
 
 #endif // __cplusplus

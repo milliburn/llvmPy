@@ -404,6 +404,8 @@ public:
 
 } // namespace llvmPy
 
+std::ostream & operator<< (std::ostream &, llvmPy::Expr &);
+std::ostream & operator<< (std::ostream &, llvmPy::Stmt &);
 std::ostream & operator<< (std::ostream &, llvmPy::Expr const &);
 std::ostream & operator<< (std::ostream &, llvmPy::Stmt const &);
 

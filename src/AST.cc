@@ -276,6 +276,18 @@ ReturnStmt::toStream(std::ostream &s) const
 }
 
 std::ostream &
+operator<< (std::ostream & s, Expr & expr)
+{
+    return s << const_cast<Expr const &>(expr);
+}
+
+std::ostream &
+operator<< (std::ostream & s, Stmt & stmt)
+{
+    return s << const_cast<Stmt const &>(stmt);
+}
+
+std::ostream &
 operator<< (std::ostream & s, Expr const & expr)
 {
     expr.toStream(s);
