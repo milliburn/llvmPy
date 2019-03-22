@@ -1,27 +1,17 @@
-#include <llvmPy.h>
+#include <llvmPy/Python.h>
 #include <sstream>
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
-#include <string>
+#include <unordered_set>
 #include <unistd.h>
 #include <build.h>
-#include <llvmPy/Compiler/AllPhases.h>
 
 using namespace llvmPy;
 using std::cerr;
 using std::cout;
 using std::endl;
-using std::string;
-using std::vector;
-
-enum class Stage {
-    PYTHON = 0,
-    IR,
-    PARSER,
-    LEXER,
-};
 
 enum class Mode {
     STDIN,
@@ -30,10 +20,10 @@ enum class Mode {
 };
 
 struct Options {
-    Stage stage;
     Mode mode;
-    string program;
-    vector<string> impl;
+    std::string program;
+    std::vector<std::string> args;
+    std::unordered_set<std::string> impl;
 };
 
 static int run(Options const &);
@@ -42,7 +32,6 @@ int
 main(int argc, char **argv)
 {
     Options options = {
-            .stage = Stage::PYTHON,
             .mode = Mode::STDIN,
     };
 
@@ -68,19 +57,7 @@ main(int argc, char **argv)
             break;
         case 'X':
             std::string impl = optarg;
-
-            if (impl == "phase=ir") {
-                options.stage = Stage::IR;
-            } else if (impl == "phase=parser") {
-                options.stage = Stage::PARSER;
-            } else if (impl == "phase=lexer") {
-                options.stage = Stage::LEXER;
-            } else {
-                cerr << "Unknown implementation-specific option: "
-                     << impl << "." << endl;
-                exit(1);
-            }
-
+            options.impl.insert(impl);
             break;
         }
 
@@ -94,96 +71,55 @@ main(int argc, char **argv)
         options.program = argv[optind++];
     }
 
-    return run(options);
-}
+    while (optind < argc) {
+        options.args.emplace_back(argv[optind++]);
+    }
 
-static void
-runPhases(Emitter &em, RT &rt)
-{
-    LexerPhase lexer;
-    ParserPhase parser;
-    EmitterPhase emitter(em);
-    RuntimePhase runtime(rt);
+    return run(options);
 }
 
 static int
 run(Options const &options)
 {
+    Python python;
+    std::vector<std::string> argv;
+    int exitcode;
 
+    switch (options.mode) {
+    case Mode::STDIN:
+        argv.emplace_back("");
+        break;
+    case Mode::COMMAND:
+        argv.emplace_back("-c");
+        break;
+    case Mode::SCRIPT:
+        argv.push_back(options.program);
+        break;
+    }
 
+    for (auto &arg : options.args) {
+        argv.push_back(arg);
+    }
 
-    std::vector<Token> tokens;
+    for (auto &impl : options.impl) {
+        python.addImplOption(impl);
+    }
 
-    if (options.mode == Mode::COMMAND) {
+    python.start(argv);
+
+    switch (options.mode) {
+    case Mode::STDIN:
+        exitcode = python.runStdin();
+        break;
+    case Mode::COMMAND: {
         std::stringstream ss(options.program);
-        Lexer lexer(ss);
-        lexer.tokenize(tokens);
-    } else if (options.mode == Mode::SCRIPT) {
-        std::ifstream input;
-        input.open(options.program, std::ios::in);
-
-        if (input.fail()) {
-            // File not found.
-            cerr << "Cannot open file '"
-                 << options.program << "': file not found."
-                 << endl;
-            exit(1);
-        }
-
-        Lexer lexer(input);
-        lexer.tokenize(tokens);
-    } else if (options.mode == Mode::STDIN) {
-        Lexer lexer(std::cin);
-        lexer.tokenize(tokens);
+        exitcode = python.runCommand(ss);
+        break;
+    }
+    case Mode::SCRIPT:
+        exitcode = python.runScript(options.program);
+        break;
     }
 
-    if (options.stage == Stage::LEXER) {
-        int iTokenOnLine = 0;
-        for (auto const &token : tokens) {
-            if (iTokenOnLine > 0
-                && token.getTokenType() != tok_eol
-                && token.getTokenType() != tok_eof) {
-                cout << ' ';
-            }
-
-            if (token.getTokenType() == tok_eof) {
-                // Right now EOF doesn't have a canonical representation.
-                cout << endl;
-                cout << ">EOF";
-            } else {
-                cout << token;
-            }
-
-            iTokenOnLine += 1;
-
-            if (token.getTokenType() == tok_eol) {
-                iTokenOnLine = 0;
-            }
-        }
-
-        return 0;
-    }
-
-    auto iter = tokens.begin();
-    Parser2 parser(iter, tokens.end());
-    auto stmt = parser.read();
-
-    if (options.stage == Stage::PARSER) {
-        std::cout << *stmt;
-        return 0;
-    }
-
-    Compiler compiler;
-    Emitter em(compiler);
-    RT rt(compiler);
-
-    RTModule &mod = *em.createModule("__main__", *stmt);
-
-    if (options.stage == Stage::IR) {
-        mod.getModule().print(llvm::outs(), nullptr);
-    } else {
-        rt.import(mod);
-    }
-
-    return 0;
+    return exitcode;
 }

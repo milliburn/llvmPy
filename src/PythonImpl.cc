@@ -7,6 +7,8 @@ PythonImpl::PythonImpl()
       _runtime(_compiler),
       _emitterPhase(_emitter),
       _runtimePhase(_runtime),
+      _argv(),
+      _implOptions(),
       _in(&std::cin),
       _out(&std::cout),
       _err(&std::cerr)

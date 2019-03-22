@@ -5,5 +5,5 @@ print("Test")
 # CHECK-NOT: Test
 # CHECK: Cannot open file
 # CHECK-SAME: .notexist
-# CHECK-SAME: file not found
+# CHECK-SAME: not found
 # CHECK-NOT: Test

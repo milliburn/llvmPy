@@ -7,7 +7,7 @@
 using namespace llvmPy;
 
 Python::Python()
-    : _impl()
+    : _impl(std::make_unique<PythonImpl>())
 {
 }
 
@@ -44,9 +44,9 @@ Python::runScript(std::string const &path)
     fp.open(path, std::ios::in);
 
     if (fp.fail()) {
-        std::stringstream ss;
-        ss << "Cannot open file '" << path << "': not found.";
-        throw std::runtime_error(ss.str());
+        _impl->getErrorStream()
+                << "Cannot open file '" << path << "': not found.";
+        return 1;
     }
 
     return _impl->run(fp, path);
