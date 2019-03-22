@@ -14,12 +14,18 @@
 public: \
     T const &get##Name() const { return *member; } \
     T &get##Name() { return *member; } \
-    void set##Name(T &x) { \
+    void set##Name (T &x) { \
         assert(&x); \
         if (member) { member->removeParent(); } \
         member = &x; \
         member->setParent(this); \
         throwIfNotConsistent(); \
+    } \
+    T *release##Name () { \
+        auto *it = member; \
+        member = nullptr; \
+        it->removeParent(); \
+        return it; \
     } \
 private: \
     T *member = nullptr;

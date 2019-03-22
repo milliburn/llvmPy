@@ -16,7 +16,7 @@ DelambdafyRule::updateLambdaExpr(LambdaExpr &lambda)
     // Generate a def-statement equivalent to the lambda expression.
     //
 
-    auto &expr = lambda.getExpr();
+    auto &expr = *lambda.releaseExpr();
     auto &stmt = *new CompoundStmt(*new ReturnStmt(expr));
 
     static size_t index = 0;
