@@ -53,6 +53,18 @@ print(str(cnuf(10)))
 # PARSER-NEXT:print(str(cnuf(10i)))
 # OUTPUT-NEXT: 26
 
+def nucf(y):
+    tup = (lambda x: x + 1, lambda x: x + 2, lambda x: x + 3)
+
+# PARSER-NEXT:def nucf(y):
+# PARSER-NEXT:    def __lambda__4(x):
+# PARSER-NEXT:        return (x + 1i)
+# PARSER-NEXT:    def __lambda__5(z):
+# PARSER-NEXT:        return (z + 2i)
+# PARSER-NEXT:    def __lambda__6(z):
+# PARSER-NEXT:        return (z + 3i)
+# PARSER-NEXT:    tup = (__lambda__4, __lambda__5, __lambda__6)
+
 print("End")
 # PARSER-NEXT:print("End")
 # OUTPUT-NEXT: End
