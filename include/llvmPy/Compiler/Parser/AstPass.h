@@ -14,9 +14,14 @@ protected:
     virtual void updateAst(AST &ast);
 
     virtual void updateExpr(Expr &expr);
+    virtual void updateStringExpr(StringExpr &expr);
+    virtual void updateDecimalExpr(DecimalExpr &expr);
+    virtual void updateIntegerExpr(IntegerExpr &expr);
+    virtual void updateIdentExpr(IdentExpr &expr);
     virtual void updateLambdaExpr(LambdaExpr &lambda);
     virtual void updateBinaryExpr(BinaryExpr &binary);
     virtual void updateCallExpr(CallExpr &call);
+    virtual void updateTokenExpr(TokenExpr &token);
     virtual void updateTupleExpr(TupleExpr &tuple);
     virtual void updateGetattrExpr(GetattrExpr &getattr);
 
@@ -26,8 +31,11 @@ protected:
     virtual void updateCompoundStmt(CompoundStmt &compound);
     virtual void updateDefStmt(DefStmt &def);
     virtual void updateReturnStmt(ReturnStmt &ret);
+    virtual void updatePassStmt(PassStmt &pass);
     virtual void updateConditionalStmt(ConditionalStmt &cond);
     virtual void updateWhileStmt(WhileStmt &loop);
+    virtual void updateBreakStmt(BreakStmt &brk);
+    virtual void updateContinueStmt(ContinueStmt &cont);
 
     template<class T>
     T &getParentOfType(AST &ast) const {
