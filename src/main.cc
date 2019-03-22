@@ -7,6 +7,7 @@
 #include <string>
 #include <unistd.h>
 #include <build.h>
+#include <llvmPy/Compiler/AllPhases.h>
 
 using namespace llvmPy;
 using std::cerr;
@@ -96,9 +97,21 @@ main(int argc, char **argv)
     return run(options);
 }
 
+static void
+runPhases(Emitter &em, RT &rt)
+{
+    LexerPhase lexer;
+    ParserPhase parser;
+    EmitterPhase emitter(em);
+    RuntimePhase runtime(rt);
+}
+
 static int
 run(Options const &options)
 {
+
+
+
     std::vector<Token> tokens;
 
     if (options.mode == Mode::COMMAND) {

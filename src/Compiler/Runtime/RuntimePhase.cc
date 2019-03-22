@@ -10,8 +10,9 @@ RuntimePhase::RuntimePhase(RT &rt)
 
 }
 
-void
+int
 RuntimePhase::run(RTModule &module)
 {
     _rt.import(module);
+    return 0;
 }

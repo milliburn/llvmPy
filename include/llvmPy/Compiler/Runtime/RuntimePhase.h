@@ -6,10 +6,10 @@
 #ifdef __cplusplus
 namespace llvmPy {
 
-class RuntimePhase : public Phase<RTModule &, void> {
+class RuntimePhase : public Phase<RTModule &, int> {
 public:
     explicit RuntimePhase(RT &rt);
-    void run(RTModule &) override;
+    int run(RTModule &) override;
 
 private:
     RT &_rt;

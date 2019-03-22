@@ -117,7 +117,13 @@ add_library(
         include/llvmPy/Compiler/Emitter/EmitterPhase.h
         src/Compiler/Emitter/EmitterPhase.cc
         include/llvmPy/Compiler/Runtime/RuntimePhase.h
-        src/Compiler/Runtime/RuntimePhase.cc)
+        src/Compiler/Runtime/RuntimePhase.cc
+        include/llvmPy/Compiler/AllPhases.h
+        include/llvmPy/Python.h
+        src/Python.cc
+        src/PythonImpl.cc
+        src/PythonImpl.h
+)
 
 set_target_properties(
         lib${name}
