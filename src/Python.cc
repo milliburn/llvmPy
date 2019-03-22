@@ -11,10 +11,18 @@ Python::Python()
 {
 }
 
+Python::~Python() = default;
+
 void
 Python::start(std::vector<std::string> const &argv)
 {
     _impl->setArgv(argv);
+}
+
+void
+Python::addImplOption(std::string const &option)
+{
+    _impl->addImplOption(option);
 }
 
 int

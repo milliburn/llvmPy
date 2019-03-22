@@ -11,9 +11,14 @@ class PythonImpl;
 class Python {
 public:
     Python();
-    virtual ~Python() = default;
+    virtual ~Python();
 
+    /** Initialize the Python runtime. Must be called before
+     *  run___() methods. */
     void start(std::vector<std::string> const &argv);
+
+    /** Set an implementation-specific option (-X argument). */
+    void addImplOption(std::string const &option);
 
     int runStdin();
     int runCommand(std::istream &command);
