@@ -11,6 +11,9 @@ public:
     void run(AST &ast) override;
 
 protected:
+    bool isUpdated() const;
+    void setUpdated(bool value);
+
     virtual void updateAst(AST &ast);
 
     virtual void updateExpr(Expr &expr);
@@ -47,6 +50,9 @@ protected:
             return getParentOfType<T>(parent);
         }
     }
+
+private:
+    bool _isUpdated;
 };
 
 

@@ -3,14 +3,29 @@
 using namespace llvmPy;
 
 AstPass::AstPass(std::string const &phaseName)
-    : Phase(phaseName)
+    : Phase(phaseName), _isUpdated(false)
 {
 }
 
 void
 AstPass::run(AST &ast)
 {
-    updateAst(ast);
+    do {
+        setUpdated(false);
+        updateAst(ast);
+    } while (isUpdated());
+}
+
+bool
+AstPass::isUpdated() const
+{
+    return _isUpdated;
+}
+
+void
+AstPass::setUpdated(bool value)
+{
+    _isUpdated = value;
 }
 
 void
@@ -91,6 +106,7 @@ void
 AstPass::updateBinaryExpr(BinaryExpr &binary)
 {
     updateExpr(binary.getLeftOperand());
+    if (isUpdated()) return;
     updateExpr(binary.getRightOperand());
 }
 
@@ -101,6 +117,7 @@ AstPass::updateCallExpr(CallExpr &call)
 
     for (auto &arg : call.args()) {
         updateExpr(arg);
+        if (isUpdated()) return;
     }
 }
 
@@ -114,6 +131,7 @@ AstPass::updateTupleExpr(TupleExpr &tuple)
 {
     for (auto &member : tuple.members()) {
         updateExpr(member);
+        if (isUpdated()) return;
     }
 }
 
@@ -168,6 +186,7 @@ AstPass::updateCompoundStmt(CompoundStmt &compound)
 {
     for (auto &stmt : compound.statements()) {
         updateStmt(stmt);
+        if (isUpdated()) return;
     }
 }
 
@@ -192,7 +211,9 @@ void
 AstPass::updateConditionalStmt(ConditionalStmt &cond)
 {
     updateExpr(cond.getCondition());
+    if (isUpdated()) return;
     updateStmt(cond.getThenBranch());
+    if (isUpdated()) return;
     updateStmt(cond.getElseBranch());
 }
 
@@ -200,6 +221,7 @@ void
 AstPass::updateWhileStmt(WhileStmt &loop)
 {
     updateExpr(loop.getCondition());
+    if (isUpdated()) return;
     updateStmt(loop.getBody());
 }
 

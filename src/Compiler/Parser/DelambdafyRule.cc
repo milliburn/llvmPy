@@ -46,4 +46,6 @@ DelambdafyRule::updateLambdaExpr(LambdaExpr &lambda)
     auto &parent = lambda.getParent();
     auto *oldval = parent.replace(lambda, functionReference);
     delete oldval;
+
+    setUpdated(true);
 }
