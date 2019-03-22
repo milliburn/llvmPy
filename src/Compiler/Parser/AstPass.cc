@@ -30,8 +30,6 @@ AstPass::updateExpr(Expr &expr)
 {
     if (auto *lambda = expr.cast<LambdaExpr>()) {
         updateLambdaExpr(*lambda);
-    } else {
-        assert(false);
     }
 }
 
@@ -45,8 +43,6 @@ AstPass::updateStmt(Stmt &stmt)
 {
     if (auto *expr = stmt.cast<ExprStmt>()) {
         updateExprStmt(*expr);
-    } else {
-        assert(false);
     }
 }
 

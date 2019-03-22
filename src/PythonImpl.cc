@@ -64,6 +64,13 @@ PythonImpl::run(
         return 0;
     }
 
+    _delambdafyRule.run(*statement);
+
+    if (hasImplOption("phase=delambdafy")) {
+        statement->toStream(getOutputStream());
+        return 0;
+    }
+
     auto module = _emitterPhase.run(*statement);
 
     if (hasImplOption("phase=ir")) {

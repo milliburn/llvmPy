@@ -18,6 +18,16 @@ protected:
 
     virtual void updateStmt(Stmt &stmt);
     virtual void updateExprStmt(ExprStmt &stmt);
+
+    template<class T>
+    T &getParentOfType(AST &ast) const {
+        AST &parent = ast.getParent();
+        if (auto *it = parent.cast<T>()) {
+            return *it;
+        } else {
+            return getParentOfType<T>(parent);
+        }
+    }
 };
 
 
