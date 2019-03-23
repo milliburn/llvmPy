@@ -112,6 +112,9 @@ TEST_CASE("Parser2", "[Parser2]") {
             check("(1,)", "(1i,)");
             check("(1, 2)", "(1i, 2i)");
             check("(1, 2, 3)", "(1i, 2i, 3i)");
+            check("1,", "(1i,)");
+            check("1, 2", "(1i, 2i)");
+            check("1, 2,3", "(1i, 2i, 3i)");
         }
 
         SECTION("Nested") {
@@ -128,6 +131,14 @@ TEST_CASE("Parser2", "[Parser2]") {
                   "(((1i * 2i) + 3i), (4i + (5i * 6i)), ((7i + 8i) + 9i))");
             check("(1, 2 + 3, 4 + (5, 6), 7)",
                   "(1i, (2i + 3i), (4i + (5i, 6i)), 7i)");
+        }
+
+        SECTION("With lambdas") {
+            check("lambda x: x + 1,", "(lambda x: x + 1,)");
+            check("lambda x: x + 1, lambda y: y + 2",
+                  "((lambda x: (x + 1i)), (lambda y: (y + 2i)))");
+            check("(lambda x: x + 1, lambda y: y + 2)",
+                  "((lambda x: (x + 1i)), (lambda y: (y + 2i)))");
         }
     }
 
