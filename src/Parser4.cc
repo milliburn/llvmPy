@@ -97,6 +97,7 @@ Parser4::Expression(int minimumPrecedence)
     if (!result) result = NumericLiteral();
     if (!result) result = StringLiteral();
     if (!result) result = UnaryExpression();
+    if (!result) result = Subexpression();
     if (!result) return nullptr;
 
     while (true) {
@@ -124,6 +125,19 @@ Parser4::Expression(int minimumPrecedence)
     }
 
     return result;
+}
+
+Expr *
+Parser4::Subexpression()
+{
+    if (is(tok_lp)) {
+        Expr *result = Expression();
+        assert(is(tok_rp) && "Expected ')'");
+        if (!result) result = new TupleExpr();
+        return result;
+    } else {
+        return nullptr;
+    }
 }
 
 Expr *

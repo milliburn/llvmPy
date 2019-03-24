@@ -127,5 +127,16 @@ TEST_CASE("Parser4: expressions") {
             et("1 * 2 + 3 * 4", "((1i * 2i) + (3i * 4i))");
         }
 
+        SECTION("Expressions with two or three binary operators and parentheses") {
+            et("1 + (2 + 3)", "(1i + (2i + 3i))");
+            et("(1 + 2) + 3", "((1i + 2i) + 3i)");
+            et("((1 + 2) + 3)", "((1i + 2i) + 3i)");
+            et("1 * (2 + 3)", "(1i * (2i + 3i))");
+            et("(1 * 2) + 3", "((1i * 2i) + 3i)");
+            et("((1 * 2) + 3)", "((1i * 2i) + 3i)");
+            et("(1 + 2) * 3", "((1i + 2i) * 3i)");
+            et("(1 < 2) + 3", "((1i < 2i) + 3i)");
+            et("1 + 2 * (3 + 4)", "(1i + (2i * (3i + 4i)))");
+        }
     }
 }

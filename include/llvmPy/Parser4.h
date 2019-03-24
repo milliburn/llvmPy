@@ -22,6 +22,7 @@ private:
     TokenType BinaryOperator();
 
     Expr *Expression(int minimumPrecedence);
+    Expr *Subexpression();
     Expr *UnaryExpression();
 
     Expr *NumericLiteral();
