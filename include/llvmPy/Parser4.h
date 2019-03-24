@@ -66,6 +66,8 @@ private:
     int precedence(TokenType type) const;
     bool isLeftAssociative(Token const &token) const;
     bool isLeftAssociative(TokenType type) const;
+
+    void syntax(bool condition, std::string const &message);
 };
 
 } // namespace llvmPy

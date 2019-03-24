@@ -1,5 +1,6 @@
 #include <llvmPy/Parser4.h>
 #include <assert.h>
+#include <stdexcept>
 using namespace llvmPy;
 
 static std::unordered_map<TokenType, int>
@@ -163,7 +164,7 @@ Parser4::Subexpression()
 {
     if (is(tok_lp)) {
         Expr *result = Expression();
-        assert(is(tok_rp) && "Expected ')'");
+        syntax(is(tok_rp), "Expected ')'");
         if (!result) result = new TupleExpr();
         return result;
     } else {
@@ -176,7 +177,7 @@ Parser4::UnaryExpression()
 {
     if (auto operator_ = UnaryOperator()) {
         auto *expr = Expression();
-        assert(expr && "Expected unary expression");
+        syntax(expr, "Expected unary expression");
         return new UnaryExpr(operator_, *expr);
     } else {
         return nullptr;
@@ -198,7 +199,7 @@ Parser4::BinaryExpression(int minimumPrecedence, Expr &lhs)
         int nextPrecedence = operatorPrecedence + (isLeftAssoc ? 1 : 0);
 
         auto *rhs = ValueExpression(nextPrecedence);
-        assert(rhs && "Expected right-hand side of binary expression");
+        syntax(rhs, "Expected right-hand side of binary expression");
         return new BinaryExpr(lhs, operator_, *rhs);
     } else {
         return nullptr;
@@ -210,9 +211,9 @@ Parser4::LambdaExpression()
 {
     if (is(kw_lambda)) {
         auto arguments = FunctionArguments();
-        assert(is(tok_colon) && "Expected ':'");
+        syntax(is(tok_colon), "Expected ':'");
         auto *body = ValueExpression(0);
-        assert(body && "Expected value expression in lambda function");
+        syntax(body, "Expected value expression in lambda function");
         auto *lambda = new LambdaExpr(*body);
         for (auto &arg : arguments) {
             lambda->addArgument(arg);
@@ -276,8 +277,8 @@ Parser4::Statement(int const outerIndent)
 {
     Stmt *result = nullptr;
     int const indent = Indentation();
-    assert(indent >= 0 && "Expected indentation");
-    assert(indent == outerIndent && "Expected statement indentation");
+    syntax(indent >= 0, "Expected indentation");
+    syntax(indent == outerIndent, "Expected statement indentation");
     if (!result) result = SimpleStatement();
     if (!result) result = BlockStatement(indent);
     return result;
@@ -336,13 +337,13 @@ Parser4::CompoundStatement(int outerIndent)
 {
     auto *result = new CompoundStmt();
     int const innerIndent = Indentation();
-    assert(innerIndent >= 0 && "Expected indentation");
-    assert(innerIndent > outerIndent && "Expected block statement indentation");
+    syntax(innerIndent >= 0, "Expected indentation");
+    syntax(innerIndent > outerIndent, "Expected block statement indentation");
     back();
 
     while (!EndOfFile()) {
         int const indent = Indentation();
-        assert(indent >= 0 && "Expected indentation");
+        syntax(indent >= 0, "Expected indentation");
 
         if (EndOfLine()) continue; // Ignore empty lines.
         if (EndOfFile()) continue; // Ignore empty lines.
@@ -351,15 +352,15 @@ Parser4::CompoundStatement(int outerIndent)
         if (indent <= outerIndent) {
             break;
         } else {
-            assert(indent == innerIndent && "Expected block indentation");
+            syntax(indent == innerIndent, "Expected block indentation");
         }
 
         auto *statement = Statement(innerIndent);
-        assert(statement && "Expected statement");
+        syntax(statement, "Expected statement");
         result->addStatement(*statement);
     }
 
-    assert(result->statementsCount() > 0 && "Expected block statement");
+    syntax(result->statementsCount() > 0, "Expected block statement");
     return result;
 }
 
@@ -368,11 +369,11 @@ Parser4::WhileStatement(int outerIndent)
 {
     if (is(kw_while)) {
         auto *condition = Expression();
-        assert(condition && "Expected 'while' condition expression");
-        assert(is(tok_colon) && "Expected ':'");
-        assert(EndOfLine() && "Expected end of line");
+        syntax(condition, "Expected 'while' condition expression");
+        syntax(is(tok_colon), "Expected ':'");
+        syntax(EndOfLine(), "Expected end of line");
         auto *body = CompoundStatement(outerIndent);
-        assert(body && "Expected 'while' statement body");
+        syntax(body, "Expected 'while' statement body");
         return new WhileStmt(*condition, *body);
     } else {
         return nullptr;
@@ -467,4 +468,12 @@ bool
 Parser4::isLeftAssociative(TokenType type) const
 {
     return ! (type & tok_rassoc);
+}
+
+void
+Parser4::syntax(bool condition, std::string const &message)
+{
+    if (!condition) {
+        throw std::runtime_error(message);
+    }
 }
