@@ -35,6 +35,24 @@ Parser4::Parser4(std::vector<Token> const &tokens)
 {
 }
 
+bool
+Parser4::EndOfFile()
+{
+    return is(tok_eof);
+}
+
+bool
+Parser4::EndOfLine()
+{
+    return is(tok_eol);
+}
+
+Stmt *
+Parser4::Statement()
+{
+    return nullptr;
+}
+
 Expr *
 Parser4::Expression()
 {
@@ -48,26 +66,22 @@ Parser4::Expression(int minimumPrecedence)
 
     if (!result) result = NumericLiteral();
     if (!result) result = StringLiteral();
+    if (!result) result = UnaryExpression();
 
     return result;
 }
 
-Stmt *
-Parser4::Statement()
+Expr *
+Parser4::UnaryExpression()
 {
-    return nullptr;
-}
-
-bool
-Parser4::EndOfFile()
-{
-    return is(tok_eof);
-}
-
-bool
-Parser4::EndOfLine()
-{
-    return is(tok_eol);
+    if (peek(tok_add) || peek(tok_sub)) {
+        auto &token = take();
+        auto *expr = Expression();
+        assert(expr && "Expected unary expression");
+        return new UnaryExpr(token.getTokenType(), *expr);
+    } else {
+        return nullptr;
+    }
 }
 
 Expr *

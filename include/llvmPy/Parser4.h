@@ -19,9 +19,11 @@ private:
     bool EndOfLine();
 
     Expr *Expression(int minimumPrecedence);
+    Expr *UnaryExpression();
 
     Expr *NumericLiteral();
     Expr *StringLiteral();
+
 
 private:
     Token const * const _tokens;

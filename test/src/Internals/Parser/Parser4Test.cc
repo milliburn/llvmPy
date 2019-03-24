@@ -10,7 +10,7 @@ tokenize(std::string const &input, bool trim)
     std::istringstream inputStream(input);
     std::vector<Token> tokens = lexer.run(inputStream);
 
-    REQUIRE(tokens.size() > 1);
+    REQUIRE(tokens.size() >= 1);
     REQUIRE(tokens[0].getTokenType() == tok_indent);
     REQUIRE(tokens[tokens.size() - 1].getTokenType() == tok_eof);
 
@@ -37,8 +37,7 @@ et(std::string const &input, std::string const &expect)
     auto tokens = tokenize(input, true);
     Parser4 parser(tokens);
     Expr *result = parser.Expression();
-    REQUIRE(result);
-    auto actual = result->toString();
+    auto actual = result ? result->toString() : "";
     REQUIRE(actual == expect);
 }
 
@@ -54,24 +53,36 @@ et(std::string const &input, std::string const &expect)
 //     REQUIRE(actual == expect);
 // }
 
-TEST_CASE("Parser4: expressions") {
-    SECTION("Integer literals") {
+TEST_CASE("Parser4: literals") {
+    SECTION("Integer") {
         et("1", "1i");
-        // et("-1", "-1i");
-        // et("+1", "+1i");
     }
 
-    SECTION("Decimal literals") {
+    SECTION("Decimal") {
         et("1.0", "1d");
-        // et("-1.0", "-1d");
-        // et("+1.0", "+1d");
         et("2.5", "2.5d");
     }
 
-    SECTION("Strings") {
+    SECTION("String") {
         et("\"Test\"", "\"Test\"");
         et("'Test'", "\"Test\"");
         et("\"\"", "\"\"");
         et("''", "\"\"");
+    }
+}
+
+TEST_CASE("Parser4: expressions") {
+    SECTION("Empty") {
+        // TODO: Fails currently, as the leading indent isn't emitted.
+        // et("", "");
+    }
+
+    SECTION("Unary") {
+        et("-1", "-1i");
+        et("+1", "+1i");
+        et("-1.0", "-1d");
+        et("+1.0", "+1d");
+        et("-2.5", "-2.5d");
+        et("+2.5", "+2.5d");
     }
 }
