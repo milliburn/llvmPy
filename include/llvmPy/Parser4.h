@@ -24,10 +24,10 @@ private:
     Expr *Expression(int minimumPrecedence);
     Expr *Subexpression();
     Expr *UnaryExpression();
+    Expr *BinaryExpression(int minimumPrecedence, Expr &lhs);
 
     Expr *NumericLiteral();
     Expr *StringLiteral();
-
 
 private:
     Token const * const _tokens;

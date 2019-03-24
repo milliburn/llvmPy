@@ -100,25 +100,9 @@ Parser4::Expression(int minimumPrecedence)
     if (!result) result = Subexpression();
     if (!result) return nullptr;
 
-    while (true) {
-        if (EndOfLine()) {
-            break;
-        } else if (EndOfFile()) {
-            break;
-        } else if (auto operator_ = BinaryOperator()) {
-            int operatorPrecedence = precedence(operator_);
-
-            if (operatorPrecedence < minimumPrecedence) {
-                back();
-                break;
-            }
-
-            bool isLeftAssoc = isLeftAssociative(operator_);
-            int nextPrecedence = operatorPrecedence + (isLeftAssoc ? 1 : 0);
-
-            auto *rhs = Expression(nextPrecedence);
-            assert(rhs && "Expected right-hand side of binary expression");
-            result = new BinaryExpr(*result, operator_, *rhs);
+    while (!EndOfLine() && !EndOfFile()) {
+        if (auto *expr = BinaryExpression(minimumPrecedence, *result)) {
+            result = expr;
         } else {
             break;
         }
@@ -147,6 +131,28 @@ Parser4::UnaryExpression()
         auto *expr = Expression();
         assert(expr && "Expected unary expression");
         return new UnaryExpr(operator_, *expr);
+    } else {
+        return nullptr;
+    }
+}
+
+Expr *
+Parser4::BinaryExpression(int minimumPrecedence, Expr &lhs)
+{
+    if (auto operator_ = BinaryOperator()) {
+        int operatorPrecedence = precedence(operator_);
+
+        if (operatorPrecedence < minimumPrecedence) {
+            back();
+            return nullptr;
+        }
+
+        bool isLeftAssoc = isLeftAssociative(operator_);
+        int nextPrecedence = operatorPrecedence + (isLeftAssoc ? 1 : 0);
+
+        auto *rhs = Expression(nextPrecedence);
+        assert(rhs && "Expected right-hand side of binary expression");
+        return new BinaryExpr(lhs, operator_, *rhs);
     } else {
         return nullptr;
     }
