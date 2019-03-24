@@ -290,6 +290,7 @@ Parser4::SimpleStatement()
     Stmt *result = nullptr;
     if (!result) result = BreakStatement();
     if (!result) result = ContinueStatement();
+    if (!result) result = PassStatement();
     if (!result) result = ExpressionStatement(); // Must be last.
     return result;
 }
@@ -309,6 +310,16 @@ Parser4::ContinueStatement()
 {
     if (is(kw_continue)) {
         return new ContinueStmt();
+    } else {
+        return nullptr;
+    }
+}
+
+Stmt *
+Parser4::PassStatement()
+{
+    if (is(kw_pass)) {
+        return new PassStmt();
     } else {
         return nullptr;
     }

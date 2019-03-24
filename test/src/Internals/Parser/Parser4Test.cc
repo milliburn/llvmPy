@@ -53,6 +53,17 @@ st(std::string const &input, std::string const &expect)
     REQUIRE(actual == expect);
 }
 
+static Stmt &
+sast(std::string const &input)
+{
+    INFO("For:\n" << input);
+    auto tokens = tokenize(input, false);
+    Parser4 parser(tokens);
+    Stmt *result = parser.Statement();
+    REQUIRE(result);
+    return *result;
+}
+
 TEST_CASE("Parser4") {
     SECTION("Integer literals") {
         et("1", "1i");
@@ -199,10 +210,20 @@ TEST_CASE("Parser4") {
 
     SECTION("Break statements") {
         st("break", "break\n");
+        auto &stmt = sast("break");
+        CHECK(stmt.isa<BreakStmt>());
     }
 
     SECTION("Continue statements") {
         st("continue", "continue\n");
+        auto &stmt = sast("continue");
+        CHECK(stmt.isa<ContinueStmt>());
+    }
+
+    SECTION("Pass statements") {
+        st("pass", "pass\n");
+        auto &stmt = sast("pass");
+        CHECK(stmt.isa<PassStmt>());
     }
 
     SECTION("While statements") {

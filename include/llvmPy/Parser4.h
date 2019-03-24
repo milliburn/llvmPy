@@ -43,6 +43,7 @@ private:
     Stmt *ExpressionStatement();
     Stmt *BreakStatement();
     Stmt *ContinueStatement();
+    Stmt *PassStatement();
 
     Stmt *BlockStatement(int outerIndent);
     CompoundStmt *CompoundStatement(int outerIndent);
