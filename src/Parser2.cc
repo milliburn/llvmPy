@@ -728,7 +728,7 @@ Parser2::isLeftAssociative(TokenType tokenType) const
 bool
 Parser2::isLeftAssociative(TokenExpr *tokenExpr) const
 {
-    return return true;
+    return true;
 }
 
 void

@@ -127,7 +127,8 @@ add_library(
         src/Compiler/Parser/AstPass.cc
         include/llvmPy/Compiler/Parser/DelambdafyRule.h
         src/Compiler/Parser/DelambdafyRule.cc
-        include/llvmPy/Parser3.h src/Parser3.cc)
+#        include/llvmPy/Parser3.h src/Parser3.cc
+        src/Parser4.cc)
 
 set_target_properties(
         lib${name}
@@ -194,7 +195,7 @@ add_executable(
         test/src/Builtins/none/builtin_none.cc
         test/src/Builtins/len/builtin_len.cc
         test/src/Internals/AST/AST_replace.cc
-        test/src/Internals/AST/test_CompoundStmt.cc)
+        test/src/Internals/AST/test_CompoundStmt.cc test/src/Internals/Parser/Parser4Test.cc)
 
 # The test suites depend on an up-to-date llvmPy binary.
 add_dependencies(
