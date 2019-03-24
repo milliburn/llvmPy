@@ -47,6 +47,17 @@ Parser4::EndOfLine()
     return is(tok_eol);
 }
 
+int
+Parser4::Indentation()
+{
+    if (peek(tok_indent)) {
+        auto &indent = take();
+        return static_cast<int>(indent.getDepth());
+    } else {
+        return -1;
+    }
+}
+
 TokenType
 Parser4::UnaryOperator()
 {
@@ -92,12 +103,6 @@ Parser4::FunctionArguments()
     } while (is(tok_comma));
 
     return result;
-}
-
-Stmt *
-Parser4::Statement()
-{
-    return nullptr;
 }
 
 Expr *
@@ -255,6 +260,120 @@ Parser4::StringLiteral()
         // Remove " or ' delimiters.
         auto value = text.substr(1, text.length() - 2);
         return new StringExpr(value);
+    } else {
+        return nullptr;
+    }
+}
+
+Stmt *
+Parser4::Statement()
+{
+    return Statement(0);
+}
+
+Stmt *
+Parser4::Statement(int const outerIndent)
+{
+    Stmt *result = nullptr;
+    int const indent = Indentation();
+    assert(indent >= 0 && "Expected indentation");
+    assert(indent == outerIndent && "Expected statement indentation");
+    if (!result) result = SimpleStatement();
+    if (!result) result = BlockStatement(indent);
+    return result;
+}
+
+Stmt *
+Parser4::SimpleStatement()
+{
+    Stmt *result = nullptr;
+    if (!result) result = BreakStatement();
+    if (!result) result = ContinueStatement();
+    if (!result) result = ExpressionStatement(); // Must be last.
+    return result;
+}
+
+Stmt *
+Parser4::BreakStatement()
+{
+    if (is(kw_break)) {
+        return new BreakStmt();
+    } else {
+        return nullptr;
+    }
+}
+
+Stmt *
+Parser4::ContinueStatement()
+{
+    if (is(kw_continue)) {
+        return new ContinueStmt();
+    } else {
+        return nullptr;
+    }
+}
+
+Stmt *
+Parser4::ExpressionStatement()
+{
+    if (auto *expr = Expression()) {
+        return new ExprStmt(*expr);
+    } else {
+        return nullptr;
+    }
+}
+
+Stmt *
+Parser4::BlockStatement(int outerIndent)
+{
+    Stmt *result = nullptr;
+    if (!result) result = WhileStatement(outerIndent);
+    return result;
+}
+
+CompoundStmt *
+Parser4::CompoundStatement(int outerIndent)
+{
+    auto *result = new CompoundStmt();
+    int const innerIndent = Indentation();
+    assert(innerIndent >= 0 && "Expected indentation");
+    assert(innerIndent > outerIndent && "Expected block statement indentation");
+    back();
+
+    while (!EndOfFile()) {
+        int const indent = Indentation();
+        assert(indent >= 0 && "Expected indentation");
+
+        if (EndOfLine()) continue; // Ignore empty lines.
+        if (EndOfFile()) continue; // Ignore empty lines.
+        back();
+
+        if (indent <= outerIndent) {
+            break;
+        } else {
+            assert(indent == innerIndent && "Expected block indentation");
+        }
+
+        auto *statement = Statement(innerIndent);
+        assert(statement && "Expected statement");
+        result->addStatement(*statement);
+    }
+
+    assert(result->statementsCount() > 0 && "Expected block statement");
+    return result;
+}
+
+Stmt *
+Parser4::WhileStatement(int outerIndent)
+{
+    if (is(kw_while)) {
+        auto *condition = Expression();
+        assert(condition && "Expected 'while' condition expression");
+        assert(is(tok_colon) && "Expected ':'");
+        assert(EndOfLine() && "Expected end of line");
+        auto *body = CompoundStatement(outerIndent);
+        assert(body && "Expected 'while' statement body");
+        return new WhileStmt(*condition, *body);
     } else {
         return nullptr;
     }

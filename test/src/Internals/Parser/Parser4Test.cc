@@ -41,17 +41,17 @@ et(std::string const &input, std::string const &expect)
     CHECK(actual == expect);
 }
 
-// static void
-// st(std::string const &input, std::string const &expect)
-// {
-//     INFO("For:\n" << input);
-//     auto tokens = tokenize(input, false);
-//     Parser4 parser(tokens);
-//     Stmt *result = parser.Statement();
-//     REQUIRE(result);
-//     auto actual = result->toString();
-//     REQUIRE(actual == expect);
-// }
+static void
+st(std::string const &input, std::string const &expect)
+{
+    INFO("For:\n" << input);
+    auto tokens = tokenize(input, false);
+    Parser4 parser(tokens);
+    Stmt *result = parser.Statement();
+    REQUIRE(result);
+    auto actual = result->toString();
+    REQUIRE(actual == expect);
+}
 
 TEST_CASE("Parser4") {
     SECTION("Integer literals") {
@@ -70,7 +70,7 @@ TEST_CASE("Parser4") {
         et("''", "\"\"");
     }
 
-    SECTION("Identifiers") {
+    SECTION("Identifier expressions") {
         et("True", "True");
         et("False", "False");
         et("x", "x");
@@ -93,7 +93,7 @@ TEST_CASE("Parser4") {
         // et("\n1\n2", ""); // TODO
     }
 
-    SECTION("Unary") {
+    SECTION("Unary expressions") {
         et("-1", "-1i");
         et("+1", "+1i");
         et("-1.0", "-1d");
@@ -102,7 +102,7 @@ TEST_CASE("Parser4") {
         et("+2.5", "+2.5d");
     }
 
-    SECTION("Binary") {
+    SECTION("Binary expressions") {
         SECTION("Expressions with one binary operator") {
             std::string const operators[] = {
                     "+", "-", "*", "/",
@@ -187,7 +187,7 @@ TEST_CASE("Parser4") {
         }
     }
 
-    SECTION("Lambda") {
+    SECTION("Lambda expressions") {
         et("lambda: None", "(lambda: None)");
         et("lambda: x + 1", "(lambda: (x + 1i))");
         et("lambda x: x + 1", "(lambda x: (x + 1i))");
@@ -195,5 +195,25 @@ TEST_CASE("Parser4") {
         // TODO: Should be an error.
         // et("lambda (x): x + 1", "(lambda x: (x + 1i))");
         et("lambda x, y: x + 1", "(lambda x, y: (x + 1i))");
+    }
+
+    SECTION("Break statements") {
+        st("break", "break\n");
+    }
+
+    SECTION("Continue statements") {
+        st("continue", "continue\n");
+    }
+
+    SECTION("While statements") {
+        SECTION("Flat") {
+            st("while True:\n break", "while True:\n    break\n");
+            st("while 1 + 2:\n 2\n 3", "while (1i + 2i):\n    2i\n    3i\n");
+        }
+
+        SECTION("Nested") {
+            st("while True:\n while False:\n  continue",
+               "while True:\n    while False:\n        continue\n");
+        }
     }
 }

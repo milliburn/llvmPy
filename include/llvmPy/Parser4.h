@@ -25,6 +25,7 @@ private:
     TokenType UnaryOperator();
     TokenType BinaryOperator();
     std::vector<std::string> FunctionArguments();
+    int Indentation();
 
     Expr *ValueExpression(int minimumPrecedence);
     Expr *Subexpression();
@@ -35,6 +36,17 @@ private:
     IdentExpr *Identifier();
     Expr *NumericLiteral();
     Expr *StringLiteral();
+
+    Stmt *Statement(int outerIndent);
+
+    Stmt *SimpleStatement();
+    Stmt *ExpressionStatement();
+    Stmt *BreakStatement();
+    Stmt *ContinueStatement();
+
+    Stmt *BlockStatement(int outerIndent);
+    CompoundStmt *CompoundStatement(int outerIndent);
+    Stmt *WhileStatement(int outerIndent);
 
 private:
     Token const * const _tokens;
