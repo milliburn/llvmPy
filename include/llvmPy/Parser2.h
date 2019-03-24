@@ -39,6 +39,7 @@ public:
 
     std::unique_ptr<Stmt> read();
     Expr *readAtomicExpr();
+    Expr *readExpr2(int minPrec);
     Expr *readExpr(int precedence = 0, Expr *lhs = nullptr);
     Expr *readSubExpr();
     Stmt *readStatement(int indent);
@@ -62,6 +63,8 @@ private:
 
     int getPrecedence(TokenType tokenType) const;
     int getPrecedence(TokenExpr *tokenExpr) const;
+    bool isLeftAssociative(TokenType tokenType) const;
+    bool isLeftAssociative(TokenExpr *tokenExpr) const;
 
     std::map<TokenType, int> const _precedences;
 

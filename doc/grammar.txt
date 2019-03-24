@@ -1,0 +1,127 @@
+#
+# Incomplete EBNF written as an aide to writing the llvmPy parser.
+#
+
+#
+# FUNDAMENTALS
+#
+
+UTF8String := "???" ;
+Numbers := "???" ;
+IdentifierString := "???" ;
+Nothing := "" ;
+
+#
+# LITERALS
+#
+
+Literal :=
+    Identifier |
+    NumericLiteral |
+    StringLiteral ;
+
+Identifier := IdentifierString ;
+NumericLiteral :=
+    Numbers |
+    Numbers "." |
+    Numbers "." Numbers ;
+StringLiteral := "\"" UTF8String "\"" | "'" UTF8String "'" ;
+
+BinaryOperator :=
+    "+" | "-" | "*" | "/" |
+    "<" | "<=" | "==" | "!=" | ">=" | ">" ;
+UnaryOperator := "+" | "-" | "~" ;
+
+Arguments := Nothing | ArgumentsContinue ;
+
+ArgumentsContinue :=
+    Identifier |
+    Identifier "," ArgumentsContinue |
+    "*" Identifier |
+    "**" Identifier |
+    "*" Identifier "," "**" Identifier ;
+
+CallArguments := Nothing | CallArgumentsContinue ;
+
+CallArgumentsContinue :=
+    Expression |
+    Expression "," RemainingCallArguments |
+    "*" Expression |
+    "**" Expression |
+    "*" Expression "," "**" Expression ;
+
+#
+# EXPRESSIONS
+#
+
+Expression :=
+    BinaryExpression |
+    CallExpression |
+    DecimalLiteral  |
+    GetattrExpression |
+    Identifier |
+    LambdaExpression |
+    StringLiteral |
+    Subexpression |
+    Tuple |
+    UnaryExpression ;
+
+ExpressionAtom :=
+    DecimalLiteral |
+    Identifier |
+    StringLiteral |
+    Subexpression ;
+
+ExpressionContinues :=
+    BinaryExpression |
+    CallExpression |
+    GetattrExpression |
+    LambdaExpression |
+    Tuple |
+    UnaryExpression ;
+
+BinaryExpression := Expression BinaryOperator Expression ;
+CallExpression := Expression "(" CallArguments ")" ;
+GetattrExpression := Expression "." Identifier ;
+LambdaExpression := "lambda" Arguments ":" Expression ;
+Subexpression := "(" Expression ")" ;
+Tuple := Expression "," TupleContinues
+TupleContinues := Nothing | Expression | Expression "," TupleContinues
+UnaryExpression := UnaryOperator Expression ;
+
+Expression :=
+    "lambda" Arguments ":" Expression |
+    UnaryOperator Expression |
+    Expression ExpressionTail ;
+
+SimpleExpression := DecimalLiteral | Identifier | StringLiteral ;
+ComplexExpression :=  ;
+
+ExpressionTail :=
+    BinaryOperator Expression |
+    "(" CallArguments ")" |
+    "." Identifier |
+    "," TupleTail ;
+
+TupleTail := Nothing | Expression | Expression "," TupleTail
+
+#
+# STATEMENTS
+#
+
+Statement := SimpleStatement | BlockStatement
+
+SimpleStatement := BreakStatement
+BlockStatement := WhileStatement
+
+BreakStatement := "break"
+WhileStatement :=
+    "while" Expression ":" SimpleStatement |
+    "while" Expression ":" EndOfLine Indent CompoundStatement
+
+#
+# MODULE
+#
+
+Module := Nothing | Statements
+Statements := Statement | Statement Statements

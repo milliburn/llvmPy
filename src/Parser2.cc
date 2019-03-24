@@ -132,6 +132,45 @@ Parser2::readSubExpr()
 }
 
 Expr *
+Parser2::readExpr2(int minPrec)
+{
+    // Implements precedence-climbing for operator precedence.
+
+    Expr *lhs = nullptr;
+    TokenType terminator = tok_unknown;
+
+    if (is(tok_lp)) {
+        auto *subExpr = readSubExpr();
+        assert(subExpr);
+        return subExpr;
+    } else if (auto *op = findUnaryOperator()) {
+        int opPrec = getPrecedence(op);
+        auto *operand = readExpr2(opPrec + 1);
+        assert(operand);
+        return new UnaryExpr(op->getTokenType(), *operand);
+    } else if (auto *atomic = readAtomicExpr()) {
+        lhs = atomic;
+    }
+
+    while (true) {
+        if (auto *op = findOperator()) {
+            int opPrec = getPrecedence(op);
+
+            if (opPrec < minPrec) {
+                break;
+            }
+
+            int nextMinPrec = opPrec + (isLeftAssociative(op) ? 1 : 0);
+
+            auto *rhs = readExpr2(nextMinPrec);
+            lhs = new BinaryExpr(*lhs, op->getTokenType(), *rhs);
+        }
+    }
+
+    return lhs;
+}
+
+Expr *
 Parser2::readExpr(int lastPrec, Expr *lhs)
 {
     if (isEnd() || is(tok_rp) || is(tok_eol)) {
@@ -678,6 +717,18 @@ int
 Parser2::getPrecedence(TokenExpr *tokenExpr) const
 {
     return getPrecedence(tokenExpr->getTokenType());
+}
+
+bool
+Parser2::isLeftAssociative(TokenType tokenType) const
+{
+    return true;
+}
+
+bool
+Parser2::isLeftAssociative(TokenExpr *tokenExpr) const
+{
+    return return true;
 }
 
 void
