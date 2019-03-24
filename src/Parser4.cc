@@ -352,8 +352,7 @@ Parser4::ReturnStatement()
 Stmt *
 Parser4::AssignStatement()
 {
-    if (peek(tok_ident)) {
-        auto *ident = Identifier();
+    if (auto *ident = Identifier()) {
         if (is(tok_assign)) {
             auto *expr = Expression();
             syntax(expr, "Expected expression");
