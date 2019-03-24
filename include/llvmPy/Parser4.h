@@ -18,6 +18,9 @@ private:
     bool EndOfFile();
     bool EndOfLine();
 
+    TokenType UnaryOperator();
+    TokenType BinaryOperator();
+
     Expr *Expression(int minimumPrecedence);
     Expr *UnaryExpression();
 
@@ -38,6 +41,11 @@ private:
     Token const &peek() const;
     bool peek(TokenType type) const;
     Token const &take();
+
+    int precedence(Token const &token) const;
+    int precedence(TokenType type) const;
+    bool isLeftAssociative(Token const &token) const;
+    bool isLeftAssociative(TokenType type) const;
 };
 
 } // namespace llvmPy

@@ -515,7 +515,7 @@ Parser2::findIdentifier()
 TokenExpr *
 Parser2::findOperator()
 {
-    if (is_a(tok_oper)) {
+    if (is_a(tok_binary)) {
         TokenType tokenType = token().getTokenType();
         next();
         return new TokenExpr(tokenType);

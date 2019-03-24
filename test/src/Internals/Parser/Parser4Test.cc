@@ -77,6 +77,11 @@ TEST_CASE("Parser4: expressions") {
         // et("", "");
     }
 
+    SECTION("Line termination") {
+        et("1\n2", "1i");
+        // et("\n1\n2", ""); // TODO
+    }
+
     SECTION("Unary") {
         et("-1", "-1i");
         et("+1", "+1i");
@@ -84,5 +89,43 @@ TEST_CASE("Parser4: expressions") {
         et("+1.0", "+1d");
         et("-2.5", "-2.5d");
         et("+2.5", "+2.5d");
+    }
+
+    SECTION("Binary") {
+        SECTION("Expressions with one binary operator") {
+            std::string const operators[] = {
+                    "+", "-", "*", "/",
+                    "<", "<=", "==", "!=", ">=", ">",
+            };
+
+            for (auto &op : operators) {
+                et("1 " + op + " 2", "(1i " + op + " 2i)");
+            }
+        }
+
+        SECTION("Expressions with two binary operators") {
+            et("1 + 2 + 3", "((1i + 2i) + 3i)");
+            et("1 * 2 + 3", "((1i * 2i) + 3i)");
+            et("1 + 2 * 3", "(1i + (2i * 3i))");
+            et("1 < 2 + 3", "(1i < (2i + 3i))");
+        }
+
+        SECTION("Expressions with unary negatives") {
+            et("1 + - 2", "(1i + -2i)");
+            et("1 + -2", "(1i + -2i)");
+            et("1 +- 2", "(1i + -2i)");
+            et("1 +-2", "(1i + -2i)");
+            et("1+-2", "(1i + -2i)");
+            et("1+- 2", "(1i + -2i)");
+        }
+
+        SECTION("Expressions with three binary operators") {
+            et("1 + 2 + 3 + 4", "(((1i + 2i) + 3i) + 4i)");
+            et("1 + 2 * 3 + 4", "((1i + (2i * 3i)) + 4i)");
+            et("1 + 2 * 3 * 4", "(1i + ((2i * 3i) * 4i))");
+            et("1 * 2 * 3 + 4", "(((1i * 2i) * 3i) + 4i)");
+            et("1 * 2 + 3 * 4", "((1i * 2i) + (3i * 4i))");
+        }
+
     }
 }

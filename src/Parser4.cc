@@ -47,6 +47,36 @@ Parser4::EndOfLine()
     return is(tok_eol);
 }
 
+TokenType
+Parser4::UnaryOperator()
+{
+    auto &token = peek();
+    auto type = token.getTokenType();
+
+    if (type & tok_unary) {
+        next();
+        assert(_precedence.count(type));
+        return type;
+    } else {
+        return tok_null;
+    }
+}
+
+TokenType
+Parser4::BinaryOperator()
+{
+    auto &token = peek();
+    auto type = token.getTokenType();
+
+    if (type & tok_binary) {
+        next();
+        assert(_precedence.count(type));
+        return type;
+    } else {
+        return tok_null;
+    }
+}
+
 Stmt *
 Parser4::Statement()
 {
@@ -67,6 +97,31 @@ Parser4::Expression(int minimumPrecedence)
     if (!result) result = NumericLiteral();
     if (!result) result = StringLiteral();
     if (!result) result = UnaryExpression();
+    if (!result) return nullptr;
+
+    while (true) {
+        if (EndOfLine()) {
+            break;
+        } else if (EndOfFile()) {
+            break;
+        } else if (auto operator_ = BinaryOperator()) {
+            int operatorPrecedence = precedence(operator_);
+
+            if (operatorPrecedence < minimumPrecedence) {
+                back();
+                break;
+            }
+
+            bool isLeftAssoc = isLeftAssociative(operator_);
+            int nextPrecedence = operatorPrecedence + (isLeftAssoc ? 1 : 0);
+
+            auto *rhs = Expression(nextPrecedence);
+            assert(rhs && "Expected right-hand side of binary expression");
+            result = new BinaryExpr(*result, operator_, *rhs);
+        } else {
+            break;
+        }
+    }
 
     return result;
 }
@@ -74,11 +129,10 @@ Parser4::Expression(int minimumPrecedence)
 Expr *
 Parser4::UnaryExpression()
 {
-    if (peek(tok_add) || peek(tok_sub)) {
-        auto &token = take();
+    if (auto operator_ = UnaryOperator()) {
         auto *expr = Expression();
         assert(expr && "Expected unary expression");
-        return new UnaryExpr(token.getTokenType(), *expr);
+        return new UnaryExpr(operator_, *expr);
     } else {
         return nullptr;
     }
@@ -87,32 +141,32 @@ Parser4::UnaryExpression()
 Expr *
 Parser4::NumericLiteral()
 {
-    if (!peek(tok_number)) {
-        return nullptr;
-    }
+    if (peek(tok_number)) {
+        auto &text = take().getString();
 
-    auto &text = take().getString();
-
-    if (text.find('.') != std::string::npos) {
-        double value = atof(text.c_str());
-        return new DecimalExpr(value);
+        if (text.find('.') != std::string::npos) {
+            double value = atof(text.c_str());
+            return new DecimalExpr(value);
+        } else {
+            int64_t value = atol(text.c_str());
+            return new IntegerExpr(value);
+        }
     } else {
-        int64_t value = atol(text.c_str());
-        return new IntegerExpr(value);
+        return nullptr;
     }
 }
 
 Expr *
 Parser4::StringLiteral()
 {
-    if (!peek(tok_string)) {
+    if (peek(tok_string)) {
+        auto &text = take().getString();
+        // Remove " or ' delimiters.
+        auto value = text.substr(1, text.length() - 2);
+        return new StringExpr(value);
+    } else {
         return nullptr;
     }
-
-    auto &text = take().getString();
-    // Remove " or ' delimiters.
-    auto value = text.substr(1, text.length() - 2);
-    return new StringExpr(value);
 }
 
 void
@@ -157,11 +211,13 @@ Parser4::peek() const
     assert(_index >= 0);
     assert(_index < _tokenCount);
 
+    auto &token = _tokens[_index];
+
     if (_index == _tokenCount - 1) {
-        assert(peek(tok_eof));
+        assert(token.getTokenType() == tok_eof);
     }
 
-    return _tokens[_index];
+    return token;
 }
 
 bool
@@ -176,4 +232,29 @@ Parser4::take()
     auto &token = peek();
     next();
     return token;
+}
+
+int
+Parser4::precedence(Token const &token) const
+{
+    return precedence(token.getTokenType());
+}
+
+int
+Parser4::precedence(TokenType type) const
+{
+    assert(_precedence.count(type));
+    return _precedence.at(type);
+}
+
+bool
+Parser4::isLeftAssociative(Token const &token) const
+{
+    return isLeftAssociative(token.getTokenType());
+}
+
+bool
+Parser4::isLeftAssociative(TokenType type) const
+{
+    return ! (type & tok_rassoc);
 }
