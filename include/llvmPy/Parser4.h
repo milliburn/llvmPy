@@ -24,12 +24,15 @@ private:
 
     TokenType UnaryOperator();
     TokenType BinaryOperator();
+    std::vector<std::string> FunctionArguments();
 
     Expr *ValueExpression(int minimumPrecedence);
     Expr *Subexpression();
     Expr *UnaryExpression();
     Expr *BinaryExpression(int minimumPrecedence, Expr &lhs);
+    Expr *LambdaExpression();
 
+    IdentExpr *Identifier();
     Expr *NumericLiteral();
     Expr *StringLiteral();
 

@@ -77,6 +77,23 @@ Parser4::BinaryOperator()
     }
 }
 
+std::vector<std::string>
+Parser4::FunctionArguments()
+{
+    // TODO: Add support for *args, **kwargs.
+    std::vector<std::string> result;
+
+    do {
+        if (auto *expr = Identifier()) {
+            result.push_back(expr->getName());
+        } else {
+            break;
+        }
+    } while (is(tok_comma));
+
+    return result;
+}
+
 Stmt *
 Parser4::Statement()
 {
@@ -117,10 +134,12 @@ Parser4::ValueExpression(int minimumPrecedence)
 
     if (EndOfLine()) return nullptr;
     if (EndOfFile()) return nullptr;
+    if (!result) result = Identifier();
     if (!result) result = NumericLiteral();
     if (!result) result = StringLiteral();
     if (!result) result = UnaryExpression();
     if (!result) result = Subexpression();
+    if (!result) result = LambdaExpression();
     if (!result) return nullptr;
 
     while (!EndOfLine() && !EndOfFile()) {
@@ -176,6 +195,35 @@ Parser4::BinaryExpression(int minimumPrecedence, Expr &lhs)
         auto *rhs = ValueExpression(nextPrecedence);
         assert(rhs && "Expected right-hand side of binary expression");
         return new BinaryExpr(lhs, operator_, *rhs);
+    } else {
+        return nullptr;
+    }
+}
+
+Expr *
+Parser4::LambdaExpression()
+{
+    if (is(kw_lambda)) {
+        auto arguments = FunctionArguments();
+        assert(is(tok_colon) && "Expected ':'");
+        auto *body = ValueExpression(0);
+        assert(body && "Expected value expression in lambda function");
+        auto *lambda = new LambdaExpr(*body);
+        for (auto &arg : arguments) {
+            lambda->addArgument(arg);
+        }
+        return lambda;
+    } else {
+        return nullptr;
+    }
+}
+
+IdentExpr *
+Parser4::Identifier()
+{
+    if (peek(tok_ident)) {
+        auto &token = take();
+        return new IdentExpr(token.getString());
     } else {
         return nullptr;
     }

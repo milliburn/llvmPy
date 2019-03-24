@@ -38,7 +38,7 @@ et(std::string const &input, std::string const &expect)
     Parser4 parser(tokens);
     Expr *result = parser.Expression();
     auto actual = result ? result->toString() : "";
-    REQUIRE(actual == expect);
+    CHECK(actual == expect);
 }
 
 // static void
@@ -53,25 +53,36 @@ et(std::string const &input, std::string const &expect)
 //     REQUIRE(actual == expect);
 // }
 
-TEST_CASE("Parser4: literals") {
-    SECTION("Integer") {
+TEST_CASE("Parser4") {
+    SECTION("Integer literals") {
         et("1", "1i");
     }
 
-    SECTION("Decimal") {
+    SECTION("Decimal literals") {
         et("1.0", "1d");
         et("2.5", "2.5d");
     }
 
-    SECTION("String") {
+    SECTION("String literals") {
         et("\"Test\"", "\"Test\"");
         et("'Test'", "\"Test\"");
         et("\"\"", "\"\"");
         et("''", "\"\"");
     }
-}
 
-TEST_CASE("Parser4: expressions") {
+    SECTION("Identifiers") {
+        et("True", "True");
+        et("False", "False");
+        et("x", "x");
+    }
+
+    SECTION("Subexpressions") {
+        et("()", "()"); // Empty tuple.
+        et("(1)", "1i"); // Single value (no tuple).
+        et("(-1)", "-1i"); // Subexpressions don't exist on their own.
+        et("(True)", "True");
+    }
+
     SECTION("Empty") {
         // TODO: Fails currently, as the leading indent isn't emitted.
         // et("", "");
@@ -166,13 +177,23 @@ TEST_CASE("Parser4: expressions") {
             et("(1, 2 + 3, 4 + (5, 6), 7)",
                   "(1i, (2i + 3i), (4i + (5i, 6i)), 7i)");
         }
-        //
-        // SECTION("With lambdas") {
-        //     check("lambda x: x + 1,", "(lambda x: x + 1,)");
-        //     check("lambda x: x + 1, lambda y: y + 2",
-        //           "((lambda x: (x + 1i)), (lambda y: (y + 2i)))");
-        //     check("(lambda x: x + 1, lambda y: y + 2)",
-        //           "((lambda x: (x + 1i)), (lambda y: (y + 2i)))");
-        // }
+
+        SECTION("With lambdas") {
+            et("lambda x: x + 1,", "((lambda x: (x + 1i)),)");
+            et("lambda x: x + 1, lambda y: y + 2",
+               "((lambda x: (x + 1i)), (lambda y: (y + 2i)))");
+            et("(lambda x: x + 1, lambda y: y + 2)",
+               "((lambda x: (x + 1i)), (lambda y: (y + 2i)))");
+        }
+    }
+
+    SECTION("Lambda") {
+        et("lambda: None", "(lambda: None)");
+        et("lambda: x + 1", "(lambda: (x + 1i))");
+        et("lambda x: x + 1", "(lambda x: (x + 1i))");
+        et("lambda x: x + 1", "(lambda x: (x + 1i))");
+        // TODO: Should be an error.
+        // et("lambda (x): x + 1", "(lambda x: (x + 1i))");
+        et("lambda x, y: x + 1", "(lambda x, y: (x + 1i))");
     }
 }
