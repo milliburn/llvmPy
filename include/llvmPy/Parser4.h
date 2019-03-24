@@ -25,12 +25,10 @@ private:
     TokenType UnaryOperator();
     TokenType BinaryOperator();
 
-    Expr *Sequence();
-    Expr *Expression(int minimumPrecedence);
+    Expr *ValueExpression(int minimumPrecedence);
     Expr *Subexpression();
     Expr *UnaryExpression();
     Expr *BinaryExpression(int minimumPrecedence, Expr &lhs);
-    Expr *TupleExpression(Expr &lhs);
 
     Expr *NumericLiteral();
     Expr *StringLiteral();

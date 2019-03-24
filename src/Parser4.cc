@@ -84,9 +84,9 @@ Parser4::Statement()
 }
 
 Expr *
-Parser4::Sequence()
+Parser4::Expression()
 {
-    Expr *result = Expression();
+    Expr *result = ValueExpression(0);
     TupleExpr *tuple = nullptr;
 
     if (!result) {
@@ -100,7 +100,7 @@ Parser4::Sequence()
             result = tuple;
         }
 
-        if (auto *expr = Expression()) {
+        if (auto *expr = ValueExpression(0)) {
             tuple->addMember(*expr);
         } else {
             break;
@@ -111,13 +111,7 @@ Parser4::Sequence()
 }
 
 Expr *
-Parser4::Expression()
-{
-    return Expression(0);
-}
-
-Expr *
-Parser4::Expression(int minimumPrecedence)
+Parser4::ValueExpression(int minimumPrecedence)
 {
     Expr *result = nullptr;
 
@@ -179,35 +173,9 @@ Parser4::BinaryExpression(int minimumPrecedence, Expr &lhs)
         bool isLeftAssoc = isLeftAssociative(operator_);
         int nextPrecedence = operatorPrecedence + (isLeftAssoc ? 1 : 0);
 
-        auto *rhs = Expression(nextPrecedence);
+        auto *rhs = ValueExpression(nextPrecedence);
         assert(rhs && "Expected right-hand side of binary expression");
         return new BinaryExpr(lhs, operator_, *rhs);
-    } else {
-        return nullptr;
-    }
-}
-
-Expr *
-Parser4::TupleExpression(Expr &lhs)
-{
-    if (peek(tok_comma)) {
-        auto *tuple = new TupleExpr();
-        tuple->addMember(lhs);
-
-        while (true) {
-            if (is(tok_comma)) {
-                if (auto *expr = Expression(0, true)) {
-                    tuple->addMember(*expr);
-                    continue;
-                } else {
-                    break;
-                }
-            } else {
-                break;
-            }
-        }
-
-        return tuple;
     } else {
         return nullptr;
     }
