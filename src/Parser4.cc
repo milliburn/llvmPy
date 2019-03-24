@@ -291,6 +291,8 @@ Parser4::SimpleStatement()
     if (!result) result = BreakStatement();
     if (!result) result = ContinueStatement();
     if (!result) result = PassStatement();
+    if (!result) result = ReturnStatement();
+    if (!result) result = AssignStatement();
     if (!result) result = ExpressionStatement(); // Must be last.
     return result;
 }
@@ -330,6 +332,36 @@ Parser4::ExpressionStatement()
 {
     if (auto *expr = Expression()) {
         return new ExprStmt(*expr);
+    } else {
+        return nullptr;
+    }
+}
+
+Stmt *
+Parser4::ReturnStatement()
+{
+    if (is(kw_return)) {
+        auto *expr = Expression();
+        syntax(expr, "Expected expression");
+        return new ReturnStmt(*expr);
+    } else {
+        return nullptr;
+    }
+}
+
+Stmt *
+Parser4::AssignStatement()
+{
+    if (peek(tok_ident)) {
+        auto *ident = Identifier();
+        if (is(tok_assign)) {
+            auto *expr = Expression();
+            syntax(expr, "Expected expression");
+            return new AssignStmt(ident->getName(), *expr);
+        } else {
+            back();
+            return nullptr;
+        }
     } else {
         return nullptr;
     }

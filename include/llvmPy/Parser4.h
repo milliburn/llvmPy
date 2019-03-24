@@ -44,6 +44,8 @@ private:
     Stmt *BreakStatement();
     Stmt *ContinueStatement();
     Stmt *PassStatement();
+    Stmt *ReturnStatement();
+    Stmt *AssignStatement();
 
     Stmt *BlockStatement(int outerIndent);
     CompoundStmt *CompoundStatement(int outerIndent);

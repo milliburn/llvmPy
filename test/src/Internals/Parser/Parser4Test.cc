@@ -226,6 +226,14 @@ TEST_CASE("Parser4") {
         CHECK(stmt.isa<PassStmt>());
     }
 
+    SECTION("Return statements") {
+        st("return 1 + 2", "return (1i + 2i)\n");
+    }
+
+    SECTION("Assign statements") {
+        st("x = 1 + 2", "x = (1i + 2i)\n");
+    }
+
     SECTION("While statements") {
         SECTION("Flat") {
             st("while True:\n break", "while True:\n    break\n");
@@ -233,8 +241,8 @@ TEST_CASE("Parser4") {
         }
 
         SECTION("Nested") {
-            st("while True:\n while False:\n  continue",
-               "while True:\n    while False:\n        continue\n");
+            st("while True:\n x = y + 1\n while False:\n  continue",
+               "while True:\n    x = (y + 1i)\n    while False:\n        continue\n");
         }
     }
 }
