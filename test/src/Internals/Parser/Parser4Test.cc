@@ -139,4 +139,40 @@ TEST_CASE("Parser4: expressions") {
             et("1 + 2 * (3 + 4)", "(1i + (2i * (3i + 4i)))");
         }
     }
+
+    SECTION("Tuples") {
+        SECTION("Flat") {
+            et("()", "()");
+            et("(1,)", "(1i,)");
+            et("(1, 2)", "(1i, 2i)");
+            et("(1, 2, 3)", "(1i, 2i, 3i)");
+            et("1,", "(1i,)");
+            et("1, 2", "(1i, 2i)");
+            et("1, 2,3", "(1i, 2i, 3i)");
+        }
+
+        SECTION("Nested") {
+            et("((1, 2), 3)", "((1i, 2i), 3i)");
+            et("(1, (2, 3))", "(1i, (2i, 3i))");
+            et("(1, 2, (3, 4, 5))", "(1i, 2i, (3i, 4i, 5i))");
+            et("(1, 2, (3, 4, 5), 6, 7)", "(1i, 2i, (3i, 4i, 5i), 6i, 7i)");
+        }
+
+        SECTION("Mixed") {
+            // Some of these examples would not be valid syntax, but any such
+            // errors wouldn't occur at the parser level.
+            et("(1 * 2 + 3, 4 + 5 * 6, 7 + 8 + 9)",
+                  "(((1i * 2i) + 3i), (4i + (5i * 6i)), ((7i + 8i) + 9i))");
+            et("(1, 2 + 3, 4 + (5, 6), 7)",
+                  "(1i, (2i + 3i), (4i + (5i, 6i)), 7i)");
+        }
+        //
+        // SECTION("With lambdas") {
+        //     check("lambda x: x + 1,", "(lambda x: x + 1,)");
+        //     check("lambda x: x + 1, lambda y: y + 2",
+        //           "((lambda x: (x + 1i)), (lambda y: (y + 2i)))");
+        //     check("(lambda x: x + 1, lambda y: y + 2)",
+        //           "((lambda x: (x + 1i)), (lambda y: (y + 2i)))");
+        // }
+    }
 }

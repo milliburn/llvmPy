@@ -84,6 +84,33 @@ Parser4::Statement()
 }
 
 Expr *
+Parser4::Sequence()
+{
+    Expr *result = Expression();
+    TupleExpr *tuple = nullptr;
+
+    if (!result) {
+        return nullptr;
+    }
+
+    while (is(tok_comma)) {
+        if (!tuple) {
+            tuple = new TupleExpr();
+            tuple->addMember(*result);
+            result = tuple;
+        }
+
+        if (auto *expr = Expression()) {
+            tuple->addMember(*expr);
+        } else {
+            break;
+        }
+    }
+
+    return result;
+}
+
+Expr *
 Parser4::Expression()
 {
     return Expression(0);
@@ -94,6 +121,8 @@ Parser4::Expression(int minimumPrecedence)
 {
     Expr *result = nullptr;
 
+    if (EndOfLine()) return nullptr;
+    if (EndOfFile()) return nullptr;
     if (!result) result = NumericLiteral();
     if (!result) result = StringLiteral();
     if (!result) result = UnaryExpression();
@@ -153,6 +182,32 @@ Parser4::BinaryExpression(int minimumPrecedence, Expr &lhs)
         auto *rhs = Expression(nextPrecedence);
         assert(rhs && "Expected right-hand side of binary expression");
         return new BinaryExpr(lhs, operator_, *rhs);
+    } else {
+        return nullptr;
+    }
+}
+
+Expr *
+Parser4::TupleExpression(Expr &lhs)
+{
+    if (peek(tok_comma)) {
+        auto *tuple = new TupleExpr();
+        tuple->addMember(lhs);
+
+        while (true) {
+            if (is(tok_comma)) {
+                if (auto *expr = Expression(0, true)) {
+                    tuple->addMember(*expr);
+                    continue;
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+
+        return tuple;
     } else {
         return nullptr;
     }
