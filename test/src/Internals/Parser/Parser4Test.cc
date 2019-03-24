@@ -67,4 +67,11 @@ TEST_CASE("Parser4: expressions") {
         // et("+1.0", "+1d");
         et("2.5", "2.5d");
     }
+
+    SECTION("Strings") {
+        et("\"Test\"", "\"Test\"");
+        et("'Test'", "\"Test\"");
+        et("\"\"", "\"\"");
+        et("''", "\"\"");
+    }
 }
