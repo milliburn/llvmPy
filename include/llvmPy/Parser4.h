@@ -33,6 +33,7 @@ private:
     Expr *UnaryExpression();
     Expr *BinaryExpression(int minimumPrecedence, Expr &lhs);
     Expr *LambdaExpression();
+    Expr *CallExpression(Expr &callee);
 
     IdentExpr *Identifier();
     Expr *NumericLiteral();

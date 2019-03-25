@@ -208,6 +208,14 @@ TEST_CASE("Parser4") {
         et("lambda x, y: x + 1", "(lambda x, y: (x + 1i))");
     }
 
+    SECTION("Function call expressions") {
+        et("f()", "f()");
+        et("f(1)", "f(1i)");
+        et("f(1, 2)", "f(1i, 2i)");
+        et("f(x + 1, 2)", "f((x + 1i), 2i)");
+        et("print(1 != 2)", "print((1i != 2i))");
+    }
+
     SECTION("Break statements") {
         st("break", "break\n");
         auto &stmt = sast("break");

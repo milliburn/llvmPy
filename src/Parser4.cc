@@ -164,11 +164,11 @@ Parser4::ValueExpression(int minimumPrecedence)
     if (!result) return nullptr;
 
     while (!EndOfLine() && !EndOfFile()) {
-        if (auto *expr = BinaryExpression(minimumPrecedence, *result)) {
-            result = expr;
-        } else {
-            break;
-        }
+        Expr *rhs = nullptr;
+        if (!rhs) rhs = CallExpression(*result);
+        if (!rhs) rhs = BinaryExpression(minimumPrecedence, *result);
+        if (!rhs) break;
+        result = rhs;
     }
 
     return result;
@@ -234,6 +234,28 @@ Parser4::LambdaExpression()
             lambda->addArgument(arg);
         }
         return lambda;
+    } else {
+        return nullptr;
+    }
+}
+
+Expr *
+Parser4::CallExpression(Expr &callee)
+{
+    if (is(tok_lp)) {
+        auto *call = new CallExpr(callee);
+
+        do {
+            if (is(tok_rp)) {
+                break;
+            } else if (auto *value = ValueExpression(0)) {
+                call->addArgument(*value);
+            } else {
+                syntax(false, "Expected value expression");
+            }
+        } while (is(tok_comma));
+
+        return call;
     } else {
         return nullptr;
     }
