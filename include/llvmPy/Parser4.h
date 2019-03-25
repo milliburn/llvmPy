@@ -15,12 +15,20 @@ class Parser4 {
 public:
     Parser4(std::vector<Token> const &tokens);
 
+    /** This should be the go-to for external consumers. */
+    CompoundStmt &Module();
+
     Expr *Expression();
     Stmt *Statement();
 
 private:
     bool EndOfFile();
     bool EndOfLine();
+
+    /**
+     * Consume an empty line is defined as optional indentation followed by
+     * an end-of-line or end-of-file marker.
+     */
     bool EmptyLine();
 
     TokenType UnaryOperator();
@@ -34,6 +42,7 @@ private:
     Expr *BinaryExpression(int minimumPrecedence, Expr &lhs);
     Expr *LambdaExpression();
     Expr *CallExpression(Expr &callee);
+    Expr *GetattrExpression(Expr &object);
 
     IdentExpr *Identifier();
     Expr *NumericLiteral();

@@ -215,6 +215,12 @@ TEST_CASE("Parser4") {
         et("print(1 != 2)", "print((1i != 2i))");
     }
 
+    SECTION("Getattr expressions") {
+        et("x.y", "x.y");
+        et("x.y()", "x.y()");
+        et("x.y.z()", "x.y.z()");
+    }
+
     SECTION("Break statements") {
         st("break", "break\n");
         auto &stmt = sast("break");

@@ -166,6 +166,7 @@ Parser4::ValueExpression(int minimumPrecedence)
     while (!EndOfLine() && !EndOfFile()) {
         Expr *rhs = nullptr;
         if (!rhs) rhs = CallExpression(*result);
+        if (!rhs) rhs = GetattrExpression(*result);
         if (!rhs) rhs = BinaryExpression(minimumPrecedence, *result);
         if (!rhs) break;
         result = rhs;
@@ -258,6 +259,20 @@ Parser4::CallExpression(Expr &callee)
         syntax(is(tok_rp), "Expected ')'");
 
         return call;
+    } else {
+        return nullptr;
+    }
+}
+
+Expr *
+Parser4::GetattrExpression(Expr &object)
+{
+    if (is(tok_dot)) {
+        auto *ident = Identifier();
+        syntax(ident, "Expected identifier");
+        auto *result = new GetattrExpr(object, ident->getName());
+        delete ident;
+        return result;
     } else {
         return nullptr;
     }
@@ -518,9 +533,9 @@ Parser4::DefStatement(int outerIndent)
         syntax(EndOfLine(), "Expected end of line");
         auto *body = CompoundStatement(outerIndent);
         syntax(body, "Expected compound statement");
-        // TODO: Convert def-statement name to IdentExpr.
-        // TODO: Memory leak (`name` not deleted).
-        return new DefStmt(name->getName(), *body);
+        auto *result = new DefStmt(name->getName(), *body);
+        delete name;
+        return result;
     } else {
         return nullptr;
     }
