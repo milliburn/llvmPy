@@ -47,9 +47,8 @@ st(std::string const &input, std::string const &expect)
     INFO("For:\n" << input);
     auto tokens = tokenize(input, false);
     Parser4 parser(tokens);
-    Stmt *result = parser.Statement();
-    REQUIRE(result);
-    auto actual = result->toString();
+    auto &result = parser.Module();
+    auto actual = result.toString();
     REQUIRE(actual == expect);
 }
 
@@ -269,5 +268,9 @@ TEST_CASE("Parser4") {
                 "def func():\n"
                 "    y = (x + 1i)\n"
                 "    z = (9i + 2i)\n");
+    }
+
+    SECTION("Mixed statements") {
+        st("print(5)\nprint(-6)", "print(5i)\nprint(-6i)\n");
     }
 }

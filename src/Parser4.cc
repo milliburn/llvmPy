@@ -246,7 +246,7 @@ Parser4::CallExpression(Expr &callee)
         auto *call = new CallExpr(callee);
 
         do {
-            if (is(tok_rp)) {
+            if (peek(tok_rp)) {
                 break;
             } else if (auto *value = ValueExpression(0)) {
                 call->addArgument(*value);
@@ -254,6 +254,8 @@ Parser4::CallExpression(Expr &callee)
                 syntax(false, "Expected value expression");
             }
         } while (is(tok_comma));
+
+        syntax(is(tok_rp), "Expected ')'");
 
         return call;
     } else {
@@ -313,6 +315,8 @@ Stmt *
 Parser4::Statement(int const outerIndent)
 {
     Stmt *result = nullptr;
+    while (EmptyLine());
+    if (EndOfFile()) return nullptr;
     int const indent = Indentation();
     syntax(indent >= 0, "Expected indentation");
     syntax(indent == outerIndent, "Expected statement indentation");
@@ -618,4 +622,16 @@ Parser4::syntax(bool condition, std::string const &message)
     if (!condition) {
         throw std::runtime_error(message);
     }
+}
+
+CompoundStmt &
+Parser4::Module()
+{
+    auto *result = new CompoundStmt();
+
+    while (auto *stmt = Statement()) {
+        result->addStatement(*stmt);
+    }
+
+    return *result;
 }
