@@ -245,4 +245,11 @@ TEST_CASE("Parser4") {
                "while True:\n    x = (y + 1i)\n    while False:\n        continue\n");
         }
     }
+
+    SECTION("If statements") {
+        st("if True:\n 1", "if True:\n    1i\n");
+        st("if True:\n 1\nelse:\n 2", "if True:\n    1i\nelse:\n    2i\n");
+        st("if True:\n 1\nelif False:\n 3\nelse:\n 2",
+           "if True:\n    1i\nelif False:\n    3i\nelse:\n    2i\n");
+    }
 }

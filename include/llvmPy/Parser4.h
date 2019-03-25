@@ -21,6 +21,7 @@ public:
 private:
     bool EndOfFile();
     bool EndOfLine();
+    bool EmptyLine();
 
     TokenType UnaryOperator();
     TokenType BinaryOperator();
@@ -50,6 +51,8 @@ private:
     Stmt *BlockStatement(int outerIndent);
     CompoundStmt *CompoundStatement(int outerIndent);
     Stmt *WhileStatement(int outerIndent);
+    Stmt *IfStatement(int outerIndent);
+    Stmt *IfStatement(int outerIndent, bool isElif);
 
 private:
     Token const * const _tokens;

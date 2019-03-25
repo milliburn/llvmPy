@@ -48,6 +48,21 @@ Parser4::EndOfLine()
     return is(tok_eol);
 }
 
+bool
+Parser4::EmptyLine()
+{
+    if (Indentation() >= 0) {
+        if (EndOfLine() || EndOfFile()) {
+            return true;
+        } else {
+            back();
+            return false;
+        }
+    } else {
+        return false;
+    }
+}
+
 int
 Parser4::Indentation()
 {
@@ -370,6 +385,7 @@ Stmt *
 Parser4::BlockStatement(int outerIndent)
 {
     Stmt *result = nullptr;
+    if (!result) result = IfStatement(outerIndent);
     if (!result) result = WhileStatement(outerIndent);
     return result;
 }
@@ -417,6 +433,46 @@ Parser4::WhileStatement(int outerIndent)
         auto *body = CompoundStatement(outerIndent);
         syntax(body, "Expected 'while' statement body");
         return new WhileStmt(*condition, *body);
+    } else {
+        return nullptr;
+    }
+}
+
+Stmt *
+Parser4::IfStatement(int outerIndent)
+{
+    return IfStatement(outerIndent, false);
+}
+
+Stmt *
+Parser4::IfStatement(int outerIndent, bool isElif)
+{
+    if (is(isElif ? kw_elif : kw_if)) {
+        auto *condition = Expression();
+        syntax(condition, "Expected 'if' condition expression");
+        syntax(is(tok_colon), "Expected ':'");
+        syntax(EndOfLine(), "Expected end of line");
+        CompoundStmt *thenBranch = CompoundStatement(outerIndent);
+        syntax(thenBranch, "Expected 'if' statement body");
+        while (EmptyLine()); // TODO: These should be skipped by the tokenizer.
+
+        CompoundStmt *elseBranch = nullptr;
+        int const indent = Indentation();
+
+        if (indent == outerIndent && is(kw_else)) {
+            syntax(is(tok_colon), "Expected ':'");
+            syntax(EndOfLine(), "Expected end of line");
+            elseBranch = CompoundStatement(outerIndent);
+        } else if (indent == outerIndent && peek(kw_elif)) {
+            auto *elifBranch = IfStatement(outerIndent, true);
+            syntax(elifBranch, "Expected 'elif' branch");
+            elseBranch = new CompoundStmt(*elifBranch);
+        } else {
+            elseBranch = new CompoundStmt(*new PassStmt());
+        }
+
+        assert(elseBranch);
+        return new ConditionalStmt(*condition, *thenBranch, *elseBranch);
     } else {
         return nullptr;
     }
