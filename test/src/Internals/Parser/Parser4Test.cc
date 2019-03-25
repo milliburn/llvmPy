@@ -260,4 +260,14 @@ TEST_CASE("Parser4") {
         st("if True:\n 1\nelif False:\n 3\nelse:\n 2",
            "if True:\n    1i\nelif False:\n    3i\nelse:\n    2i\n");
     }
+
+    SECTION("Def statements") {
+        st(
+                "def func():\n"
+                "    y = x + 1\n"
+                "    z = 9 + 2\n",
+                "def func():\n"
+                "    y = (x + 1i)\n"
+                "    z = (9i + 2i)\n");
+    }
 }

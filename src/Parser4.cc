@@ -409,6 +409,7 @@ Parser4::BlockStatement(int outerIndent)
     Stmt *result = nullptr;
     if (!result) result = IfStatement(outerIndent);
     if (!result) result = WhileStatement(outerIndent);
+    if (!result) result = DefStatement(outerIndent);
     return result;
 }
 
@@ -495,6 +496,27 @@ Parser4::IfStatement(int outerIndent, bool isElif)
 
         assert(elseBranch);
         return new ConditionalStmt(*condition, *thenBranch, *elseBranch);
+    } else {
+        return nullptr;
+    }
+}
+
+Stmt *
+Parser4::DefStatement(int outerIndent)
+{
+    if (is(kw_def)) {
+        auto *name = Identifier();
+        syntax(name, "Expected function name");
+        syntax(is(tok_lp), "Expected '('");
+        auto args = FunctionArguments();
+        syntax(is(tok_rp), "Expected ')'");
+        syntax(is(tok_colon), "Expected ':'");
+        syntax(EndOfLine(), "Expected end of line");
+        auto *body = CompoundStatement(outerIndent);
+        syntax(body, "Expected compound statement");
+        // TODO: Convert def-statement name to IdentExpr.
+        // TODO: Memory leak (`name` not deleted).
+        return new DefStmt(name->getName(), *body);
     } else {
         return nullptr;
     }

@@ -54,6 +54,7 @@ private:
     Stmt *WhileStatement(int outerIndent);
     Stmt *IfStatement(int outerIndent);
     Stmt *IfStatement(int outerIndent, bool isElif);
+    Stmt *DefStatement(int outerIndent);
 
 private:
     Token const * const _tokens;
