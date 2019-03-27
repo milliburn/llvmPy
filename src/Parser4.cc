@@ -534,6 +534,11 @@ Parser4::DefStatement(int outerIndent)
         auto *body = CompoundStatement(outerIndent);
         syntax(body, "Expected compound statement");
         auto *result = new DefStmt(name->getName(), *body);
+
+        for (auto &arg : args) {
+            result->addArgument(arg);
+        }
+
         delete name;
         return result;
     } else {
