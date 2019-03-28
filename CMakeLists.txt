@@ -176,7 +176,6 @@ add_executable(
         test/src/main.cc
         test/src/Internals/Lexer/LexerTest.cc
         test/src/TestSuite.cc
-        test/src/Internals/Parser/Parser2Test.cc
         test/src/Builtins/str/builtin_str.cc
         test/src/Types/PyStr/type_PyStr.cc
         test/src/Builtins/truthy/instr_truthy.cc
