@@ -279,4 +279,9 @@ TEST_CASE("Parser") {
     SECTION("Mixed statements") {
         st("print(5)\nprint(-6)", "print(5i)\nprint(-6i)\n");
     }
+
+    SECTION("Getitem expressions") {
+        et("x[1]", "x[1i]");
+        et("x[1, 2]", "x[(1i, 2i)]");
+    }
 }

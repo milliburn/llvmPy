@@ -38,6 +38,7 @@ private:
     Expr *LambdaExpression();
     Expr *CallExpression(Expr &callee);
     Expr *GetattrExpression(Expr &object);
+    Expr *GetitemExpression(Expr &object);
 
     IdentExpr *Identifier();
     Expr *NumericLiteral();

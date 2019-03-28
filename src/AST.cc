@@ -768,3 +768,15 @@ TupleExpr::isEmpty() const
 {
     return getLength() == 0;
 }
+
+GetitemExpr::GetitemExpr(Expr &object, Expr &key)
+{
+    setObject(object);
+    setKey(key);
+}
+
+void
+GetitemExpr::toStream(std::ostream &s) const
+{
+    s << getObject() << "[" << getKey() << "]";
+}
