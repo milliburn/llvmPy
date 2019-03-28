@@ -11,3 +11,6 @@ y = x[0]
 
 print(y)
 # OUTPUT: 1
+
+print(x[1])
+# OUTPUT-NEXT: 2

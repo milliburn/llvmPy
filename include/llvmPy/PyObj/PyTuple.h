@@ -35,6 +35,8 @@ public:
 
     bool py__ge__(PyObj &rhs) override;
 
+    PyObj *py__getitem__(PyObj &key) override;
+
 private:
     int64_t const _count;
     PyObj * const * const _members;
