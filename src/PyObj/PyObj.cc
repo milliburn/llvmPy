@@ -47,21 +47,21 @@ PyObj::py__mul__(PyObj &rhs)
 }
 
 bool
-PyObj::py__lt__(PyObj &)
+PyObj::py__lt__(PyObj &rhs)
 {
-    return false;
+    return compare(rhs) < 0;
 }
 
 bool
-PyObj::py__le__(PyObj &)
+PyObj::py__le__(PyObj &rhs)
 {
-    return false;
+    return compare(rhs) <= 0;
 }
 
 bool
-PyObj::py__eq__(PyObj &)
+PyObj::py__eq__(PyObj &rhs)
 {
-    return false;
+    return this == &rhs;
 }
 
 bool
@@ -71,15 +71,15 @@ PyObj::py__ne__(PyObj &rhs)
 }
 
 bool
-PyObj::py__ge__(PyObj &)
+PyObj::py__ge__(PyObj &rhs)
 {
-    return false;
+    return compare(rhs) >= 0;
 }
 
 bool
-PyObj::py__gt__(PyObj &)
+PyObj::py__gt__(PyObj &rhs)
 {
-    return false;
+    return compare(rhs) > 0;
 }
 
 int64_t
@@ -104,4 +104,10 @@ bool
 PyObj::isInstance() const
 {
     return true;
+}
+
+int
+PyObj::compare(PyObj &rhs) const
+{
+    throw std::runtime_error("Comparison not supported.");
 }
