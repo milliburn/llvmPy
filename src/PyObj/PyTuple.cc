@@ -105,38 +105,6 @@ PyTuple::py__lt__(PyObj &rhs_)
 }
 
 bool
-PyTuple::py__le__(PyObj &rhs_)
-{
-    if (PyObj::py__eq__(rhs_)) {
-        return true;
-    } else if (auto *rhs = rhs_.cast<PyTuple>()) {
-        if (getLength() < rhs->getLength()) {
-            return true;
-        } else {
-            return compareTo(*rhs, &PyObj::py__le__);
-        }
-    } else {
-        return false;
-    }
-}
-
-bool
-PyTuple::py__ge__(PyObj &rhs_)
-{
-    if (PyObj::py__eq__(rhs_)) {
-        return true;
-    } else if (auto *rhs = rhs_.cast<PyTuple>()) {
-        if (getLength() > rhs->getLength()) {
-            return true;
-        } else {
-            return compareTo(*rhs, &PyObj::py__ge__);
-        }
-    } else {
-        return false;
-    }
-}
-
-bool
 PyTuple::py__gt__(PyObj &rhs_)
 {
     if (PyObj::py__eq__(rhs_)) {

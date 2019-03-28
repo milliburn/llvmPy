@@ -1,5 +1,6 @@
 #include <llvmPy/Instr.h>
 #include <llvmPy/PyObj/PyTuple.h>
+#include <llvmPy/Test/PyObj_DSL.h>
 #include <catch2.h>
 #include <string>
 using namespace llvmPy;
@@ -59,21 +60,22 @@ TEST_CASE("type: PyTuple", "[types][PyTuple]") {
     }
 
     SECTION("py__eq__()") {
-        CHECK(t0.py__eq__(t0));
-        CHECK(!t0.py__eq__(t1));
-        CHECK(t1.py__eq__(t1));
-        CHECK(!t1.py__eq__(t2));
+        CHECK(t0 == t0);
+        CHECK(!(t0 == t1));
+        CHECK(t1 == t1);
+        CHECK(!(t1 == t2));
     }
 
     SECTION("py__lt__()") {
-        CHECK(!t0.py__lt__(t0));
-        CHECK(t0.py__lt__(t1));
-        CHECK(!t1.py__lt__(t0));
-        CHECK(tup(1).py__lt__(tup(2)));
-        CHECK(tup(1).py__lt__(tup(1, 2)));
-        CHECK(tup(1).py__lt__(tup(2, 1)));
-        CHECK(tup(1).py__lt__(tup(1, 2, 3)));
-        CHECK(tup(1).py__lt__(tup(3, 2, 1)));
-        CHECK(!tup(2).py__lt__(tup(1)));
+        CHECK(!(t0 < t0));
+        CHECK(t0 < t1);
+        CHECK(!(t1 < t0));
+        CHECK(tup(1) < tup(2));
+        CHECK(tup(1) < tup(2));
+        CHECK(tup(1) < tup(1, 2));
+        CHECK(tup(1) < tup(2, 1));
+        CHECK(tup(1) < tup(1, 2, 3));
+        CHECK(tup(1) < tup(3, 2, 1));
+        CHECK(!(tup(2) < tup(1)));
     }
 }

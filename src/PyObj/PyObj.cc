@@ -55,7 +55,7 @@ PyObj::py__lt__(PyObj &rhs)
 bool
 PyObj::py__le__(PyObj &rhs)
 {
-    return compare(rhs) <= 0;
+    return !py__gt__(rhs);
 }
 
 bool
@@ -73,7 +73,7 @@ PyObj::py__ne__(PyObj &rhs)
 bool
 PyObj::py__ge__(PyObj &rhs)
 {
-    return compare(rhs) >= 0;
+    return !py__lt__(rhs);
 }
 
 bool

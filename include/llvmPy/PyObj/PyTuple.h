@@ -1,6 +1,6 @@
 #pragma once
 
-#include "PyObj.h"
+#include <llvmPy/PyObj/PyObj.h>
 
 #ifdef __cplusplus
 namespace llvmPy {
@@ -26,10 +26,6 @@ public:
     bool py__eq__(PyObj &rhs) override;
 
     bool py__lt__(PyObj &rhs) override;
-
-    bool py__le__(PyObj &rhs) override;
-
-    bool py__ge__(PyObj &rhs) override;
 
     bool py__gt__(PyObj &rhs) override;
 
