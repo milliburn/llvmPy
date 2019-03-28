@@ -68,6 +68,7 @@ Types::Types(
             Ptr,
             { llvm::Type::getInt64Ty(ctx), llvm::Type::getInt64Ty(ctx) },
             false);
+    llvmPy_getitem = llvm::FunctionType::get(Ptr, { Ptr, Ptr }, false);
 
     llvm::FunctionType *cmp = llvmPy_binop;
     llvmPy_lt = cmp;
@@ -378,4 +379,10 @@ llvmPy_getattr(llvmPy::PyObj &object, llvmPy::PyStr &name)
     } else {
         return attr;
     }
+}
+
+extern "C" llvmPy::PyObj * MARK_USED
+llvmPy_getitem(llvmPy::PyObj &object, llvmPy::PyObj &key)
+{
+    return object.py__getitem__(key);
 }
