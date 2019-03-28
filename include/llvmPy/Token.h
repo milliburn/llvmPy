@@ -7,6 +7,7 @@
 #ifdef __cplusplus
 namespace llvmPy {
 
+// TODO: All non-flags should assign a numerical value.
 enum TokenType {
     tok_eof = -1,
     tok_unknown = 0,
@@ -21,11 +22,11 @@ enum TokenType {
     tok_rassoc = 0x02000000,
 
     tok_ignore = 1,
-    tok_ident,
-    tok_indent,
-    tok_number,
-    tok_string,
-    tok_eol,
+    tok_ident = 2,
+    tok_indent = 3,
+    tok_number = 4,
+    tok_string = 5,
+    tok_eol = 6,
 
     tok_semicolon, // ;
     tok_colon, // :
