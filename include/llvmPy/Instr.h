@@ -100,6 +100,7 @@ void *llvmPy_fchk(llvmPy::Frame **callframe, llvmPy::PyFunc &func, int np);
 llvmPy::PyObj *llvmPy_print(llvmPy::PyObj &);
 llvmPy::PyStr *llvmPy_str(llvmPy::PyObj &);
 llvmPy::PyBool *llvmPy_bool(llvmPy::PyObj &);
+llvmPy::PyTuple *llvmPy_tuple(int64_t count, llvmPy::PyObj **objects);
 
 llvmPy::PyBool *llvmPy_lt(llvmPy::PyObj &l, llvmPy::PyObj &r);
 llvmPy::PyBool *llvmPy_le(llvmPy::PyObj &l, llvmPy::PyObj &r);

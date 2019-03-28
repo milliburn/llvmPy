@@ -270,6 +270,12 @@ llvmPy_bool(llvmPy::PyObj &obj)
     return &PyBool::get(obj.py__bool__());
 }
 
+extern "C" llvmPy::PyTuple * MARK_USED
+llvmPy_tuple(int64_t count, llvmPy::PyObj **objects)
+{
+    return &PyTuple::get(count, objects);
+}
+
 extern "C" llvmPy::PyBool * MARK_USED
 llvmPy_lt(llvmPy::PyObj &l, llvmPy::PyObj &r)
 {

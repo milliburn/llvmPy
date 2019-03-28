@@ -6,3 +6,4 @@
 #include <llvmPy/PyObj/PyInt.h>
 #include <llvmPy/PyObj/PyNone.h>
 #include <llvmPy/PyObj/PyFunc.h>
+#include <llvmPy/PyObj/PyTuple.h>
