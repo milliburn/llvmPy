@@ -59,6 +59,13 @@ TEST_CASE("type: PyTuple", "[types][PyTuple]") {
         CHECK(t3.py__bool__());
     }
 
+    SECTION("py__len__()") {
+        CHECK(t0.py__len__() == 0);
+        CHECK(t1.py__len__() == 1);
+        CHECK(t2.py__len__() == 2);
+        CHECK(t3.py__len__() == 3);
+    }
+
     SECTION("py__eq__()") {
         CHECK(t0 == t0);
         CHECK(!(t0 == t1));

@@ -5,7 +5,7 @@
 using namespace llvmPy;
 using namespace fakeit;
 
-TEST_CASE("types: PyObj", "[types][PyObj]") {
+TEST_CASE("type: PyObj", "[types][PyObj]") {
     PyObj obj1, obj2;
     std::array<bool, 2> bools = { true, false };
 

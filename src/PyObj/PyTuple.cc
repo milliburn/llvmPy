@@ -1,6 +1,7 @@
 #include <llvmPy/PyObj/PyTuple.h>
 #include <cstring>
 #include <sstream>
+#include <cmath>
 using namespace llvmPy;
 
 PyTuple llvmPy_tuple0;
@@ -82,7 +83,11 @@ PyTuple::py__eq__(PyObj &rhs_)
     if (PyObj::py__eq__(rhs_)) {
         return true;
     } else if (auto *rhs = rhs_.cast<PyTuple>()) {
-        return compareTo(*rhs, &PyObj::py__eq__);
+        if (getLength() != rhs->getLength()) {
+            return false;
+        } else {
+            return compareTo(*rhs, &PyObj::py__eq__);
+        }
     } else {
         return false;
     }
@@ -94,11 +99,19 @@ PyTuple::py__lt__(PyObj &rhs_)
     if (PyObj::py__eq__(rhs_)) {
         return false;
     } else if (auto *rhs = rhs_.cast<PyTuple>()) {
-        if (getLength() < rhs->getLength()) {
-            return true;
-        } else {
-            return compareTo(*rhs, &PyObj::py__lt__);
-        }
+        return compareTo(*rhs, &PyObj::py__lt__);
+    } else {
+        return false;
+    }
+}
+
+bool
+PyTuple::py__le__(PyObj &rhs_)
+{
+    if (PyObj::py__eq__(rhs_)) {
+        return true;
+    } else if (auto *rhs = rhs_.cast<PyTuple>()) {
+        return compareTo(*rhs, &PyObj::py__le__);
     } else {
         return false;
     }
@@ -110,11 +123,19 @@ PyTuple::py__gt__(PyObj &rhs_)
     if (PyObj::py__eq__(rhs_)) {
         return false;
     } else if (auto *rhs = rhs_.cast<PyTuple>()) {
-        if (getLength() > rhs->getLength()) {
-            return true;
-        } else {
-            return compareTo(*rhs, &PyObj::py__gt__);
-        }
+        return compareTo(*rhs, &PyObj::py__gt__);
+    } else {
+        return false;
+    }
+}
+
+bool
+PyTuple::py__ge__(PyObj &rhs_)
+{
+    if (PyObj::py__eq__(rhs_)) {
+        return true;
+    } else if (auto *rhs = rhs_.cast<PyTuple>()) {
+        return compareTo(*rhs, &PyObj::py__ge__);
     } else {
         return false;
     }
@@ -144,19 +165,21 @@ PyTuple::compareTo(PyTuple &rhs_, bool (PyObj::* comparator)(PyObj &)) const
 {
     auto &lhs = *this;
     auto &rhs = rhs_;
+    auto len = std::min(lhs.getLength(), rhs.getLength());
 
-    if (lhs.getLength() != rhs.getLength()) {
-        return false;
-    } else {
-        for (int64_t i = 0; i < getLength(); ++i) {
-            auto &a = lhs.at(i);
-            auto &b = rhs.at(i);
-            bool result = (a.*comparator)(b);
-            if (!result) {
-                return false;
-            }
-        }
-
+    if (len == 0) {
+        // It's the empty tuple.
         return true;
     }
+
+    for (int64_t i = 0; i < len; ++i) {
+        auto &a = lhs.at(i);
+        auto &b = rhs.at(i);
+        bool result = (a.*comparator)(b);
+        if (!result) {
+            return false;
+        }
+    }
+
+    return true;
 }

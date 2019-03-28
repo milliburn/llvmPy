@@ -27,7 +27,11 @@ public:
 
     bool py__lt__(PyObj &rhs) override;
 
+    bool py__le__(PyObj &rhs) override;
+
     bool py__gt__(PyObj &rhs) override;
+
+    bool py__ge__(PyObj &rhs) override;
 
 private:
     int64_t const _count;
