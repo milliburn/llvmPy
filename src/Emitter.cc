@@ -95,6 +95,7 @@ Emitter::emit(RTScope &scope, Expr const &expr)
     if (auto *e = expr.cast<BinaryExpr>()) return emit(scope, *e);
     if (auto *e = expr.cast<GetattrExpr>()) return emit(scope, *e);
     if (auto *e = expr.cast<TupleExpr>()) return emit(scope, *e);
+    if (auto *e = expr.cast<GetitemExpr>()) return emit(scope, *e);
     assert(false && "Unrecognised AST");
     return nullptr;
 }
@@ -703,6 +704,16 @@ Emitter::emit(RTScope &scope, GetattrExpr const &getattr)
             module.llvmPy_getattr(),
             { object, name });
 
+    return value;
+}
+
+llvm::Value *
+Emitter::emit(RTScope &scope, GetitemExpr const &expr)
+{
+    auto &module = scope.getModule();
+    auto *object = emit(scope, expr.getObject());
+    auto *key = emit(scope, expr.getKey());
+    auto *value = _ir.CreateCall(module.llvmPy_getitem(), { object, key });
     return value;
 }
 

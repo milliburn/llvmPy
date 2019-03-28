@@ -28,6 +28,7 @@ protected:
     virtual void updateTokenExpr(TokenExpr &token);
     virtual void updateTupleExpr(TupleExpr &tuple);
     virtual void updateGetattrExpr(GetattrExpr &getattr);
+    virtual void updateGetitemExpr(GetitemExpr &getitem);
 
     virtual void updateStmt(Stmt &stmt);
     virtual void updateExprStmt(ExprStmt &stmt);
