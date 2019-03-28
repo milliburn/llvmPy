@@ -275,6 +275,16 @@ private:
     std::string const _name;
 };
 
+class GetitemExpr final : public Expr {
+    DECLARE_AST_MEMBER(Expr, _object, Object)
+    DECLARE_AST_MEMBER(Expr, _key, Key)
+
+public:
+    GetitemExpr(Expr &object, Expr &key);
+
+    void toStream(std::ostream &s) const override;
+};
+
 class Stmt : public AST {
 public:
     virtual ~Stmt();

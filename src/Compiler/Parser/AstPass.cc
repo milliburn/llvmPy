@@ -65,6 +65,8 @@ AstPass::updateExpr(Expr &expr)
         updateTupleExpr(*tuple);
     } else if (auto *getattr = expr.cast<GetattrExpr>()) {
         updateGetattrExpr(*getattr);
+    } else if (auto *getitem = expr.cast<GetitemExpr>()) {
+        updateGetitemExpr(*getitem);
     } else {
         assert(false);
     }
@@ -233,4 +235,12 @@ AstPass::updateBreakStmt(BreakStmt &brk)
 void
 AstPass::updateContinueStmt(ContinueStmt &cont)
 {
+}
+
+void
+AstPass::updateGetitemExpr(GetitemExpr &getitem)
+{
+    updateExpr(getitem.getObject());
+    if (isUpdated()) return;
+    updateExpr(getitem.getKey());
 }

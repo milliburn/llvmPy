@@ -1,5 +1,6 @@
 #include <llvmPy/PyObj/PyStr.h>
 #include <llvmPy/PyObj/PyFunc.h>
+#include <llvmPy/PyObj/PyInt.h>
 #include <ctype.h>
 #include <algorithm>
 #include <unordered_map>
@@ -41,6 +42,12 @@ std::string const &
 PyStr::getValue() const
 {
     return *_value;
+}
+
+size_t
+PyStr::getLength() const
+{
+    return _value->size();
 }
 
 std::string const &
@@ -128,4 +135,21 @@ PyStr::py_capitalize(PyStr &self)
             [](uint8_t c) { return tolower(c); });
     (*s)[0] = static_cast<char>(toupper((*s)[0]));
     return new PyStr(std::move(s));
+}
+
+PyObj *
+PyStr::py__getitem__(PyObj &key)
+{
+    auto index = key.as<PyInt>().getValue();
+    auto length = static_cast<int64_t>(getLength());
+
+    if (index < 0) {
+        index = length + index;
+    }
+
+    if (index < 0 || index >= length) {
+        throw std::runtime_error("Index out of bounds");
+    }
+
+    return new PyStr(getValue().substr(static_cast<size_t>(index), 1));
 }

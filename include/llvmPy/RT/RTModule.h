@@ -57,6 +57,7 @@ public:
     llvm::Value *llvmPy_len() const;
     llvm::Value *llvmPy_getattr() const;
     llvm::Value *llvmPy_tupleN() const;
+    llvm::Value *llvmPy_getitem() const;
 
     llvm::GlobalVariable *llvmPy_None() const;
     llvm::GlobalVariable *llvmPy_True() const;

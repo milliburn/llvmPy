@@ -197,7 +197,8 @@ add_executable(
         test/src/Internals/Parser/ParserTest.cc
         test/src/Types/PyTuple/type_PyTuple.cc
         test/include/llvmPy/Test/PyObj_DSL.h
-        test/src/Types/PyObj/test_PyObj.cc)
+        test/src/Types/PyObj/test_PyObj.cc
+        test/src/Builtins/getitem/instr_getitem.cc)
 
 # The test suites depend on an up-to-date llvmPy binary.
 add_dependencies(

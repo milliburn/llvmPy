@@ -112,4 +112,13 @@ TEST_CASE("type: PyTuple", "[types][PyTuple]") {
         CHECK(!(tup() > tup(1)));
         CHECK(tup(1) > tup());
     }
+
+    SECTION("py__getitem__()") {
+        CHECK(t3.py__getitem__(*new PyInt(0)) == values[0]);
+        CHECK(t3.py__getitem__(*new PyInt(-3)) == values[0]);
+        CHECK(t3.py__getitem__(*new PyInt(1)) == values[1]);
+        CHECK(t3.py__getitem__(*new PyInt(-2)) == values[1]);
+        CHECK(t3.py__getitem__(*new PyInt(2)) == values[2]);
+        CHECK(t3.py__getitem__(*new PyInt(-1)) == values[2]);
+    }
 }

@@ -55,6 +55,7 @@ public:
     llvm::FunctionType *llvmPy_len;
     llvm::FunctionType *llvmPy_getattr;
     llvm::FunctionType *llvmPy_tupleN;
+    llvm::FunctionType *llvmPy_getitem;
 
     llvm::FunctionType *llvmPy_lt;
     llvm::FunctionType *llvmPy_le;
@@ -125,6 +126,7 @@ llvmPy::PyInt *llvmPy_len(llvmPy::PyObj &);
 
 uint8_t llvmPy_truthy(llvmPy::PyObj &);
 llvmPy::PyObj *llvmPy_getattr(llvmPy::PyObj &object, llvmPy::PyStr &name);
+llvmPy::PyObj *llvmPy_getitem(llvmPy::PyObj &object, llvmPy::PyObj &key);
 
 } // extern "C"
 

@@ -1,4 +1,5 @@
 #include <llvmPy/PyObj/PyTuple.h>
+#include <llvmPy/PyObj/PyInt.h>
 #include <cstring>
 #include <sstream>
 #include <cmath>
@@ -223,4 +224,20 @@ PyTuple::compareTo(PyTuple &rhs_, bool (PyObj::* comparator)(PyObj &)) const
     }
 
     return false;
+}
+
+PyObj *
+PyTuple::py__getitem__(PyObj &key)
+{
+    auto index = key.as<PyInt>().getValue();
+
+    if (index < 0) {
+        index = getLength() + index;
+    }
+
+    if (index < 0 || index >= getLength()) {
+        throw std::runtime_error("Index out of bounds");
+    }
+
+    return &at(index);
 }

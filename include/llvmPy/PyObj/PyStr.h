@@ -15,6 +15,8 @@ public:
 
     std::string const &getValue() const;
 
+    size_t getLength() const;
+
     std::string const &str() const;
 
     std::string py__str__() override;
@@ -34,6 +36,8 @@ public:
     static PyObj *py_upper(PyStr &self);
 
     static PyObj *py_capitalize(PyStr &self);
+
+    PyObj *py__getitem__(PyObj &key) override;
 
 private:
     std::unique_ptr<std::string const> _value;

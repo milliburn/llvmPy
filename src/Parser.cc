@@ -158,6 +158,7 @@ Parser::ValueExpression(int minimumPrecedence)
         Expr *rhs = nullptr;
         if (!rhs) rhs = CallExpression(*result);
         if (!rhs) rhs = GetattrExpression(*result);
+        if (!rhs) rhs = GetitemExpression(*result);
         if (!rhs) rhs = BinaryExpression(minimumPrecedence, *result);
         if (!rhs) break;
         result = rhs;
@@ -264,6 +265,19 @@ Parser::GetattrExpression(Expr &object)
         auto *result = new GetattrExpr(object, ident->getName());
         delete ident;
         return result;
+    } else {
+        return nullptr;
+    }
+}
+
+Expr *
+Parser::GetitemExpression(Expr &object)
+{
+    if (is(tok_lb)) {
+        auto *expr = Expression();
+        syntax(expr, "Expected key expression");
+        syntax(is(tok_rb), "expected ']'");
+        return new GetitemExpr(object, *expr);
     } else {
         return nullptr;
     }

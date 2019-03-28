@@ -224,6 +224,12 @@ RTModule::llvmPy_getattr() const
     return _ir.getOrInsertFunction("llvmPy_getattr", _types.llvmPy_getattr);
 }
 
+llvm::Value *
+RTModule::llvmPy_getitem() const
+{
+    return _ir.getOrInsertFunction("llvmPy_getitem", _types.llvmPy_getitem);
+}
+
 llvm::GlobalVariable *
 RTModule::getOrCreateGlobalExtern(std::string const &name) const
 {

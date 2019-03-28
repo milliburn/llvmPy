@@ -97,7 +97,13 @@ PyObj::py__int__()
 PyObj *
 PyObj::py__getattr__(std::string const &name)
 {
-    return &PyNone::get();
+    throw std::runtime_error("Not Implemented");
+}
+
+PyObj *
+PyObj::py__getitem__(PyObj &key)
+{
+    throw std::runtime_error("Not Implemented");
 }
 
 bool

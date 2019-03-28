@@ -50,5 +50,8 @@ print(s1 + s2)  # OUTPUT-NEXT: a
 print(s2 + s2)  # OUTPUT-NEXT: aa
 print(s1 + s2 + s3 + s4)  # OUTPUT-NEXT: atest4
 
-print("end")  # OUTPUT-LABEL: end
+# py__getitem__()
+print(s3[0])  # OUTPUT-NEXT: t
+print(s3[1])  # OUTPUT-NEXT: e
 
+print("end")  # OUTPUT-LABEL: end

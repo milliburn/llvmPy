@@ -1,5 +1,5 @@
 #include <llvmPy/Instr.h>
-#include <llvmPy/PyObj/PyObj.h>
+#include <llvmPy/PyObj.h>
 #include <catch2.h>
 #include <fakeit.h>
 using namespace llvmPy;
@@ -12,6 +12,14 @@ checkMethodPtr(PyStr &s, std::string name, PyObj*(*method)(PyStr &))
 
     CHECK(f.getFrame() == nullptr);
     CHECK(f.getLabel() == reinterpret_cast<void *>(method));
+}
+
+static std::string const &
+getitem(PyStr &str, int64_t index)
+{
+    auto *selector = new PyInt(index);
+    auto *result = str.py__getitem__(*selector);
+    return result->as<PyStr>().getValue();
 }
 
 TEST_CASE("type: PyStr", "[types][PyStr]") {
@@ -91,5 +99,15 @@ TEST_CASE("type: PyStr", "[types][PyStr]") {
         CHECK(r1->as<PyStr>().getValue() == "");
         auto *r3 = PyStr::py_capitalize(s3);
         CHECK(r3->as<PyStr>().getValue() == "Test");
+    }
+
+    SECTION("py__getitem__(): access character at index") {
+        PyStr s("abc");
+        CHECK(getitem(s, 0) == "a");
+        CHECK(getitem(s, -3) == "a");
+        CHECK(getitem(s, 1) == "b");
+        CHECK(getitem(s, -2) == "b");
+        CHECK(getitem(s, 2) == "c");
+        CHECK(getitem(s, -1) == "c");
     }
 }
