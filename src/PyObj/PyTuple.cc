@@ -7,12 +7,22 @@ using namespace llvmPy;
 PyTuple llvmPy_tuple0;
 
 PyTuple &
+PyTuple::getNoCopy(int64_t count, PyObj **members)
+{
+    if (count == 0) {
+        return llvmPy_tuple0;
+    } else {
+        return *new PyTuple(count, members, false);
+    }
+}
+
+PyTuple &
 PyTuple::get(int64_t count, PyObj **members)
 {
     if (count == 0) {
         return llvmPy_tuple0;
     } else {
-        return *new PyTuple(count, members);
+        return *new PyTuple(count, members, true);
     }
 }
 
@@ -34,8 +44,8 @@ PyTuple::PyTuple() noexcept
 {
 }
 
-PyTuple::PyTuple(int64_t count, PyObj **members) noexcept
-    : _count(count), _members(copyMembers(count, members))
+PyTuple::PyTuple(int64_t count, PyObj **members, bool copy) noexcept
+    : _count(count), _members(copy ? copyMembers(count, members) : members)
 {
     for (int64_t i = 0; i < _count; ++i) {
         assert(_members[i]);

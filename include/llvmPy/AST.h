@@ -40,7 +40,7 @@ public: \
     name##_const_iterator name##_begin() const { return boost::make_indirect_iterator(const_cast<T const **>(member.data())); } \
     name##_const_iterator name##_end() const { return boost::make_indirect_iterator(const_cast<T const **>(member.data()) + member.size()); } \
     iterator_range<name##_const_iterator> name() const { return make_range(name##_begin(), name##_end()); } \
-    T &get##Name##At(size_t index) { \
+    T &get##Name##At(size_t index) const { \
         return *member.at(index); \
     } \
     void add##Name (T &it) { \
@@ -252,6 +252,10 @@ public:
     void toStream(std::ostream &s) const override;
 
     AST *replace(AST &oldval, AST &replacement) override;
+
+    size_t getLength() const;
+
+    bool isEmpty() const;
 
 protected:
     bool isConsistent() override;

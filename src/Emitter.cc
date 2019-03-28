@@ -45,6 +45,7 @@ static struct {
     string Loop = "loop";
     string Endwhile = "endwhile";
     string Name = "name";
+    string Buffer = "buffer";
 } tags;
 
 Emitter::Emitter(Compiler &c) noexcept
@@ -85,27 +86,17 @@ llvm::Value *
 Emitter::emit(RTScope &scope, Expr const &expr)
 {
     assert(&expr);
-
-    if (auto *intLit = expr.cast<IntegerExpr>()) {
-        return emit(scope, *intLit);
-    } else if (auto *ident = expr.cast<IdentExpr>()) {
-        return emit(scope, *ident);
-    } else if (auto *call = expr.cast<CallExpr>()) {
-        return emit(scope, *call);
-    } else if (auto *lambda = expr.cast<LambdaExpr>()) {
-        return emit(scope, *lambda);
-    } else if (auto *strLit = expr.cast<StringExpr>()) {
-        return emit(scope, *strLit);
-    } else if (auto *unary = expr.cast<UnaryExpr>()) {
-        return emit(scope, *unary);
-    } else if (auto *binop = expr.cast<BinaryExpr>()) {
-        return emit(scope, *binop);
-    } else if (auto *getattr = expr.cast<GetattrExpr>()) {
-        return emit(scope, *getattr);
-    } else {
-        assert(false && "Unrecognised AST");
-        return nullptr;
-    }
+    if (auto *e = expr.cast<IntegerExpr>()) return emit(scope, *e);
+    if (auto *e = expr.cast<IdentExpr>()) return emit(scope, *e);
+    if (auto *e = expr.cast<CallExpr>()) return emit(scope, *e);
+    if (auto *e = expr.cast<LambdaExpr>()) return emit(scope, *e);
+    if (auto *e = expr.cast<StringExpr>()) return emit(scope, *e);
+    if (auto *e = expr.cast<UnaryExpr>()) return emit(scope, *e);
+    if (auto *e = expr.cast<BinaryExpr>()) return emit(scope, *e);
+    if (auto *e = expr.cast<GetattrExpr>()) return emit(scope, *e);
+    if (auto *e = expr.cast<TupleExpr>()) return emit(scope, *e);
+    assert(false && "Unrecognised AST");
+    return nullptr;
 }
 
 llvm::Value *
@@ -713,4 +704,44 @@ Emitter::emit(RTScope &scope, GetattrExpr const &getattr)
             { object, name });
 
     return value;
+}
+
+llvm::Value *
+Emitter::emit(RTScope &scope, TupleExpr const &tuple)
+{
+    auto &module = scope.getModule();
+
+    if (tuple.isEmpty()) {
+        return module.llvmPy_tuple0();
+    }
+
+    // TODO: At some low number of tuple members, this operation should be
+    // TODO: optimized to either a direct call to tuple0..10, or
+    // TODO: the values should be placed on the stack and copied by the tuple.
+
+    auto *bufferPtr = _ir.CreateCall(
+            module.llvmPy_malloc(),
+            { _types.getInt64(static_cast<int64_t>(
+                    tuple.getLength() * sizeof(PyObj *))) },
+            tags.Buffer);
+
+    auto *array = _ir.CreateIntToPtr(
+            bufferPtr,
+            _types.getPtr(_types.getPyObjArray(tuple.getLength())));
+
+    for (size_t i = 0; i < tuple.getLength(); ++i) {
+        auto *value = emit(scope, tuple.getMemberAt(i));
+        auto *gep = _ir.CreateGEP(
+                array,
+                { _types.getInt64(0),
+                  _types.getInt64(static_cast<int64_t>(i)) });
+        _ir.CreateStore(value, gep);
+    }
+
+    auto *result = _ir.CreateCall(
+            module.llvmPy_tupleN(),
+            { _types.getInt64(static_cast<int64_t>(tuple.getLength())),
+              bufferPtr });
+
+    return result;
 }

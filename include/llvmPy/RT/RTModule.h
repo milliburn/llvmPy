@@ -35,6 +35,8 @@ public:
     RTScope &getScope() { return _scope; }
 
 public:
+    llvm::Value *llvmPy_malloc() const;
+    llvm::Value *llvmPy_calloc() const;
     llvm::Value *llvmPy_add() const;
     llvm::Value *llvmPy_sub() const;
     llvm::Value *llvmPy_mul() const;
@@ -54,10 +56,12 @@ public:
     llvm::Value *llvmPy_truthy() const;
     llvm::Value *llvmPy_len() const;
     llvm::Value *llvmPy_getattr() const;
+    llvm::Value *llvmPy_tupleN() const;
 
     llvm::GlobalVariable *llvmPy_None() const;
     llvm::GlobalVariable *llvmPy_True() const;
     llvm::GlobalVariable *llvmPy_False() const;
+    llvm::GlobalVariable *llvmPy_tuple0() const;
 
     llvm::GlobalVariable *llvmPy_PyInt(int64_t value) const;
     llvm::GlobalVariable *llvmPy_PyStr(std::string const &value);

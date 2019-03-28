@@ -9,6 +9,7 @@
 #ifdef __cplusplus
 
 namespace llvm {
+class ArrayType;
 class DataLayout;
 class IntegerType;
 class ConstantInt;
@@ -36,6 +37,9 @@ public:
 
     llvm::IntegerType *PyIntValue;
 
+    llvm::FunctionType *llvmPy_malloc;
+    llvm::FunctionType *llvmPy_calloc;
+
     llvm::FunctionType *llvmPy_binop;
 
     llvm::FunctionType *llvmPy_add;
@@ -50,6 +54,7 @@ public:
     llvm::FunctionType *llvmPy_truthy;
     llvm::FunctionType *llvmPy_len;
     llvm::FunctionType *llvmPy_getattr;
+    llvm::FunctionType *llvmPy_tupleN;
 
     llvm::FunctionType *llvmPy_lt;
     llvm::FunctionType *llvmPy_le;
@@ -58,6 +63,7 @@ public:
     llvm::FunctionType *llvmPy_ge;
     llvm::FunctionType *llvmPy_gt;
 
+    llvm::ConstantInt *sizeofPyObj;
     llvm::ConstantInt *getInt32(int32_t value) const;
     llvm::ConstantInt *getInt64(int64_t value) const;
     llvm::PointerType *getPtr(llvm::Type *type) const;
@@ -76,6 +82,8 @@ public:
             llvm::StructType *outer,
             size_t N) const;
 
+    llvm::ArrayType *getPyObjArray(size_t N) const;
+
 private:
     llvm::LLVMContext &_ctx;
 };
@@ -89,6 +97,10 @@ extern "C" {
 extern llvmPy::PyNone llvmPy_None;
 extern llvmPy::PyBool llvmPy_True;
 extern llvmPy::PyBool llvmPy_False;
+extern llvmPy::PyTuple llvmPy_tuple0;
+
+void *llvmPy_malloc(size_t size);
+void *llvmPy_calloc(size_t num, size_t size);
 
 llvmPy::PyObj *llvmPy_add(llvmPy::PyObj &, llvmPy::PyObj &);
 llvmPy::PyObj *llvmPy_sub(llvmPy::PyObj &, llvmPy::PyObj &);
@@ -100,7 +112,7 @@ void *llvmPy_fchk(llvmPy::Frame **callframe, llvmPy::PyFunc &func, int np);
 llvmPy::PyObj *llvmPy_print(llvmPy::PyObj &);
 llvmPy::PyStr *llvmPy_str(llvmPy::PyObj &);
 llvmPy::PyBool *llvmPy_bool(llvmPy::PyObj &);
-llvmPy::PyTuple *llvmPy_tuple(int64_t count, llvmPy::PyObj **objects);
+llvmPy::PyTuple *llvmPy_tupleN(int64_t count, llvmPy::PyObj **objects);
 
 llvmPy::PyBool *llvmPy_lt(llvmPy::PyObj &l, llvmPy::PyObj &r);
 llvmPy::PyBool *llvmPy_le(llvmPy::PyObj &l, llvmPy::PyObj &r);

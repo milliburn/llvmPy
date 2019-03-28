@@ -9,8 +9,10 @@ class PyTuple : public PyObj {
 public:
     static PyTuple &get(int64_t count, PyObj **members);
 
+    static PyTuple &getNoCopy(int64_t count, PyObj **members);
+
     PyTuple() noexcept;
-    PyTuple(int64_t count, PyObj **members) noexcept;
+    PyTuple(int64_t count, PyObj **members, bool copy) noexcept;
 
     bool isEmpty() const;
     int64_t getLength() const;

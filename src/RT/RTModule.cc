@@ -25,6 +25,18 @@ RTModule::RTModule(
 }
 
 llvm::Value *
+RTModule::llvmPy_malloc() const
+{
+    return _ir.getOrInsertFunction("llvmPy_malloc", _types.llvmPy_malloc);
+}
+
+llvm::Value *
+RTModule::llvmPy_calloc() const
+{
+    return _ir.getOrInsertFunction("llvmPy_calloc", _types.llvmPy_calloc);
+}
+
+llvm::Value *
 RTModule::llvmPy_add() const
 {
     return _ir.getOrInsertFunction("llvmPy_add", _types.llvmPy_add);
@@ -136,6 +148,18 @@ llvm::GlobalVariable *
 RTModule::llvmPy_False() const
 {
     return getOrCreateGlobalExtern("llvmPy_False");
+}
+
+llvm::GlobalVariable *
+RTModule::llvmPy_tuple0() const
+{
+    return getOrCreateGlobalExtern("llvmPy_tuple0");
+}
+
+llvm::Value *
+RTModule::llvmPy_tupleN() const
+{
+    return _ir.getOrInsertFunction("llvmPy_tupleN", _types.llvmPy_tupleN);
 }
 
 llvm::GlobalVariable *
