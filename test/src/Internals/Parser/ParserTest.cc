@@ -1,5 +1,5 @@
 #include <llvmPy/Compiler/Lexer/LexerPhase.h>
-#include <llvmPy/Parser4.h>
+#include <llvmPy/Parser.h>
 #include <catch2.h>
 using namespace llvmPy;
 
@@ -35,7 +35,7 @@ et(std::string const &input, std::string const &expect)
 {
     INFO("For: " << input);
     auto tokens = tokenize(input, true);
-    Parser4 parser(tokens);
+    Parser parser(tokens);
     Expr *result = parser.Expression();
     auto actual = result ? result->toString() : "";
     CHECK(actual == expect);
@@ -46,7 +46,7 @@ st(std::string const &input, std::string const &expect)
 {
     INFO("For:\n" << input);
     auto tokens = tokenize(input, false);
-    Parser4 parser(tokens);
+    Parser parser(tokens);
     auto &result = parser.Module();
     auto actual = result.toString();
     REQUIRE(actual == expect);
@@ -57,13 +57,13 @@ sast(std::string const &input)
 {
     INFO("For:\n" << input);
     auto tokens = tokenize(input, false);
-    Parser4 parser(tokens);
+    Parser parser(tokens);
     Stmt *result = parser.Statement();
     REQUIRE(result);
     return *result;
 }
 
-TEST_CASE("Parser4") {
+TEST_CASE("Parser") {
     SECTION("Integer literals") {
         et("1", "1i");
     }

@@ -1,4 +1,4 @@
-#include <llvmPy/Parser4.h>
+#include <llvmPy/Parser.h>
 #include <assert.h>
 #include <stdexcept>
 using namespace llvmPy;
@@ -28,7 +28,7 @@ generatePrecedenceMap()
     return map;
 }
 
-Parser4::Parser4(std::vector<Token> const &tokens)
+Parser::Parser(std::vector<Token> const &tokens)
     : _tokens(tokens.data()),
       _tokenCount(tokens.size()),
       _index(0),
@@ -37,19 +37,19 @@ Parser4::Parser4(std::vector<Token> const &tokens)
 }
 
 bool
-Parser4::EndOfFile()
+Parser::EndOfFile()
 {
     return is(tok_eof);
 }
 
 bool
-Parser4::EndOfLine()
+Parser::EndOfLine()
 {
     return is(tok_eol);
 }
 
 int
-Parser4::NextIndentation()
+Parser::NextIndentation()
 {
     int indent = Indentation();
     syntax(indent >= 0, "Expected indentation");
@@ -58,7 +58,7 @@ Parser4::NextIndentation()
 }
 
 int
-Parser4::Indentation()
+Parser::Indentation()
 {
     if (peek(tok_indent)) {
         auto &indent = take();
@@ -69,7 +69,7 @@ Parser4::Indentation()
 }
 
 TokenType
-Parser4::UnaryOperator()
+Parser::UnaryOperator()
 {
     auto &token = peek();
     auto type = token.getTokenType();
@@ -84,7 +84,7 @@ Parser4::UnaryOperator()
 }
 
 TokenType
-Parser4::BinaryOperator()
+Parser::BinaryOperator()
 {
     auto &token = peek();
     auto type = token.getTokenType();
@@ -99,7 +99,7 @@ Parser4::BinaryOperator()
 }
 
 std::vector<std::string>
-Parser4::FunctionArguments()
+Parser::FunctionArguments()
 {
     // TODO: Add support for *args, **kwargs.
     std::vector<std::string> result;
@@ -116,7 +116,7 @@ Parser4::FunctionArguments()
 }
 
 Expr *
-Parser4::Expression()
+Parser::Expression()
 {
     Expr *result = ValueExpression(0);
     TupleExpr *tuple = nullptr;
@@ -143,7 +143,7 @@ Parser4::Expression()
 }
 
 Expr *
-Parser4::ValueExpression(int minimumPrecedence)
+Parser::ValueExpression(int minimumPrecedence)
 {
     Expr *result = nullptr;
     if (!result) result = Identifier();
@@ -167,7 +167,7 @@ Parser4::ValueExpression(int minimumPrecedence)
 }
 
 Expr *
-Parser4::Subexpression()
+Parser::Subexpression()
 {
     if (is(tok_lp)) {
         Expr *result = Expression();
@@ -180,7 +180,7 @@ Parser4::Subexpression()
 }
 
 Expr *
-Parser4::UnaryExpression()
+Parser::UnaryExpression()
 {
     if (auto operator_ = UnaryOperator()) {
         auto *expr = Expression();
@@ -192,7 +192,7 @@ Parser4::UnaryExpression()
 }
 
 Expr *
-Parser4::BinaryExpression(int minimumPrecedence, Expr &lhs)
+Parser::BinaryExpression(int minimumPrecedence, Expr &lhs)
 {
     if (auto operator_ = BinaryOperator()) {
         int operatorPrecedence = precedence(operator_);
@@ -214,7 +214,7 @@ Parser4::BinaryExpression(int minimumPrecedence, Expr &lhs)
 }
 
 Expr *
-Parser4::LambdaExpression()
+Parser::LambdaExpression()
 {
     if (is(kw_lambda)) {
         auto arguments = FunctionArguments();
@@ -232,7 +232,7 @@ Parser4::LambdaExpression()
 }
 
 Expr *
-Parser4::CallExpression(Expr &callee)
+Parser::CallExpression(Expr &callee)
 {
     if (is(tok_lp)) {
         auto *call = new CallExpr(callee);
@@ -256,7 +256,7 @@ Parser4::CallExpression(Expr &callee)
 }
 
 Expr *
-Parser4::GetattrExpression(Expr &object)
+Parser::GetattrExpression(Expr &object)
 {
     if (is(tok_dot)) {
         auto *ident = Identifier();
@@ -270,7 +270,7 @@ Parser4::GetattrExpression(Expr &object)
 }
 
 IdentExpr *
-Parser4::Identifier()
+Parser::Identifier()
 {
     if (peek(tok_ident)) {
         auto &token = take();
@@ -281,7 +281,7 @@ Parser4::Identifier()
 }
 
 Expr *
-Parser4::NumericLiteral()
+Parser::NumericLiteral()
 {
     if (peek(tok_number)) {
         auto &text = take().getString();
@@ -299,7 +299,7 @@ Parser4::NumericLiteral()
 }
 
 Expr *
-Parser4::StringLiteral()
+Parser::StringLiteral()
 {
     if (peek(tok_string)) {
         auto &text = take().getString();
@@ -312,13 +312,13 @@ Parser4::StringLiteral()
 }
 
 Stmt *
-Parser4::Statement()
+Parser::Statement()
 {
     return Statement(0);
 }
 
 Stmt *
-Parser4::Statement(int const outerIndent)
+Parser::Statement(int const outerIndent)
 {
     Stmt *result = nullptr;
     if (EndOfFile()) return nullptr;
@@ -330,7 +330,7 @@ Parser4::Statement(int const outerIndent)
 }
 
 Stmt *
-Parser4::SimpleStatement()
+Parser::SimpleStatement()
 {
     Stmt *result = nullptr;
     if (!result) result = BreakStatement();
@@ -344,7 +344,7 @@ Parser4::SimpleStatement()
 }
 
 Stmt *
-Parser4::BreakStatement()
+Parser::BreakStatement()
 {
     if (is(kw_break)) {
         return new BreakStmt();
@@ -354,7 +354,7 @@ Parser4::BreakStatement()
 }
 
 Stmt *
-Parser4::ContinueStatement()
+Parser::ContinueStatement()
 {
     if (is(kw_continue)) {
         return new ContinueStmt();
@@ -364,7 +364,7 @@ Parser4::ContinueStatement()
 }
 
 Stmt *
-Parser4::PassStatement()
+Parser::PassStatement()
 {
     if (is(kw_pass)) {
         return new PassStmt();
@@ -374,7 +374,7 @@ Parser4::PassStatement()
 }
 
 Stmt *
-Parser4::ExpressionStatement()
+Parser::ExpressionStatement()
 {
     if (auto *expr = Expression()) {
         return new ExprStmt(*expr);
@@ -384,7 +384,7 @@ Parser4::ExpressionStatement()
 }
 
 Stmt *
-Parser4::ReturnStatement()
+Parser::ReturnStatement()
 {
     if (is(kw_return)) {
         auto *expr = Expression();
@@ -396,7 +396,7 @@ Parser4::ReturnStatement()
 }
 
 Stmt *
-Parser4::AssignStatement()
+Parser::AssignStatement()
 {
     if (auto *ident = Identifier()) {
         if (is(tok_assign)) {
@@ -413,7 +413,7 @@ Parser4::AssignStatement()
 }
 
 Stmt *
-Parser4::BlockStatement(int outerIndent)
+Parser::BlockStatement(int outerIndent)
 {
     Stmt *result = nullptr;
     if (!result) result = IfStatement(outerIndent);
@@ -423,7 +423,7 @@ Parser4::BlockStatement(int outerIndent)
 }
 
 CompoundStmt *
-Parser4::CompoundStatement(int outerIndent)
+Parser::CompoundStatement(int outerIndent)
 {
     syntax(EndOfLine(), "Expected end-of-line");
     auto *result = new CompoundStmt();
@@ -448,7 +448,7 @@ Parser4::CompoundStatement(int outerIndent)
 }
 
 Stmt *
-Parser4::WhileStatement(int outerIndent)
+Parser::WhileStatement(int outerIndent)
 {
     if (is(kw_while)) {
         auto *condition = Expression();
@@ -463,13 +463,13 @@ Parser4::WhileStatement(int outerIndent)
 }
 
 Stmt *
-Parser4::IfStatement(int outerIndent)
+Parser::IfStatement(int outerIndent)
 {
     return IfStatement(outerIndent, false);
 }
 
 Stmt *
-Parser4::IfStatement(int outerIndent, bool isElif)
+Parser::IfStatement(int outerIndent, bool isElif)
 {
     if (is(isElif ? kw_elif : kw_if)) {
         Expr *condition = nullptr;
@@ -509,7 +509,7 @@ Parser4::IfStatement(int outerIndent, bool isElif)
 }
 
 Stmt *
-Parser4::DefStatement(int outerIndent)
+Parser::DefStatement(int outerIndent)
 {
     if (is(kw_def)) {
         auto *name = Identifier();
@@ -534,7 +534,7 @@ Parser4::DefStatement(int outerIndent)
 }
 
 void
-Parser4::next()
+Parser::next()
 {
     assert(_index >= 0);
     assert(_index < _tokenCount);
@@ -546,7 +546,7 @@ Parser4::next()
 }
 
 void
-Parser4::back()
+Parser::back()
 {
     assert(_index > 0);
     assert(_index < _tokenCount);
@@ -554,7 +554,7 @@ Parser4::back()
 }
 
 bool
-Parser4::is(TokenType const type)
+Parser::is(TokenType const type)
 {
     assert(_index >= 0);
     assert(_index < _tokenCount);
@@ -570,7 +570,7 @@ Parser4::is(TokenType const type)
 }
 
 Token const &
-Parser4::peek() const
+Parser::peek() const
 {
     assert(_index >= 0);
     assert(_index < _tokenCount);
@@ -585,13 +585,13 @@ Parser4::peek() const
 }
 
 bool
-Parser4::peek(TokenType type) const
+Parser::peek(TokenType type) const
 {
     return peek().getTokenType() == type;
 }
 
 Token const &
-Parser4::take()
+Parser::take()
 {
     auto &token = peek();
     next();
@@ -599,32 +599,32 @@ Parser4::take()
 }
 
 int
-Parser4::precedence(Token const &token) const
+Parser::precedence(Token const &token) const
 {
     return precedence(token.getTokenType());
 }
 
 int
-Parser4::precedence(TokenType type) const
+Parser::precedence(TokenType type) const
 {
     assert(_precedence.count(type));
     return _precedence.at(type);
 }
 
 bool
-Parser4::isLeftAssociative(Token const &token) const
+Parser::isLeftAssociative(Token const &token) const
 {
     return isLeftAssociative(token.getTokenType());
 }
 
 bool
-Parser4::isLeftAssociative(TokenType type) const
+Parser::isLeftAssociative(TokenType type) const
 {
     return ! (type & tok_rassoc);
 }
 
 void
-Parser4::syntax(bool condition, std::string const &message)
+Parser::syntax(bool condition, std::string const &message)
 {
     if (!condition) {
         throw std::runtime_error(message);
@@ -632,7 +632,7 @@ Parser4::syntax(bool condition, std::string const &message)
 }
 
 CompoundStmt &
-Parser4::Module()
+Parser::Module()
 {
     auto *result = new CompoundStmt();
 

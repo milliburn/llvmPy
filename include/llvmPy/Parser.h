@@ -11,9 +11,9 @@ namespace llvmPy {
  * Operator precedence is implemented by way of precedence climbing. A good
  * introduction on the subject is https://eli.thegreenplace.net/2012/08/02/parsing-expressions-by-precedence-climbing.
  */
-class Parser4 {
+class Parser {
 public:
-    Parser4(std::vector<Token> const &tokens);
+    Parser(std::vector<Token> const &tokens);
 
     /** This should be the go-to for external consumers. */
     CompoundStmt &Module();

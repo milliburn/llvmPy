@@ -1,6 +1,6 @@
 #include <assert.h>
 #include <llvmPy/Compiler/Parser/ParserPhase.h>
-#include <llvmPy/Parser4.h>
+#include <llvmPy/Parser.h>
 using namespace llvmPy;
 
 static std::string const phaseName = "parser";
@@ -14,7 +14,7 @@ ParserPhase::ParserPhase()
 std::unique_ptr<Stmt>
 ParserPhase::run(std::vector<Token> &tokens)
 {
-    Parser4 parser(tokens);
+    Parser parser(tokens);
     auto &stmt = parser.Module();
     return std::unique_ptr<Stmt>(&stmt);
 }
