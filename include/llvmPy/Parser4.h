@@ -25,12 +25,6 @@ private:
     bool EndOfFile();
     bool EndOfLine();
 
-    /**
-     * Consume an empty line is defined as optional indentation followed by
-     * an end-of-line or end-of-file marker.
-     */
-    bool EmptyLine();
-
     TokenType UnaryOperator();
     TokenType BinaryOperator();
     std::vector<std::string> FunctionArguments();

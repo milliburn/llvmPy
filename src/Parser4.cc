@@ -48,21 +48,6 @@ Parser4::EndOfLine()
     return is(tok_eol);
 }
 
-bool
-Parser4::EmptyLine()
-{
-    if (Indentation() >= 0) {
-        if (EndOfLine() || EndOfFile()) {
-            return true;
-        } else {
-            back();
-            return false;
-        }
-    } else {
-        return false;
-    }
-}
-
 int
 Parser4::Indentation()
 {
@@ -152,9 +137,6 @@ Expr *
 Parser4::ValueExpression(int minimumPrecedence)
 {
     Expr *result = nullptr;
-
-    if (EndOfLine()) return nullptr;
-    if (EndOfFile()) return nullptr;
     if (!result) result = Identifier();
     if (!result) result = NumericLiteral();
     if (!result) result = StringLiteral();
@@ -163,7 +145,7 @@ Parser4::ValueExpression(int minimumPrecedence)
     if (!result) result = LambdaExpression();
     if (!result) return nullptr;
 
-    while (!EndOfLine() && !EndOfFile()) {
+    while (true) {
         Expr *rhs = nullptr;
         if (!rhs) rhs = CallExpression(*result);
         if (!rhs) rhs = GetattrExpression(*result);
@@ -330,7 +312,6 @@ Stmt *
 Parser4::Statement(int const outerIndent)
 {
     Stmt *result = nullptr;
-    while (EmptyLine());
     if (EndOfFile()) return nullptr;
     int const indent = Indentation();
     syntax(indent >= 0, "Expected indentation");
@@ -350,6 +331,7 @@ Parser4::SimpleStatement()
     if (!result) result = ReturnStatement();
     if (!result) result = AssignStatement();
     if (!result) result = ExpressionStatement(); // Must be last.
+    if ( result) syntax(is(tok_eol), "Expected end-of-statement");
     return result;
 }
 
@@ -438,16 +420,13 @@ Parser4::CompoundStatement(int outerIndent)
     auto *result = new CompoundStmt();
     int const innerIndent = Indentation();
     syntax(innerIndent >= 0, "Expected indentation");
-    syntax(innerIndent > outerIndent, "Expected block statement indentation");
+    syntax(innerIndent > outerIndent, "Expected block statement");
     back();
 
-    while (!EndOfFile()) {
+    do {
         int const indent = Indentation();
         syntax(indent >= 0, "Expected indentation");
-
-        if (EndOfLine()) continue; // Ignore empty lines.
-        if (EndOfFile()) continue; // Ignore empty lines.
-        back();
+        back(); // Let the actual statement consume indentation.
 
         if (indent <= outerIndent) {
             break;
@@ -458,9 +437,8 @@ Parser4::CompoundStatement(int outerIndent)
         auto *statement = Statement(innerIndent);
         syntax(statement, "Expected statement");
         result->addStatement(*statement);
-    }
+    } while (!EndOfFile());
 
-    syntax(result->statementsCount() > 0, "Expected block statement");
     return result;
 }
 
@@ -471,7 +449,7 @@ Parser4::WhileStatement(int outerIndent)
         auto *condition = Expression();
         syntax(condition, "Expected 'while' condition expression");
         syntax(is(tok_colon), "Expected ':'");
-        syntax(EndOfLine(), "Expected end of line");
+        syntax(EndOfLine(), "Expected end-of-line");
         auto *body = CompoundStatement(outerIndent);
         syntax(body, "Expected 'while' statement body");
         return new WhileStmt(*condition, *body);
@@ -493,17 +471,16 @@ Parser4::IfStatement(int outerIndent, bool isElif)
         auto *condition = Expression();
         syntax(condition, "Expected 'if' condition expression");
         syntax(is(tok_colon), "Expected ':'");
-        syntax(EndOfLine(), "Expected end of line");
+        syntax(EndOfLine(), "Expected end-of-line");
         CompoundStmt *thenBranch = CompoundStatement(outerIndent);
         syntax(thenBranch, "Expected 'if' statement body");
-        while (EmptyLine()); // TODO: These should be skipped by the tokenizer.
 
         CompoundStmt *elseBranch = nullptr;
         int const indent = Indentation();
 
         if (indent == outerIndent && is(kw_else)) {
             syntax(is(tok_colon), "Expected ':'");
-            syntax(EndOfLine(), "Expected end of line");
+            syntax(EndOfLine(), "Expected end-of-line");
             elseBranch = CompoundStatement(outerIndent);
         } else if (indent == outerIndent && peek(kw_elif)) {
             auto *elifBranch = IfStatement(outerIndent, true);
@@ -530,7 +507,7 @@ Parser4::DefStatement(int outerIndent)
         auto args = FunctionArguments();
         syntax(is(tok_rp), "Expected ')'");
         syntax(is(tok_colon), "Expected ':'");
-        syntax(EndOfLine(), "Expected end of line");
+        syntax(EndOfLine(), "Expected end-of-line");
         auto *body = CompoundStatement(outerIndent);
         syntax(body, "Expected compound statement");
         auto *result = new DefStmt(name->getName(), *body);
