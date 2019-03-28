@@ -54,15 +54,15 @@ print(str(cnuf(10)))
 # OUTPUT-NEXT: 26
 
 def nucf(y):
-    tup = (lambda x: x + 1, lambda x: x + 2, lambda x: x + 3)
+    tup = (lambda a: a + 1, lambda b: b + 2, lambda c: c + 3)
 
 # PARSER-NEXT:def nucf(y):
-# PARSER-NEXT:    def __lambda__4(x):
-# PARSER-NEXT:        return (x + 1i)
-# PARSER-NEXT:    def __lambda__5(z):
-# PARSER-NEXT:        return (z + 2i)
-# PARSER-NEXT:    def __lambda__6(z):
-# PARSER-NEXT:        return (z + 3i)
+# PARSER-NEXT:    def __lambda__4(a):
+# PARSER-NEXT:        return (a + 1i)
+# PARSER-NEXT:    def __lambda__5(b):
+# PARSER-NEXT:        return (b + 2i)
+# PARSER-NEXT:    def __lambda__6(c):
+# PARSER-NEXT:        return (c + 3i)
 # PARSER-NEXT:    tup = (__lambda__4, __lambda__5, __lambda__6)
 
 print("End")

@@ -79,7 +79,6 @@ add_library(
         include/llvmPy/Emitter.h
         include/llvmPy/Instr.h
         include/llvmPy/Lexer.h
-        include/llvmPy/Parser2.h
         include/llvmPy/PyObj.h
         include/llvmPy/RT.h
         include/llvmPy/Token.h
@@ -105,7 +104,6 @@ add_library(
         src/Emitter.cc
         src/Instr.cc
         src/Lexer.cc
-        src/Parser2.cc
         src/RT.cc
         src/Token.cc
         src/build.h.in
@@ -127,7 +125,7 @@ add_library(
         src/Compiler/Parser/AstPass.cc
         include/llvmPy/Compiler/Parser/DelambdafyRule.h
         src/Compiler/Parser/DelambdafyRule.cc
-)
+        src/Parser.cc)
 
 set_target_properties(
         lib${name}
@@ -176,7 +174,6 @@ add_executable(
         test/src/main.cc
         test/src/Internals/Lexer/LexerTest.cc
         test/src/TestSuite.cc
-        test/src/Internals/Parser/Parser2Test.cc
         test/src/Builtins/str/builtin_str.cc
         test/src/Types/PyStr/type_PyStr.cc
         test/src/Builtins/truthy/instr_truthy.cc
@@ -194,7 +191,7 @@ add_executable(
         test/src/Builtins/none/builtin_none.cc
         test/src/Builtins/len/builtin_len.cc
         test/src/Internals/AST/AST_replace.cc
-        test/src/Internals/AST/test_CompoundStmt.cc)
+        test/src/Internals/AST/test_CompoundStmt.cc test/src/Internals/Parser/ParserTest.cc)
 
 # The test suites depend on an up-to-date llvmPy binary.
 add_dependencies(

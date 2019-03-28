@@ -7,22 +7,26 @@
 #ifdef __cplusplus
 namespace llvmPy {
 
+// TODO: All non-flags should assign a numerical value.
 enum TokenType {
-    tok_eof = 0,
-    tok_unknown = tok_eof,
+    tok_eof = -1,
+    tok_unknown = 0,
+    tok_null = tok_unknown,
 
     // Modifiers
     tok_assign = 0x80000000,
     tok_cmpeq = 0x40000000,
     tok_kw = 0x20000000,
-    tok_oper = 0x10000000,
+    tok_binary = 0x10000000,
+    tok_unary = 0x01000000,
+    tok_rassoc = 0x02000000,
 
     tok_ignore = 1,
-    tok_ident,
-    tok_indent,
-    tok_number,
-    tok_string,
-    tok_eol,
+    tok_ident = 2,
+    tok_indent = 3,
+    tok_number = 4,
+    tok_string = 5,
+    tok_eol = 6,
 
     tok_semicolon, // ;
     tok_colon, // :
@@ -35,21 +39,21 @@ enum TokenType {
     tok_rb, // ]
 
     // Operators
-    tok_dot = 100 | tok_oper, // .
+    tok_dot = 100 | tok_binary, // .
 
     // Logical operators
     tok_lt,
     tok_gt,
 
-    tok_lte = tok_lt | tok_cmpeq | tok_oper,
-    tok_gte = tok_gt | tok_cmpeq | tok_oper,
-    tok_neq = tok_not | tok_cmpeq | tok_oper,
-    tok_eq = tok_eqsign | tok_cmpeq | tok_oper,
+    tok_lte = tok_lt | tok_cmpeq | tok_binary,
+    tok_gte = tok_gt | tok_cmpeq | tok_binary,
+    tok_neq = tok_not | tok_cmpeq | tok_binary,
+    tok_eq = tok_eqsign | tok_cmpeq | tok_binary,
 
     // Arithmetic operators
-    tok_add = 200 | tok_oper, // +
-    tok_sub, // -
-    tok_mul, // *
+    tok_add = 200 | tok_binary | tok_unary, // +
+    tok_sub = 201 | tok_binary | tok_unary, // -
+    tok_mul = 202 | tok_binary, // *
     tok_div, // /
 
     tok_addeq = tok_add | tok_assign,

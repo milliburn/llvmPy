@@ -35,7 +35,7 @@ Lexer::Lexer(std::istream & stream)
 }
 
 bool
-Lexer::tokenize(std::vector<Token> & out)
+Lexer::tokenize(std::vector<Token> &out)
 {
     _tokens.clear();
 
@@ -47,6 +47,7 @@ Lexer::tokenize(std::vector<Token> & out)
         reset();
 
         // Skip preceding whitespace, but record the indent level.
+        // TODO: Handle tab levels.
         while (is(' ') || is('\t')) {
             indent++;
         }
@@ -120,16 +121,36 @@ Lexer::isEof()
 void
 Lexer::add(Token token)
 {
-    if (token.getTokenType() == tok_eol) {
+    auto tokenType = token.getTokenType();
+
+    if (tokenType == tok_eol) {
         // Ignore empty lines at start of file.
         if (_tokens.empty()) return;
 
         // Ignore empty lines in the middle of the file.
         if (_tokens.back().getTokenType() == tok_eol) return;
-    } else if (token.getTokenType() == tok_eof) {
-        // Ignore empty lines at end of file.
-        if (!_tokens.empty() && _tokens.back().getTokenType() == tok_eol) {
+
+        if (!_tokens.empty() && _tokens.back().getTokenType() == tok_indent) {
             _tokens.pop_back();
+            return;
+        }
+    } else if (tokenType == tok_eof) {
+        if (!_tokens.empty() && _tokens.back().getTokenType() != tok_eol) {
+            add(Token(tok_eol));
+        }
+    }
+
+    // Check for illegal duplicates.
+    if (!_tokens.empty()) {
+        switch (tokenType) {
+        case tok_eol:
+        case tok_eof:
+        case tok_indent:
+            assert(_tokens.back().getTokenType() != tokenType);
+            break;
+
+        default:
+            break;
         }
     }
 
