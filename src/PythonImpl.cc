@@ -104,7 +104,6 @@ PythonImpl::printLexerOutput(std::vector<Token> const &tokens) const
 
         if (token.getTokenType() == tok_eof) {
             // Right now EOF doesn't have a canonical representation.
-            stream << std::endl;
             stream << ">EOF";
         } else {
             token.toStream(stream);

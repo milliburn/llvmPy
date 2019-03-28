@@ -24,6 +24,7 @@ public:
 private:
     bool EndOfFile();
     bool EndOfLine();
+    int NextIndentation();
 
     TokenType UnaryOperator();
     TokenType BinaryOperator();
