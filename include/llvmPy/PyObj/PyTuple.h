@@ -12,15 +12,32 @@ public:
     PyTuple() noexcept;
     PyTuple(int64_t count, PyObj **members) noexcept;
 
+    bool isEmpty() const;
+    int64_t getLength() const;
+    PyObj &at(int64_t index) const;
+
+public:
     std::string py__str__() override;
 
     bool py__bool__() override;
 
     int64_t py__len__() override;
 
+    bool py__eq__(PyObj &rhs) override;
+
+    bool py__lt__(PyObj &rhs) override;
+
+    bool py__le__(PyObj &rhs) override;
+
+    bool py__ge__(PyObj &rhs) override;
+
+    bool py__gt__(PyObj &rhs) override;
+
 private:
     int64_t const _count;
     PyObj ** const _members;
+
+    bool compareTo(PyTuple &rhs, bool (PyObj::* comparator)(PyObj &)) const;
 };
 
 } // namespace llvmPy
