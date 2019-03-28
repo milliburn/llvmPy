@@ -127,7 +127,6 @@ add_library(
         src/Compiler/Parser/AstPass.cc
         include/llvmPy/Compiler/Parser/DelambdafyRule.h
         src/Compiler/Parser/DelambdafyRule.cc
-#        include/llvmPy/Parser3.h src/Parser3.cc
         src/Parser4.cc)
 
 set_target_properties(
