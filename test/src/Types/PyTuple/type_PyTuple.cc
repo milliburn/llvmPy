@@ -6,6 +6,12 @@
 using namespace llvmPy;
 
 static PyTuple &
+tup()
+{
+    return PyTuple::get(0, nullptr);
+}
+
+static PyTuple &
 tup(int64_t value)
 {
     PyObj *values[] = { new PyInt(value) };
@@ -74,15 +80,36 @@ TEST_CASE("type: PyTuple", "[types][PyTuple]") {
     }
 
     SECTION("py__lt__()") {
-        CHECK(!(t0 < t0));
-        CHECK(t0 < t1);
-        CHECK(!(t1 < t0));
+        // Empty tuple is less than non-empty tuple.
+        // Otherwise compare elements lexicographically.
+        CHECK(!(tup() < tup()));
+        CHECK(tup() < tup(1));
+        CHECK(tup() < tup(1, 2));
+        CHECK(!(tup(1) < tup()));
+        CHECK(!(tup(1) < tup(1, 2)));
         CHECK(tup(1) < tup(2));
-        CHECK(tup(1) < tup(2));
-        CHECK(tup(1) < tup(1, 2));
         CHECK(tup(1) < tup(2, 1));
-        CHECK(tup(1) < tup(1, 2, 3));
-        CHECK(tup(1) < tup(3, 2, 1));
-        CHECK(!(tup(2) < tup(1)));
+        CHECK(tup(2, 1) < tup(2, 2));
+        CHECK(tup(2, 1, 3) < tup(2, 2));
+        CHECK(tup(1, 2, 3) < tup(2));
+        CHECK(!(tup(2, 3) < tup(2)));
+    }
+
+    SECTION("py__le__()") {
+        CHECK(tup() <= tup());
+        CHECK(tup() <= tup(1));
+        CHECK(!(tup(1) <= tup()));
+    }
+
+    SECTION("py__ge__()") {
+        CHECK(tup() >= tup());
+        CHECK(!(tup() >= tup(1)));
+        CHECK(tup(1) >= tup());
+    }
+
+    SECTION("py__gt__()") {
+        CHECK(!(tup() > tup()));
+        CHECK(!(tup() > tup(1)));
+        CHECK(tup(1) > tup());
     }
 }

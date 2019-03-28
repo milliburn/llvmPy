@@ -35,8 +35,9 @@ public:
 
 private:
     int64_t const _count;
-    PyObj ** const _members;
+    PyObj * const * const _members;
 
+    static PyObj * const * copyMembers(int64_t count, PyObj **members);
     bool compareTo(PyTuple &rhs, bool (PyObj::* comparator)(PyObj &)) const;
 };
 

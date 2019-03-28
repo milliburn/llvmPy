@@ -16,23 +16,27 @@ PyTuple::get(int64_t count, PyObj **members)
     }
 }
 
-PyTuple::PyTuple() noexcept
-    : _count(0), _members(nullptr)
-{
-
-}
-
-PyTuple::PyTuple(int64_t count, PyObj **members) noexcept
-    : _count(count), _members(new PyObj* [static_cast<size_t>(count)])
+PyObj * const *
+PyTuple::copyMembers(int64_t count, PyObj **members)
 {
     assert(count > 0);
     assert(members);
-
+    auto **result = new PyObj* [static_cast<size_t>(count)];
     std::memcpy(
-            _members,
+            result,
             members,
-            sizeof(*_members) * static_cast<size_t>(_count));
+            sizeof(*result) * static_cast<size_t>(count));
+    return result;
+}
 
+PyTuple::PyTuple() noexcept
+    : _count(0), _members(nullptr)
+{
+}
+
+PyTuple::PyTuple(int64_t count, PyObj **members) noexcept
+    : _count(count), _members(copyMembers(count, members))
+{
     for (int64_t i = 0; i < _count; ++i) {
         assert(_members[i]);
     }
@@ -99,7 +103,13 @@ PyTuple::py__lt__(PyObj &rhs_)
     if (PyObj::py__eq__(rhs_)) {
         return false;
     } else if (auto *rhs = rhs_.cast<PyTuple>()) {
-        return compareTo(*rhs, &PyObj::py__lt__);
+        if (isEmpty() && !rhs->isEmpty()) {
+            return true;
+        } else if (!isEmpty() && rhs->isEmpty()) {
+            return false;
+        } else {
+            return compareTo(*rhs, &PyObj::py__lt__);
+        }
     } else {
         return false;
     }
@@ -111,7 +121,13 @@ PyTuple::py__le__(PyObj &rhs_)
     if (PyObj::py__eq__(rhs_)) {
         return true;
     } else if (auto *rhs = rhs_.cast<PyTuple>()) {
-        return compareTo(*rhs, &PyObj::py__le__);
+        if (isEmpty() && !rhs->isEmpty()) {
+            return true;
+        } else if (!isEmpty() && rhs->isEmpty()) {
+            return false;
+        } else {
+            return compareTo(*rhs, &PyObj::py__le__);
+        }
     } else {
         return false;
     }
@@ -123,7 +139,13 @@ PyTuple::py__gt__(PyObj &rhs_)
     if (PyObj::py__eq__(rhs_)) {
         return false;
     } else if (auto *rhs = rhs_.cast<PyTuple>()) {
-        return compareTo(*rhs, &PyObj::py__gt__);
+        if (isEmpty() && !rhs->isEmpty()) {
+            return false;
+        } else if (!isEmpty() && rhs->isEmpty()) {
+            return true;
+        } else {
+            return compareTo(*rhs, &PyObj::py__gt__);
+        }
     } else {
         return false;
     }
@@ -135,7 +157,13 @@ PyTuple::py__ge__(PyObj &rhs_)
     if (PyObj::py__eq__(rhs_)) {
         return true;
     } else if (auto *rhs = rhs_.cast<PyTuple>()) {
-        return compareTo(*rhs, &PyObj::py__ge__);
+        if (isEmpty() && !rhs->isEmpty()) {
+            return false;
+        } else if (!isEmpty() && rhs->isEmpty()) {
+            return true;
+        } else {
+            return compareTo(*rhs, &PyObj::py__ge__);
+        }
     } else {
         return false;
     }
@@ -150,6 +178,7 @@ PyTuple::isEmpty() const
 int64_t
 PyTuple::getLength() const
 {
+    assert(_count >= 0);
     return _count;
 }
 
@@ -157,7 +186,9 @@ PyObj &
 PyTuple::at(int64_t index) const
 {
     assert(index < _count);
-    return *_members[index];
+    auto *member = _members[index];
+    assert(member);
+    return *member;
 }
 
 bool
@@ -176,10 +207,10 @@ PyTuple::compareTo(PyTuple &rhs_, bool (PyObj::* comparator)(PyObj &)) const
         auto &a = lhs.at(i);
         auto &b = rhs.at(i);
         bool result = (a.*comparator)(b);
-        if (!result) {
-            return false;
+        if (result) {
+            return true;
         }
     }
 
-    return true;
+    return false;
 }
