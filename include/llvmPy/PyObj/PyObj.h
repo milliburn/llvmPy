@@ -44,6 +44,9 @@ public:
      *  should automatically bind the self-argument.
      */
     virtual bool isInstance() const;
+
+protected:
+    virtual int compare(PyObj &rhs) const;
 };
 
 } // namespace llvmPy

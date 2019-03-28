@@ -47,6 +47,7 @@ public:
     llvm::Value *emit(RTScope &scope, BinaryExpr const &expr);
     llvm::Value *emit(RTScope &scope, UnaryExpr const &unary);
     llvm::Value *emit(RTScope &scope, GetattrExpr const &getattr);
+    llvm::Value *emit(RTScope &scope, TupleExpr const &tuple);
 
     void emitCondStmt(
             llvm::Function &function,

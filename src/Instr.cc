@@ -35,6 +35,16 @@ Types::Types(
 
     PyIntValue = llvm::IntegerType::get(ctx, dl.getPointerSizeInBits());
 
+    llvmPy_malloc = llvm::FunctionType::get(
+            llvm::Type::getInt64Ty(ctx),
+            { llvm::Type::getInt64Ty(ctx) },
+            false);
+
+    llvmPy_calloc = llvm::FunctionType::get(
+            llvm::Type::getInt64Ty(ctx),
+            { llvm::Type::getInt64Ty(ctx), llvm::Type::getInt64Ty(ctx) },
+            false);
+
     llvmPy_binop = llvm::FunctionType::get(Ptr, { Ptr, Ptr }, false);
     llvmPy_add = llvmPy_binop;
     llvmPy_sub = llvmPy_binop;
@@ -54,6 +64,10 @@ Types::Types(
             llvm::Type::getInt1Ty(ctx), { Ptr }, false);
     llvmPy_len = llvm::FunctionType::get(Ptr, { Ptr }, false);
     llvmPy_getattr = llvm::FunctionType::get(Ptr, { Ptr, Ptr }, false);
+    llvmPy_tupleN = llvm::FunctionType::get(
+            Ptr,
+            { llvm::Type::getInt64Ty(ctx), llvm::Type::getInt64Ty(ctx) },
+            false);
 
     llvm::FunctionType *cmp = llvmPy_binop;
     llvmPy_lt = cmp;
@@ -130,6 +144,24 @@ Types::getFuncFrame(
             true);
 
     return structType;
+}
+
+llvm::ArrayType *
+Types::getPyObjArray(size_t N) const
+{
+    return llvm::ArrayType::get(Ptr, N);
+}
+
+extern "C" void * MARK_USED
+llvmPy_malloc(size_t size)
+{
+    return malloc(size);
+}
+
+extern "C" void * MARK_USED
+llvmPy_calloc(size_t num, size_t size)
+{
+    return calloc(num, size);
 }
 
 extern "C" PyObj * MARK_USED
@@ -268,6 +300,12 @@ extern "C" llvmPy::PyBool * MARK_USED
 llvmPy_bool(llvmPy::PyObj &obj)
 {
     return &PyBool::get(obj.py__bool__());
+}
+
+extern "C" llvmPy::PyTuple * MARK_USED
+llvmPy_tupleN(int64_t count, llvmPy::PyObj **objects)
+{
+    return &PyTuple::getNoCopy(count, objects);
 }
 
 extern "C" llvmPy::PyBool * MARK_USED

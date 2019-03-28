@@ -756,3 +756,15 @@ CompoundStmt::insertAfter(Stmt *marker, Stmt &stmt)
 
     assert(false && "reached end of statement");
 }
+
+size_t
+TupleExpr::getLength() const
+{
+    return _members.size();
+}
+
+bool
+TupleExpr::isEmpty() const
+{
+    return getLength() == 0;
+}
