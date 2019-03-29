@@ -1,4 +1,4 @@
-set(name llvmPy)
+set(name ${LLVMPY_EXECUTABLE_NAME})
 
 add_executable(
         ${name}

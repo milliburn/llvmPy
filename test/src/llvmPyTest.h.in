@@ -3,7 +3,7 @@
 #ifdef __cplusplus
 namespace llvmPy {
 
-static constexpr char const *TEST_PATH = "@CMAKE_CURRENT_SOURCE_DIR@/test";
+static constexpr char const *TEST_PATH = "@CMAKE_CURRENT_SOURCE_DIR@";
 static constexpr char const *LLVM_DIR = "@LLVM_DIR@";
 static constexpr char const *BINARY_DIR = "@CMAKE_BINARY_DIR@";
 

@@ -1,4 +1,4 @@
-set(name libllvmPy)
+set(name ${LLVMPY_LIBRARY_NAME})
 
 find_package(LLVM REQUIRED CONFIG)
 
