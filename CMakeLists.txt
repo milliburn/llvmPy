@@ -49,6 +49,7 @@ llvm_map_components_to_libnames(
 # Libraries
 
 add_subdirectory(library)
+add_subdirectory(vendor)
 
 # llvmPy static library
 
