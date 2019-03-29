@@ -100,7 +100,6 @@ add_library(
         src/Lexer.cc
         src/RT.cc
         src/Token.cc
-        src/build.h.in
         include/llvmPy/Compiler/Phase.h
         include/llvmPy/Compiler/Lexer/LexerPhase.h
         src/Compiler/Lexer/LexerPhase.cc
@@ -145,23 +144,7 @@ target_link_libraries(
 
 # llvmPy executable
 
-add_executable(
-        ${name}
-        src/main.cc)
-
-configure_file(
-        src/build.h.in
-        ${CMAKE_CURRENT_BINARY_DIR}/src/build.h)
-
-target_include_directories(
-        ${name}
-        PRIVATE
-            src
-            ${CMAKE_CURRENT_BINARY_DIR}/src)
-
-target_link_libraries(
-        ${name}
-        PRIVATE lib${name})
+add_subdirectory(cli)
 
 # llvmPyTest
 
