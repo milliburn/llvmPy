@@ -1,5 +1,4 @@
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Weverything"
 #pragma GCC diagnostic ignored "-Wpedantic"
 #include <llvm/IR/Value.h>
 #include <llvm/IR/Verifier.h>
@@ -511,7 +510,9 @@ Emitter::emitWhileStmt(
     auto *loopBB = llvm::BasicBlock::Create(_ctx, tags.Loop + suffix);
     auto *endwhileBB = llvm::BasicBlock::Create(_ctx, tags.Endwhile + suffix);
 
-    Loop loop = { .cond = condBB, .end = endwhileBB };
+    Loop loop;
+    loop.cond = condBB;
+    loop.end = endwhileBB;
 
     _ir.CreateBr(condBB);
 

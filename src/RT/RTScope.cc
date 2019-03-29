@@ -84,10 +84,10 @@ void
 RTScope::declareSlot(std::string const &name)
 {
     if (!hasSlot(name)) {
-        _slots[name] = {
-                .value = nullptr,
-                .frameIndex = _slots.size()
-        };
+        Slot slot;
+        slot.value = nullptr;
+        slot.frameIndex = _slots.size();
+        _slots[name] = slot;
     }
 }
 

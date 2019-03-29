@@ -1,5 +1,4 @@
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Weverything"
 #pragma GCC diagnostic ignored "-Wpedantic"
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/GlobalVariable.h>
@@ -166,7 +165,7 @@ llvm::GlobalVariable *
 RTModule::llvmPy_PyInt(int64_t value) const
 {
     std::string sign = value < 0 ? "_" : "";
-    std::string name = "PyInt." + sign + std::to_string(abs(value));
+    std::string name = "PyInt." + sign + std::to_string(std::abs(value));
 
     if (auto *var = _ir.getGlobalVariable(name, true)) {
         return var;

@@ -18,9 +18,14 @@ public:
     }
 
 public:
+    // Ignore -pedantic to allow flexible array member in C++. The actual space
+    // taken by the array is defined in the specific stack frame.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
     Frame *self;
     Frame *outer;
     PyObj *vars[];
+#pragma GCC diagnostic pop
 
     Frame() noexcept; ///< Constructor used in tests.
     bool isPointingToHeap() const;
