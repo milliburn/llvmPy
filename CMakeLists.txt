@@ -1,10 +1,10 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.10)
 set(name llvmPy)
 project(${name})
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
-                     -Wall -Werror -Weverything -pedantic \
+                     -Wall -Werror -pedantic \
                      -Wno-unused-variable -Wno-unused-parameter \
                      -Wno-c++98-compat -Wno-c++98-compat-pedantic \
                      -Wno-global-constructors -Wno-exit-time-destructors \
