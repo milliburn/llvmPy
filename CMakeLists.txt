@@ -3,14 +3,7 @@ set(name llvmPy)
 project(${name})
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
-                     -Wall -Werror -pedantic \
-                     -Wno-unused-variable -Wno-unused-parameter \
-                     -Wno-c++98-compat -Wno-c++98-compat-pedantic \
-                     -Wno-global-constructors -Wno-exit-time-destructors \
-                     -Wno-c99-extensions \
-                     -Wno-padded -Wno-switch-enum \
-                     -Wno-disabled-macro-expansion")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -pedantic")
 
 # VERSIONING
 
