@@ -27,7 +27,8 @@ add_executable(
         src/Types/PyTuple/type_PyTuple.cc
         include/llvmPy/Test/PyObj_DSL.h
         src/Types/PyObj/test_PyObj.cc
-        src/Builtins/getitem/instr_getitem.cc)
+        src/Builtins/getitem/instr_getitem.cc
+        src/Internals/Lexer/test_Lexer_utf8.cc)
 
 # The test suites depend on an up-to-date llvmPy binary.
 add_dependencies(${name} libllvmPy)
