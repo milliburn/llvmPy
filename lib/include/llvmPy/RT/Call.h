@@ -12,6 +12,10 @@ struct Call {
     Frame *frame;
     void *label;
     PyObj *self;
+
+    Call(Frame *frame, void *label, PyObj *self)
+    : frame(frame), label(label), self(self)
+    {}
 };
 
 } // namespace llvmPy

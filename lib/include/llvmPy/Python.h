@@ -2,6 +2,7 @@
 #include <string>
 #include <istream>
 #include <vector>
+#include <memory>
 
 #ifdef __cplusplus
 namespace llvmPy {

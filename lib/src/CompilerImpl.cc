@@ -1,5 +1,4 @@
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Weverything"
 #pragma GCC diagnostic ignored "-Wpedantic"
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
@@ -70,7 +69,7 @@ CompilerImpl::findSymbol(std::string const &name, bool mangle)
 
     return nullptr;
 }
-#include <llvmPy/Instr.h>
+
 std::shared_ptr<llvm::orc::SymbolResolver>
 CompilerImpl::createSymbolResolver()
 {

@@ -1,0 +1,12 @@
+#pragma once
+
+#ifdef __cplusplus
+namespace llvmPy {
+
+static std::string const LLVMPY_NAME      = "@PROJECT_NAME@";
+static std::string const LLVMPY_VERSION   = "@PROJECT_VERSION@";
+static std::string const LLVMPY_TIMESTAMP = "@PROJECT_TIMESTAMP@";
+static std::string const LLVMPY_PYTHON    = "3.6.0";
+
+} // namespace llvmPy
+#endif // __cplusplus

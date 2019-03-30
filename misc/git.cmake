@@ -1,0 +1,21 @@
+find_package(Git QUIET REQUIRED)
+
+execute_process(
+        COMMAND "${GIT_EXECUTABLE}" describe --tags --always HEAD
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        RESULT_VARIABLE res
+        OUTPUT_VARIABLE PROJECT_VERSION
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+execute_process(
+        COMMAND "${GIT_EXECUTABLE}" show -s --format=%cd
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        RESULT_VARIABLE res
+        OUTPUT_VARIABLE PROJECT_TIMESTAMP
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+set_property(GLOBAL APPEND
+             PROPERTY CMAKE_CONFIGURE_DEPENDS
+             "${CMAKE_SOURCE_DIR}/.git/index")

@@ -1,7 +1,6 @@
 #pragma once
 
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Weverything"
 #pragma GCC diagnostic ignored "-Wpedantic"
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/ExecutionEngine/Orc/Core.h>

@@ -31,9 +31,8 @@ static int run(Options const &);
 int
 main(int argc, char **argv)
 {
-    Options options = {
-            .mode = Mode::STDIN,
-    };
+    Options options;
+    options.mode = Mode::STDIN;
 
     char c;
 

@@ -45,7 +45,7 @@ PyFunc::PyFunc(PyFunc &&move) noexcept = default;
 
 PyFunc::PyFunc(PyFuncType type, void *label, Frame *frame, PyObj *self)
 : _type(type),
-  _call({ .frame = frame, .label = label, .self = self })
+  _call(frame, label, self)
 {
 }
 

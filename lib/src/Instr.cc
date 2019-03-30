@@ -1,5 +1,4 @@
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Weverything"
 #pragma GCC diagnostic ignored "-Wpedantic"
 #include <llvm/ADT/APInt.h>
 #include <llvm/IR/DataLayout.h>
