@@ -28,6 +28,7 @@ add_library(
         include/llvmPy/PyObj/PyNone.h
         include/llvmPy/PyObj/PyObj.h
         include/llvmPy/PyObj/PyStr.h
+        include/llvmPy/PyObj/PyTuple.h
         include/llvmPy/RT/Frame.h
         include/llvmPy/RT/RTModule.h
         include/llvmPy/RT/RTScope.h
@@ -36,14 +37,38 @@ add_library(
         include/llvmPy/Support/Testing.h
         include/llvmPy/AST.h
         include/llvmPy/Compiler.h
+        include/llvmPy/Compiler/AllPhases.h
+        include/llvmPy/Compiler/Emitter/EmitterPhase.h
+        include/llvmPy/Compiler/Lexer/LexerPhase.h
+        include/llvmPy/Compiler/Parser/AstPass.h
+        include/llvmPy/Compiler/Parser/DelambdafyRule.h
+        include/llvmPy/Compiler/Parser/ParserPhase.h
+        include/llvmPy/Compiler/Phase.h
+        include/llvmPy/Compiler/Runtime/RuntimePhase.h
         include/llvmPy/Emitter.h
         include/llvmPy/Instr.h
         include/llvmPy/Lexer.h
         include/llvmPy/PyObj.h
+        include/llvmPy/Python.h
         include/llvmPy/RT.h
+        include/llvmPy/RT/Call.h
         include/llvmPy/Token.h
         include/llvmPy/Typed.h
         include/llvmPy.h
+        src/AST.cc
+        src/Compiler.cc
+        src/Compiler/Emitter/EmitterPhase.cc
+        src/Compiler/Lexer/LexerPhase.cc
+        src/Compiler/Parser/AstPass.cc
+        src/Compiler/Parser/DelambdafyRule.cc
+        src/Compiler/Parser/ParserPhase.cc
+        src/Compiler/Runtime/RuntimePhase.cc
+        src/CompilerImpl.cc
+        src/CompilerImpl.h
+        src/Emitter.cc
+        src/Instr.cc
+        src/Lexer.cc
+        src/Parser.cc
         src/PyObj/PyBool.cc
         src/PyObj/PyClass.cc
         src/PyObj/PyFunc.cc
@@ -51,42 +76,17 @@ add_library(
         src/PyObj/PyNone.cc
         src/PyObj/PyObj.cc
         src/PyObj/PyStr.cc
-        include/llvmPy/RT/Call.h
+        src/PyObj/PyTuple.cc
+        src/Python.cc
+        src/PythonImpl.cc
+        src/PythonImpl.h
+        src/RT.cc
         src/RT/Frame.cc
         src/RT/RTScope.cc
         src/RT/RTModule.cc
         src/RT/Scope.cc
         src/Support/Typed.cc
-        src/AST.cc
-        src/Compiler.cc
-        src/CompilerImpl.h
-        src/CompilerImpl.cc
-        src/Emitter.cc
-        src/Instr.cc
-        src/Lexer.cc
-        src/RT.cc
-        src/Token.cc
-        include/llvmPy/Compiler/Phase.h
-        include/llvmPy/Compiler/Lexer/LexerPhase.h
-        src/Compiler/Lexer/LexerPhase.cc
-        include/llvmPy/Compiler/Parser/ParserPhase.h
-        src/Compiler/Parser/ParserPhase.cc
-        include/llvmPy/Compiler/Emitter/EmitterPhase.h
-        src/Compiler/Emitter/EmitterPhase.cc
-        include/llvmPy/Compiler/Runtime/RuntimePhase.h
-        src/Compiler/Runtime/RuntimePhase.cc
-        include/llvmPy/Compiler/AllPhases.h
-        include/llvmPy/Python.h
-        src/Python.cc
-        src/PythonImpl.cc
-        src/PythonImpl.h
-        include/llvmPy/Compiler/Parser/AstPass.h
-        src/Compiler/Parser/AstPass.cc
-        include/llvmPy/Compiler/Parser/DelambdafyRule.h
-        src/Compiler/Parser/DelambdafyRule.cc
-        src/Parser.cc
-        include/llvmPy/PyObj/PyTuple.h
-        src/PyObj/PyTuple.cc)
+        src/Token.cc)
 
 set_target_properties(
         ${name}
