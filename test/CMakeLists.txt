@@ -1,4 +1,4 @@
-set(name ${PROJECT_NAME}Test)
+set(name test)
 
 add_executable(
         ${name}
